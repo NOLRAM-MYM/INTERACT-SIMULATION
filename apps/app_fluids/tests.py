@@ -180,6 +180,98 @@ class TestVelocityProfile:
         assert len(result.velocity_profile)  == PipeFlowService.PROFILE_POINTS
 
 
+class TestRegimeConsistency:
+    """
+    The friction factor and the velocity profile must agree about whether the
+    flow is laminar. They used to branch on different thresholds — friction on
+    RE_LAMINAR_LIMIT (2300), profile on RE_TURBULENT_LIMIT (4000) — so between
+    those two values one response carried a turbulent Churchill friction factor
+    next to a fully parabolic laminar profile, and the page drew two charts that
+    contradicted each other.
+
+    The profile shape is the discriminator: parabolic puts the centreline at
+    exactly 2x the mean, the 1/7 power law at about 1.22x.
+    """
+
+    @staticmethod
+    def _transition_input():
+        """Water in a 50 mm pipe, sized to land inside 2300 <= Re < 4000."""
+        return PipeFlowInput(
+            diameter_m     = 0.050,
+            length_m       = 10.0,
+            roughness_m    = 0.000045,
+            density_kg_m3  = 998.2,
+            viscosity_pa_s = 0.001002,
+            flow_rate_m3_s = 7.1 / 60000,
+        )
+
+    def test_scenario_really_is_in_the_transition_band(self):
+        result = PipeFlowService(self._transition_input()).compute()
+        assert PipeFlowService.RE_LAMINAR_LIMIT <= result.reynolds_number
+        assert result.reynolds_number < PipeFlowService.RE_TURBULENT_LIMIT
+        assert result.flow_regime == 'Transition'
+
+    def test_transition_profile_is_not_laminar_parabolic(self):
+        result = PipeFlowService(self._transition_input()).compute()
+        centreline_ratio = result.velocity_profile[0] / result.velocity_m_s
+        assert centreline_ratio == pytest.approx(1.2245, abs=1e-3), (
+            "transition-zone profile fell back to the laminar parabola while "
+            "the friction factor used the turbulent correlation"
+        )
+
+    def test_transition_friction_factor_uses_the_turbulent_correlation(self):
+        result = PipeFlowService(self._transition_input()).compute()
+        assert result.friction_method.startswith('Churchill')
+        # 64/Re is the laminar value; the turbulent correlation is well above it
+        # at this Reynolds number, so a mismatch here is unambiguous.
+        assert result.friction_factor > 64.0 / result.reynolds_number
+
+    def test_laminar_side_of_the_threshold_stays_parabolic(self, laminar_pipe_input):
+        result = PipeFlowService(laminar_pipe_input).compute()
+        assert result.reynolds_number < PipeFlowService.RE_LAMINAR_LIMIT
+        centreline_ratio = result.velocity_profile[0] / result.velocity_m_s
+        assert centreline_ratio == pytest.approx(2.0, abs=1e-2)
+
+
+class TestFrictionCorrelationIsExplicit:
+    def test_churchill_is_requested_by_name(self, water_pipe_input):
+        """
+        friction_factor() defaults to Clamond, so omitting Method returned a
+        Clamond value under the 'Churchill (1977)' label this service reports
+        to the UI. Compare against the library called explicitly both ways.
+        """
+        import fluids
+
+        result = PipeFlowService(water_pipe_input).compute()
+        eD = water_pipe_input.roughness_m / water_pipe_input.diameter_m
+        churchill = fluids.friction.friction_factor(
+            Re=result.reynolds_number, eD=eD, Method='Churchill_1977'
+        )
+        clamond = fluids.friction.friction_factor(Re=result.reynolds_number, eD=eD)
+
+        # The service rounds to 8 decimals, so match loosely enough to survive
+        # that but tightly enough to tell the two correlations apart — they
+        # differ by ~0.7% here, four orders of magnitude above this tolerance.
+        assert result.friction_factor == pytest.approx(churchill, rel=1e-6)
+        assert result.friction_factor != pytest.approx(clamond, rel=1e-4)
+        assert 'Churchill' in result.friction_method
+
+    def test_sweep_uses_the_same_correlation_as_the_operating_point(self, water_pipe_input):
+        """
+        The chart draws the sweep and marks the operating point on it. If the
+        two use different correlations the marker sits off the curve.
+        """
+        import numpy as np
+
+        result = PipeFlowService(water_pipe_input).compute()
+        q = np.array(result.sweep_flow_rates_m3_s)
+        dp = np.array(result.sweep_pressure_drops_pa)
+        interpolated = float(np.interp(water_pipe_input.flow_rate_m3_s, q, dp))
+        assert interpolated == pytest.approx(
+            result.pressure_drop_total_bar * 1e5, rel=0.02
+        )
+
+
 # ===========================================================================
 # API Integration Tests
 # ===========================================================================

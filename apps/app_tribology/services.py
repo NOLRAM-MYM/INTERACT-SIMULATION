@@ -85,12 +85,29 @@ class TribologyService:
         # 2 / E' = (1 - nu1^2)/E1 + (1 - nu2^2)/E2
         e_reduced = 2.0 / (((1.0 - self.nu1**2) / self.E1) + ((1.0 - self.nu2**2) / self.E2))
 
-        # Linear speed at pitch circle (m/s)
+        # Linear speed at pitch circle (m/s) — the tangential speed of a point
+        # on the pitch cylinder. Reported for reference; it is NOT the speed
+        # that drives the film.
         omega1 = (2.0 * math.pi * rpm) / 60.0
         v_pitch = omega1 * (d1_m / 2.0)
-        u_entrainment = v_pitch  # Entrainment velocity is equal to pitch speed
 
-        # Normal load
+        # Entrainment (mean surface) velocity. At the pitch point the two teeth
+        # roll without sliding, so u = u1 = u2 = omega1 * r1_c — the speed
+        # component along the line of action, which is the pitch radius
+        # projected by sin(phi), exactly as r1_c/r2_c are projected above.
+        #
+        # This previously used v_pitch directly, dropping sin(phi). At the
+        # standard 20 deg pressure angle that overstates u by 1/sin(20 deg) =
+        # 2.92x, and since Dowson-Higginson gives H_min proportional to U^0.7,
+        # h_min and the lambda ratio came out ~2.1x too high — enough to report
+        # a full hydrodynamic film where the gear pair is actually in the mixed
+        # regime. The tell was the internal inconsistency: sin(phi) was applied
+        # to the radii but not to the velocity derived from the same geometry.
+        u_entrainment = omega1 * r1_c
+
+        # Normal load along the line of action. The input is the tangential
+        # (circumferential) force F_t at the pitch circle; the tooth normal is
+        # F_t / cos(phi).
         f_normal = self.ft / math.cos(self.phi_rad) if math.cos(self.phi_rad) > 0 else self.ft
 
         # Dimensionless Dowson-Higginson parameters
@@ -111,14 +128,18 @@ class TribologyService:
         lambda_val = h_min_um / self.rq if self.rq > 0 else 0.0
 
         # Lubrication Regime
+        # English, like every other module's payload (compare app_fluids'
+        # 'Laminar'/'Transition'/'Turbulent'). `regime_code` is the stable key
+        # clients should branch on; `regime` is the human-readable label, and
+        # the UI localises it from regime_code.
         if lambda_val < 1.0:
-            regime = "Limítrofe"
+            regime = "Boundary"
             regime_code = "boundary"
         elif lambda_val < 3.0:
-            regime = "Misto"
+            regime = "Mixed"
             regime_code = "mixed"
         else:
-            regime = "Hidrodinâmico Completo"
+            regime = "Full Hydrodynamic"
             regime_code = "hydrodynamic"
 
         return {
@@ -149,8 +170,19 @@ class TribologyService:
         }
 
     def compute_sweep(self):
-        """Generates Lambda parameter values for pinion speeds from 100 to 5000 RPM."""
-        rpms = np.linspace(100, 5000, 50)
+        """
+        Generate Lambda values across a speed range that brackets the operating
+        point.
+
+        The range used to be a fixed 100-5000 RPM while the serializer accepts
+        up to 20000, so any faster gear set put the "Operating Point" marker off
+        the right-hand edge of the plotted curve — the one thing the chart
+        exists to place in context. Span 0.2x to 2x the operating speed instead,
+        floored so a near-zero input still produces a usable axis.
+        """
+        rpm_lo = max(self.n1 * 0.2, 10.0)
+        rpm_hi = max(self.n1 * 2.0, rpm_lo * 1.01)
+        rpms = np.linspace(rpm_lo, rpm_hi, 50)
         lambdas = []
         h_mins = []
         for rpm in rpms:

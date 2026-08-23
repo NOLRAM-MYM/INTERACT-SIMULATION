@@ -14,11 +14,13 @@ This module implements:
 
 Scientific Libraries Used:
     - ``fluids``:  Authoritative pipe friction, flow regime, fittings library
-    - ``pint``:    Unit-aware calculations — prevents dimensional errors
     - ``numpy``:   Fast array operations for velocity profiles and sweep arrays
-    - ``scipy``:   Not used here directly but available for ODE/optimise tasks
     - ``sympy``:   Used for exact symbolic expression of Hagen-Poiseuille law
     - ``mpmath``:  Used for high-precision Colebrook iteration verification
+
+Units: every value reaching this module is already in SI — conversion happens in
+the serializer. The maths below is therefore on plain floats; the header used to
+claim pint made it unit-aware, but nothing here ever constructed a Quantity.
 
 References:
     - Colebrook, C.F. (1939). Turbulent Flow in Pipes. J. Inst. Civil Engrs.
@@ -29,15 +31,12 @@ References:
 import logging
 import math
 from dataclasses import dataclass, field
-from typing import Any
 
 import fluids
 import mpmath
 import numpy as np
 import sympy as sp
-from pint import DimensionalityError
 
-from apps.core.units import Q_, ureg
 
 logger = logging.getLogger(__name__)
 
@@ -266,19 +265,23 @@ class PipeFlowService:
             ff = 64.0 / re
             method = 'Hagen-Poiseuille (64/Re)'
         else:
-            # Churchill (1977) — explicit, works for all Re > 0
-            ff = fluids.friction.friction_factor(Re=re, eD=eD)
+            # Churchill (1977) — explicit, works for all Re > 0.
+            # Method is passed explicitly: the library's default is Clamond, so
+            # omitting it returned a Clamond value under a "Churchill" label,
+            # which is the string this method hands to the UI.
+            ff = fluids.friction.friction_factor(Re=re, eD=eD, Method='Churchill_1977')
             method = 'Churchill (1977) / Colebrook-White'
 
         # Validate with high-precision mpmath for turbulent (optional verification)
         if re >= self.RE_TURBULENT_LIMIT:
             ff_colebrook = self._colebrook_mpmath(re, eD)
-            relative_error = abs(ff - ff_colebrook) / ff_colebrook
-            if relative_error > 0.01:  # >1% discrepancy
-                self._warnings.append(
-                    f"Friction factor discrepancy {relative_error:.2%} between "
-                    f"Churchill ({ff:.6f}) and Colebrook ({ff_colebrook:.6f})."
-                )
+            if ff_colebrook > 0:
+                relative_error = abs(ff - ff_colebrook) / ff_colebrook
+                if relative_error > 0.01:  # >1% discrepancy
+                    self._warnings.append(
+                        f"Friction factor discrepancy {relative_error:.2%} between "
+                        f"Churchill ({ff:.6f}) and Colebrook ({ff_colebrook:.6f})."
+                    )
 
         return float(ff), method
 
@@ -289,30 +292,35 @@ class PipeFlowService:
         1/√f = -2·log₁₀(ε/D/3.7 + 2.51/(Re·√f))
 
         This is the reference-grade calculation used to validate Churchill.
+
+        Precision is raised inside a ``workdps`` context rather than by assigning
+        ``mpmath.mp.dps``. That attribute is process-global: setting it here left
+        every other thread in a multi-threaded WSGI worker computing at 50 digits
+        for the rest of the process, and it was never restored.
         """
-        mp = mpmath.mp
-        mp.dps = 50  # 50 decimal places of precision
+        with mpmath.workdps(50):
+            eD_mp = mpmath.mpf(eD)
+            re_mp = mpmath.mpf(re)
 
-        eD_mp = mpmath.mpf(eD)
-        re_mp = mpmath.mpf(re)
+            # Initial guess via Swamee-Jain
+            if eD > 0:
+                f_guess = 0.25 / (mpmath.log10(eD / 3.7 + 5.74 / re_mp ** 0.9)) ** 2
+            else:
+                f_guess = 0.316 / re_mp ** 0.25  # Blasius (smooth pipes)
 
-        # Initial guess via Swamee-Jain
-        if eD > 0:
-            f_guess = 0.25 / (mpmath.log10(eD / 3.7 + 5.74 / re_mp ** 0.9)) ** 2
-        else:
-            f_guess = 0.316 / re_mp ** 0.25  # Blasius (smooth pipes)
+            f = mpmath.mpf(f_guess)
 
-        f = mpmath.mpf(f_guess)
+            # Fixed-point iteration (converges in < 10 iterations)
+            for _ in range(100):
+                rhs = -2 * mpmath.log10(
+                    eD_mp / 3.7 + mpmath.mpf('2.51') / (re_mp * mpmath.sqrt(f))
+                )
+                f_new = 1 / rhs ** 2
+                if abs(f_new - f) < mpmath.mpf('1e-40'):
+                    break
+                f = f_new
 
-        # Fixed-point iteration (converges in < 10 iterations)
-        for _ in range(100):
-            rhs = -2 * mpmath.log10(eD_mp / 3.7 + mpmath.mpf('2.51') / (re_mp * mpmath.sqrt(f)))
-            f_new = 1 / rhs ** 2
-            if abs(f_new - f) < mpmath.mpf('1e-40'):
-                break
-            f = f_new
-
-        return float(f)
+            return float(f)
 
     # ------------------------------------------------------------------
     # Step 4 — Major Pressure Drop (Darcy-Weisbach)
@@ -401,6 +409,14 @@ class PipeFlowService:
           v(r) = v_max · (1 - r/R)^(1/7)
           (valid for Re ≈ 10⁴–10⁷; error < 5%)
 
+        The laminar/turbulent split uses ``RE_LAMINAR_LIMIT``, the same
+        threshold ``_friction_factor`` switches on. It used to branch on
+        ``RE_TURBULENT_LIMIT`` instead, so for 2300 ≤ Re < 4000 a single
+        response paired a turbulent (Churchill) friction factor with a fully
+        parabolic laminar profile — the two charts on the page contradicted each
+        other. The transition band is genuinely approximate either way, and
+        ``_flow_regime`` already attaches a warning saying so.
+
         Returns:
             (normalised_radii, velocities)
             Both lists have ``PROFILE_POINTS`` elements.
@@ -411,7 +427,7 @@ class PipeFlowService:
         if v_mean == 0:
             return r_norm.tolist(), np.zeros_like(r_norm).tolist()
 
-        if re < self.RE_TURBULENT_LIMIT:
+        if re < self.RE_LAMINAR_LIMIT:
             # Laminar: parabolic — v_max = 2·v_mean at centre
             v_max = 2.0 * v_mean
             v_profile = v_max * (1.0 - r_norm ** 2)
@@ -453,7 +469,13 @@ class PipeFlowService:
             if re < self.RE_LAMINAR_LIMIT:
                 ff = 64.0 / max(re, 1e-9)
             else:
-                ff = float(fluids.friction.friction_factor(Re=re, eD=eD))
+                # Same correlation as _friction_factor, so the operating point
+                # marker lands exactly on the plotted curve.
+                ff = float(
+                    fluids.friction.friction_factor(
+                        Re=re, eD=eD, Method='Churchill_1977'
+                    )
+                )
 
             dp = fluids.dP_from_K(
                 K=ff * (self.inp.length_m / self.inp.diameter_m),

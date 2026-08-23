@@ -4,20 +4,21 @@ apps/app_materials/services.py
 Structural & Finite Element Analysis (FEA) service layer.
 
 Libraries:
-    - sfepy:   Full FEA engine — mesh generation, element matrices, solver
-    - numpy:   Matrix construction and result arrays
-    - scipy:   Sparse linear solver (for large FEA systems)
-    - pint:    Unit-safe stress/strain calculations
+    - numpy:   Deflection curve arrays
+
+The header used to also list sfepy, scipy and pint; none of them are imported
+here. The beam cases below are closed-form Euler-Bernoulli solutions, which need
+no FEA engine and no sparse solver, and every value arrives already in SI from
+the serializer, so there are no Quantities either.
 
 Planned modules (scaffold):
     - BeamDeflectionService:   Euler-Bernoulli beam bending analysis
-    - TrussAnalysisService:    2D/3D truss FEA
+    - TrussAnalysisService:    2D/3D truss FEA (would need sfepy)
     - PlateStressService:      Thin plate theory + SfePy solver
 """
 
 import logging
 import numpy as np
-from apps.core.units import Q_, to_si
 
 logger = logging.getLogger(__name__)
 
@@ -73,6 +74,11 @@ class BeamDeflectionService:
             )
         elif self.load_type == 'uniform':
             # Uniform distributed load: δ_max = 5qL⁴/(384EI)
+            #
+            # NOTE: for the two distributed cases `load_kn` is the TOTAL load
+            # spread over the span, not an intensity — q is recovered by
+            # dividing by L. For the point cases it is the force itself. Same
+            # field, two meanings; the serializer's help text says so.
             q = self.P / self.L   # N/m
             delta_max = 5 * q * self.L ** 4 / (384 * EI)
             # w(x) = qx/(24EI) * (L³ - 2Lx² + x³)

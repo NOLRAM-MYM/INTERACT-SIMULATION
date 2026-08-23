@@ -1,11 +1,20 @@
 """apps/app_materials/views.py"""
+import logging
+
 from django.views.generic import TemplateView
 from rest_framework import status
 from rest_framework.views import APIView
 
-from apps.core.responses import error_response, success_response
+from apps.core.responses import (
+    computation_error_response,
+    error_response,
+    success_response,
+)
+from apps.core.schema import SerializerSchemaView
 
 from .serializers import BeamDeflectionInputSerializer
+
+logger = logging.getLogger(__name__)
 
 
 class MaterialsPageView(TemplateView):
@@ -30,11 +39,16 @@ class BeamDeflectionView(APIView):
         try:
             service = BeamDeflectionService(**serializer.to_service_kwargs())
             result = service.compute()
-        except ValueError as exc:
-            return error_response(
-                message=str(exc),
-                code="calculation_error",
-                http_status=status.HTTP_400_BAD_REQUEST,
+        except Exception as exc:
+            return computation_error_response(
+                exc,
+                view_name="BeamDeflectionView",
+                view_logger=logger,
             )
 
         return success_response(result)
+
+
+class BeamDeflectionSchemaView(SerializerSchemaView):
+    """GET /api/materials/beam-deflection/schema/ — form schema for the beam solver."""
+    serializer_class = BeamDeflectionInputSerializer

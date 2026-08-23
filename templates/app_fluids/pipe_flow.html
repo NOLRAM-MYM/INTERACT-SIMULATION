@@ -22,7 +22,7 @@
     </div>
     <div class="page-header__badges">
       <span class="stat-badge stat-badge--blue" id="badge-regime">
-        <span>Flow Regime</span><span id="regime-value">—</span>
+        <span data-i18n="fluids-badge-regime">Flow Regime</span><span id="regime-value">—</span>
       </span>
       <span class="stat-badge stat-badge--green" id="badge-re">
         <span>Re</span><span id="re-value">—</span>
@@ -41,10 +41,10 @@
       <div class="card__header">
         <div>
           <div class="card__title" style="display:flex; align-items:center; gap:8px;">
-            <span>🌀 3D Pipe Flow Workbench</span>
+            <span data-i18n="fluids-wb-title">🌀 3D Pipe Flow Workbench</span>
             <span class="regime-tag" id="workbench-status" style="font-size:0.65rem; padding:2px 6px;">Active</span>
           </div>
-          <div class="card__subtitle">Interactive particle velocity field and camera viewport control</div>
+          <div class="card__subtitle" data-i18n="fluids-wb-sub">Interactive particle velocity field and camera viewport control</div>
         </div>
         <button class="btn btn--outline" id="toggle-animation" style="padding:6px 12px; font-size:0.75rem;">
           ⏸ Pause
@@ -59,18 +59,18 @@
         <!-- 3D Camera Controls (floating overlay on the canvas corner) -->
         <div class="camera-controls camera-controls--overlay">
           <div style="font-size:0.75rem; font-weight:600; color:var(--text-secondary); margin-bottom:8px; display:flex; justify-content:space-between; align-items:center;">
-            <span>🎥 Camera Viewpoint (XYZ)</span>
+            <span data-i18n="cam-title">🎥 Camera Viewpoint (XYZ)</span>
             <label style="display:flex; align-items:center; gap:6px; cursor:pointer; font-size:0.72rem; color:var(--text-muted);">
-              <input type="checkbox" id="auto-orbit" style="cursor:pointer; accent-color:var(--accent-primary);"> Auto-Orbit
+              <input type="checkbox" id="auto-orbit" style="cursor:pointer; accent-color:var(--accent-primary);"> <span data-i18n="cam-lbl-orbit">Auto-Orbit</span>
             </label>
           </div>
 
           <!-- View Presets -->
           <div style="display:grid; grid-template-columns:repeat(4, 1fr); gap:6px; margin-bottom:10px;">
-            <button type="button" class="btn btn--outline" id="btn-view-iso" style="padding:4px 6px; font-size:0.68rem; justify-content:center; min-height:auto;">Iso</button>
-            <button type="button" class="btn btn--outline" id="btn-view-side" style="padding:4px 6px; font-size:0.68rem; justify-content:center; min-height:auto;">Side (Z)</button>
-            <button type="button" class="btn btn--outline" id="btn-view-top" style="padding:4px 6px; font-size:0.68rem; justify-content:center; min-height:auto;">Top (Y)</button>
-            <button type="button" class="btn btn--outline" id="btn-view-inlet" style="padding:4px 6px; font-size:0.68rem; justify-content:center; min-height:auto;">Inlet (X)</button>
+            <button type="button" class="btn btn--outline" id="btn-view-iso" style="padding:4px 6px; font-size:0.68rem; justify-content:center; min-height:auto;" data-i18n="cam-btn-iso">Iso</button>
+            <button type="button" class="btn btn--outline" id="btn-view-side" style="padding:4px 6px; font-size:0.68rem; justify-content:center; min-height:auto;" data-i18n="cam-btn-side">Side (Z)</button>
+            <button type="button" class="btn btn--outline" id="btn-view-top" style="padding:4px 6px; font-size:0.68rem; justify-content:center; min-height:auto;" data-i18n="cam-btn-top">Top (Y)</button>
+            <button type="button" class="btn btn--outline" id="btn-view-inlet" style="padding:4px 6px; font-size:0.68rem; justify-content:center; min-height:auto;" data-i18n="cam-btn-inlet">Inlet (X)</button>
           </div>
 
           <!-- XYZ Sliders -->
@@ -95,9 +95,9 @@
       </div>
 
       <div class="velocity-legend" aria-label="Velocity colour scale">
-        <span style="color:#3b82f6">● Low</span>
+        <span style="color:#3b82f6" data-i18n="fluids-legend-low">● Low</span>
         <div class="legend-gradient"></div>
-        <span style="color:#ef4444">● High</span>
+        <span style="color:#ef4444" data-i18n="fluids-legend-high">● High</span>
       </div>
     </div>
 
@@ -105,14 +105,14 @@
     <div class="card">
       <div class="card__header">
         <div>
-          <div class="card__title">📈 Radial Velocity Profile</div>
-          <div class="card__subtitle">v(r) — parabolic or power-law velocity distribution</div>
+          <div class="card__title" data-i18n="fluids-profile-title">📈 Radial Velocity Profile</div>
+          <div class="card__subtitle" data-i18n="fluids-profile-sub">v(r) — parabolic or power-law velocity distribution</div>
         </div>
       </div>
       <div id="profile-chart" style="height:240px;" role="img" aria-label="Radial velocity profile chart">
         <div class="chart-placeholder" id="profile-placeholder">
           <span>📈</span>
-          <p>Profile renders after calculation</p>
+          <p data-i18n="fluids-profile-placeholder">Profile renders after calculation</p>
         </div>
       </div>
     </div>
@@ -125,7 +125,7 @@
 
   <aside class="floating-panel floating-panel--left" id="config-panel" role="dialog" aria-label="Configuration panel" aria-hidden="true">
     <div class="floating-panel__header">
-      <span class="floating-panel__title">⚙️ Configuration</span>
+      <span class="floating-panel__title" data-i18n="panel-config-title">⚙️ Configuration</span>
       <div class="floating-panel__actions">
         <button class="floating-panel__pin" id="pin-config" aria-label="Pin panel" aria-pressed="false">📌</button>
         <button class="floating-panel__close" aria-label="Close">✕</button>
@@ -143,7 +143,7 @@
         </div>
         <div class="form-group" style="margin-bottom:0">
           <select class="form-input" id="fluid-preset" aria-label="Fluid preset selector">
-            <option value="">— Select fluid —</option>
+            <option value="" data-i18n="fluids-opt-select">— Select fluid —</option>
           </select>
         </div>
       </div>
@@ -158,21 +158,21 @@
         </div>
 
         <!-- PIPE GEOMETRY -->
-        <div class="form-section-label">📐 Pipe Geometry</div>
+        <div class="form-section-label" data-i18n="fluids-sec-geometry">📐 Pipe Geometry</div>
 
         <div class="form-group">
           <label class="form-label" for="diameter_mm">
-            Inner Diameter <span class="unit-tag">mm</span>
+            <span data-i18n="fluids-lbl-diameter">Inner Diameter</span> <span class="unit-tag">mm</span>
           </label>
           <input class="form-input" type="number" id="diameter_mm" name="diameter_mm"
                  value="50" min="0.1" max="10000" step="0.1"
                  placeholder="e.g. 50" aria-describedby="diameter-help">
-          <span class="form-help" id="diameter-help">Internal pipe diameter in millimetres</span>
+          <span class="form-help" id="diameter-help" data-i18n="fluids-help-diameter">Internal pipe diameter in millimetres</span>
         </div>
 
         <div class="form-group">
           <label class="form-label" for="length_m">
-            Pipe Length <span class="unit-tag">m</span>
+            <span data-i18n="fluids-lbl-length">Pipe Length</span> <span class="unit-tag">m</span>
           </label>
           <input class="form-input" type="number" id="length_m" name="length_m"
                  value="100" min="0.001" step="0.1" placeholder="e.g. 100">
@@ -180,18 +180,18 @@
 
         <div class="form-group">
           <label class="form-label" for="roughness_mm">
-            Wall Roughness (ε) <span class="unit-tag">mm</span>
+            <span data-i18n="fluids-lbl-roughness">Wall Roughness (ε)</span> <span class="unit-tag">mm</span>
           </label>
           <input class="form-input" type="number" id="roughness_mm" name="roughness_mm"
                  value="0.046" min="0" max="10" step="0.001" placeholder="0.046 — commercial steel">
         </div>
 
         <!-- FLUID PROPERTIES -->
-        <div class="form-section-label">🧬 Fluid Properties</div>
+        <div class="form-section-label" data-i18n="fluids-sec-fluid">🧬 Fluid Properties</div>
 
         <div class="form-group">
           <label class="form-label" for="density_kg_m3">
-            Density (ρ) <span class="unit-tag">kg/m³</span>
+            <span data-i18n="fluids-lbl-density">Density (ρ)</span> <span class="unit-tag">kg/m³</span>
           </label>
           <input class="form-input" type="number" id="density_kg_m3" name="density_kg_m3"
                  value="998.2" min="0.001" step="0.1" placeholder="e.g. 998.2 (water)">
@@ -199,39 +199,39 @@
 
         <div class="form-group">
           <label class="form-label" for="viscosity_mpa_s">
-            Viscosity (μ) <span class="unit-tag">mPa·s</span>
+            <span data-i18n="fluids-lbl-viscosity">Viscosity (μ)</span> <span class="unit-tag">mPa·s</span>
           </label>
           <input class="form-input" type="number" id="viscosity_mpa_s" name="viscosity_mpa_s"
                  value="1.002" min="0.000001" step="0.001" placeholder="e.g. 1.002 (water 20°C)">
         </div>
 
         <!-- FLOW CONDITION -->
-        <div class="form-section-label">🌊 Operating Condition</div>
+        <div class="form-section-label" data-i18n="fluids-sec-operating">🌊 Operating Condition</div>
 
         <div class="form-group">
           <label class="form-label" for="flow_rate_lpm">
-            Flow Rate <span class="unit-tag">L/min</span>
+            <span data-i18n="fluids-lbl-flowrate">Flow Rate</span> <span class="unit-tag">L/min</span>
           </label>
           <input class="form-input" type="number" id="flow_rate_lpm" name="flow_rate_lpm"
                  value="120" min="0" step="0.1" placeholder="e.g. 120">
         </div>
 
         <!-- FITTINGS (minor losses) -->
-        <div class="form-section-label">🔧 Fittings (Minor Losses)</div>
+        <div class="form-section-label" data-i18n="fluids-sec-fittings">🔧 Fittings (Minor Losses)</div>
 
         <div class="form-row">
           <div class="form-group">
-            <label class="form-label" for="num_elbows_90">90° Elbows</label>
+            <label class="form-label" for="num_elbows_90" data-i18n="fluids-lbl-elbows">90° Elbows</label>
             <input class="form-input" type="number" id="num_elbows_90" name="num_elbows_90"
                    value="0" min="0" max="100" step="1">
           </div>
           <div class="form-group">
-            <label class="form-label" for="num_gate_valves_open">Gate Valves</label>
+            <label class="form-label" for="num_gate_valves_open" data-i18n="fluids-lbl-gate">Gate Valves</label>
             <input class="form-input" type="number" id="num_gate_valves_open" name="num_gate_valves_open"
                    value="0" min="0" max="100" step="1">
           </div>
           <div class="form-group">
-            <label class="form-label" for="num_check_valves">Check Valves</label>
+            <label class="form-label" for="num_check_valves" data-i18n="fluids-lbl-check">Check Valves</label>
             <input class="form-input" type="number" id="num_check_valves" name="num_check_valves"
                    value="0" min="0" max="100" step="1">
           </div>
@@ -240,22 +240,86 @@
         <!-- Submit -->
         <button class="btn btn--primary btn--full" type="submit" id="calculate-btn">
           <span id="btn-icon">▶</span>
-          <span id="btn-text">Calculate</span>
+          <span id="btn-text" data-i18n="fluids-btn-calc">Calculate</span>
         </button>
 
         <!-- Warnings area -->
         <div id="warnings-container" style="display:none; margin-top:12px;" role="alert"></div>
       </form>
 
+      <!-- Pipe Material Reference Card -->
+      <div class="card" style="padding:16px;">
+        <div class="card__header" style="margin-bottom:12px;">
+          <div>
+            <div class="card__title" style="font-size:0.9rem;" data-i18n="fluids-ref-title">📋 Roughness Reference (ε)</div>
+            <div class="card__subtitle" data-i18n="fluids-ref-sub">Common pipe wall roughness values</div>
+          </div>
+        </div>
+        <table style="width:100%; font-size:0.72rem; border-collapse:collapse;">
+          <thead>
+            <tr style="border-bottom:1px solid var(--border-subtle);">
+              <th style="text-align:left; padding:4px 6px; color:var(--text-muted); font-weight:700; text-transform:uppercase; letter-spacing:0.06em;">Material</th>
+              <th style="text-align:right; padding:4px 6px; color:var(--text-muted); font-weight:700; text-transform:uppercase; letter-spacing:0.06em;">ε (mm)</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr style="border-bottom:1px solid var(--border-subtle);">
+              <td style="padding:5px 6px; color:var(--text-secondary);">Drawn tubing (brass, copper)</td>
+              <td style="padding:5px 6px; text-align:right; font-family:var(--font-mono); color:#60a5fa;">0.0015</td>
+            </tr>
+            <tr style="border-bottom:1px solid var(--border-subtle);">
+              <td style="padding:5px 6px; color:var(--text-secondary);">Commercial steel / welded</td>
+              <td style="padding:5px 6px; text-align:right; font-family:var(--font-mono); color:#60a5fa;">0.046</td>
+            </tr>
+            <tr style="border-bottom:1px solid var(--border-subtle);">
+              <td style="padding:5px 6px; color:var(--text-secondary);">Cast iron</td>
+              <td style="padding:5px 6px; text-align:right; font-family:var(--font-mono); color:#60a5fa;">0.26</td>
+            </tr>
+            <tr style="border-bottom:1px solid var(--border-subtle);">
+              <td style="padding:5px 6px; color:var(--text-secondary);">Concrete (formed)</td>
+              <td style="padding:5px 6px; text-align:right; font-family:var(--font-mono); color:#fbbf24;">0.3–3.0</td>
+            </tr>
+            <tr>
+              <td style="padding:5px 6px; color:var(--text-secondary);">Galvanized iron</td>
+              <td style="padding:5px 6px; text-align:right; font-family:var(--font-mono); color:#60a5fa;">0.15</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Flow Regime Reference Card -->
+      <div class="card" style="padding:16px;">
+        <div class="card__header" style="margin-bottom:10px;">
+          <div>
+            <div class="card__title" style="font-size:0.9rem;">🌊 Flow Regime Guide</div>
+            <div class="card__subtitle">Reynolds number (Re) classification</div>
+          </div>
+        </div>
+        <div style="display:flex; flex-direction:column; gap:6px; font-size:0.73rem;">
+          <div style="display:flex; justify-content:space-between; align-items:center; padding:5px 8px; background:rgba(16,185,129,0.08); border-radius:6px; border-left:3px solid #10b981;">
+            <span style="color:var(--text-secondary);">Laminar</span>
+            <span style="font-family:var(--font-mono); color:#6ee7b7;">Re &lt; 2300</span>
+          </div>
+          <div style="display:flex; justify-content:space-between; align-items:center; padding:5px 8px; background:rgba(245,158,11,0.08); border-radius:6px; border-left:3px solid #f59e0b;">
+            <span style="color:var(--text-secondary);">Transition</span>
+            <span style="font-family:var(--font-mono); color:#fcd34d;">2300–4000</span>
+          </div>
+          <div style="display:flex; justify-content:space-between; align-items:center; padding:5px 8px; background:rgba(239,68,68,0.08); border-radius:6px; border-left:3px solid #ef4444;">
+            <span style="color:var(--text-secondary);">Turbulent</span>
+            <span style="font-family:var(--font-mono); color:#fca5a5;">Re &gt; 4000</span>
+          </div>
+        </div>
+      </div>
+
     </div>
   </aside>
 
   <aside class="floating-panel floating-panel--right" id="results-panel" role="dialog" aria-label="Results panel" aria-hidden="true">
     <div class="floating-panel__header">
-      <span class="floating-panel__title">📊 Results</span>
+      <span class="floating-panel__title" data-i18n="panel-results-title">📊 Results</span>
       <div class="floating-panel__actions">
         <button class="floating-panel__pin" id="pin-results" aria-label="Pin panel" aria-pressed="false">📌</button>
-        <button class="floating-panel__export" id="export-results">⬇ Export</button>
+        <button class="floating-panel__export" id="export-results" data-i18n="panel-export">⬇ Export</button>
         <button class="floating-panel__close" aria-label="Close">✕</button>
       </div>
     </div>
@@ -264,40 +328,40 @@
       <!-- Comparison mode: pin the current velocity profile as a reference
            to compare against the next flow condition. -->
       <div class="card" id="comparison-card">
-        <div class="card__title" style="margin-bottom:8px; font-size:0.85rem;">📌 Comparison Mode</div>
-        <p style="font-size:0.72rem; color:var(--text-muted); margin-bottom:10px;">Fix the current velocity profile as a reference, then change a parameter to compare.</p>
-        <button type="button" class="btn btn--outline btn--full" id="btn-toggle-reference" style="font-size:0.78rem;">📌 Fix as Reference</button>
+        <div class="card__title" style="margin-bottom:8px; font-size:0.85rem;" data-i18n="fluids-cmp-title">📌 Comparison Mode</div>
+        <p style="font-size:0.72rem; color:var(--text-muted); margin-bottom:10px;" data-i18n="fluids-cmp-desc">Fix the current velocity profile as a reference, then change a parameter to compare.</p>
+        <button type="button" class="btn btn--outline btn--full" id="btn-toggle-reference" style="font-size:0.78rem;" data-i18n="fluids-cmp-btn-fix">📌 Fix as Reference</button>
       </div>
 
       <!-- KPI Cards stacked in a neat vertical grid -->
       <div class="kpi-grid" id="kpi-grid" style="grid-template-columns: 1fr 1fr; gap: 10px;">
         <div class="kpi-card kpi-card--velocity" id="kpi-velocity">
-          <div class="kpi-label">Velocity</div>
+          <div class="kpi-label" data-i18n="fluids-kpi-velocity">Velocity</div>
           <div class="kpi-value" id="kpi-velocity-val">—</div>
           <div class="kpi-unit">m/s</div>
         </div>
         <div class="kpi-card kpi-card--reynolds" id="kpi-re">
-          <div class="kpi-label">Reynolds No.</div>
+          <div class="kpi-label" data-i18n="fluids-kpi-re">Reynolds No.</div>
           <div class="kpi-value" id="kpi-re-val">—</div>
           <div class="kpi-unit">dimensionless</div>
         </div>
         <div class="kpi-card kpi-card--friction" id="kpi-friction">
-          <div class="kpi-label">Friction Darcy</div>
+          <div class="kpi-label" data-i18n="fluids-kpi-friction">Friction Darcy</div>
           <div class="kpi-value" id="kpi-friction-val">—</div>
           <div class="kpi-unit">f factor</div>
         </div>
         <div class="kpi-card kpi-card--dp-major" id="kpi-dp-major">
-          <div class="kpi-label">ΔP Major</div>
+          <div class="kpi-label" data-i18n="fluids-kpi-dp-major">ΔP Major</div>
           <div class="kpi-value" id="kpi-dp-major-val">—</div>
           <div class="kpi-unit">Pa</div>
         </div>
         <div class="kpi-card kpi-card--dp-minor" id="kpi-dp-minor">
-          <div class="kpi-label">ΔP Minor</div>
+          <div class="kpi-label" data-i18n="fluids-kpi-dp-minor">ΔP Minor</div>
           <div class="kpi-value" id="kpi-dp-minor-val">—</div>
           <div class="kpi-unit">Pa</div>
         </div>
         <div class="kpi-card kpi-card--dp-total kpi-card--highlight" id="kpi-dp-total" style="grid-column: span 2;">
-          <div class="kpi-label">Total ΔP</div>
+          <div class="kpi-label" data-i18n="fluids-kpi-dp-total">Total ΔP</div>
           <div class="kpi-value" id="kpi-dp-total-val">—</div>
           <div class="kpi-unit">bar</div>
         </div>
@@ -305,18 +369,18 @@
 
       <!-- Detailed Results Table -->
       <div class="card" id="results-table-card">
-        <div class="card__title" style="margin-bottom:12px;">📋 Detailed Results</div>
+        <div class="card__title" style="margin-bottom:12px;" data-i18n="fluids-tbl-title">📋 Detailed Results</div>
         <table class="results-table" id="results-table" aria-label="Numerical results">
           <tbody>
-            <tr><td>Velocity</td><td id="tbl-velocity">—</td></tr>
-            <tr><td>Reynolds No.</td><td id="tbl-re">—</td></tr>
-            <tr><td>Flow Regime</td><td id="tbl-regime">—</td></tr>
-            <tr><td>Friction Factor (f)</td><td id="tbl-ff">—</td></tr>
-            <tr><td>Friction Method</td><td id="tbl-ffmethod">—</td></tr>
-            <tr><td>ΔP Major (Pa)</td><td id="tbl-dp-major">—</td></tr>
-            <tr><td>ΔP Minor (Pa)</td><td id="tbl-dp-minor">—</td></tr>
-            <tr><td>ΔP Total (Pa)</td><td id="tbl-dp-total-pa">—</td></tr>
-            <tr class="results-table__highlight"><td>ΔP Total (bar)</td><td id="tbl-dp-total-bar">—</td></tr>
+            <tr><td data-i18n="fluids-kpi-velocity">Velocity</td><td id="tbl-velocity">—</td></tr>
+            <tr><td data-i18n="fluids-kpi-re">Reynolds No.</td><td id="tbl-re">—</td></tr>
+            <tr><td data-i18n="fluids-row-regime">Flow Regime</td><td id="tbl-regime">—</td></tr>
+            <tr><td data-i18n="fluids-row-ff">Friction Factor (f)</td><td id="tbl-ff">—</td></tr>
+            <tr><td data-i18n="fluids-row-ffmethod">Friction Method</td><td id="tbl-ffmethod">—</td></tr>
+            <tr><td data-i18n="fluids-row-dp-major">ΔP Major (Pa)</td><td id="tbl-dp-major">—</td></tr>
+            <tr><td data-i18n="fluids-row-dp-minor">ΔP Minor (Pa)</td><td id="tbl-dp-minor">—</td></tr>
+            <tr><td data-i18n="fluids-row-dp-total-pa">ΔP Total (Pa)</td><td id="tbl-dp-total-pa">—</td></tr>
+            <tr class="results-table__highlight"><td data-i18n="fluids-row-dp-total-bar">ΔP Total (bar)</td><td id="tbl-dp-total-bar">—</td></tr>
           </tbody>
         </table>
       </div>
@@ -325,16 +389,15 @@
       <div class="card">
         <div class="card__header">
           <div>
-            <div class="card__title">📊 Pressure Drop vs. Q</div>
-            <div class="card__subtitle">Sweep up to 3× flow rate</div>
+            <div class="card__title" data-i18n="fluids-chart-title">📊 Pressure Drop vs. Q</div>
+            <div class="card__subtitle" data-i18n="fluids-chart-sub">Sweep up to 3× flow rate</div>
           </div>
-          <div id="regime-badge-chart"></div>
         </div>
         <div id="plotly-chart" style="height:220px; border-radius:8px; overflow:hidden;"
              role="img" aria-label="Pressure drop vs flow rate chart">
           <div class="chart-placeholder" id="chart-placeholder">
             <span>📊</span>
-            <p>Submit parameters to render chart</p>
+            <p data-i18n="fluids-chart-placeholder">Submit parameters to render chart</p>
           </div>
         </div>
       </div>
@@ -342,7 +405,7 @@
       <!-- Symbolic Hagen-Poiseuille (laminar only) -->
       <div class="card" id="hp-card" style="display:none;">
         <div class="card__header">
-          <div class="card__title">∑ Hagen-Poiseuille (Laminar — Exact)</div>
+          <div class="card__title" data-i18n="fluids-hp-title">∑ Hagen-Poiseuille (Laminar — Exact)</div>
         </div>
         <div class="hp-formula-box" id="hp-formula" role="math" aria-label="Hagen-Poiseuille formula">
           <!-- MathJax renders here -->
@@ -391,766 +454,40 @@
 </style>
 
 <!-- ============================================================
-     JAVASCRIPT — API call + Plotly + Three.js (inline for Django)
-     In production: imported via Vite bundle from frontend/src/pages/fluids.js
+     JAVASCRIPT — loaded from the Vite bundle (see below)
      ============================================================ -->
 
-{% load static %}
-<!-- Local static files for standalone Django serving (extremely fast & offline support) -->
+{% load static vite %}
+
+<!-- Vendored libraries: three r128 (2021) and plotly.js-dist 2.33.0. Neither is
+     an npm dependency any more — nothing imports them, so shipping them twice
+     was pure weight. three in particular is NOT interchangeable with a current
+     npm build (0.166 is ~38 revisions ahead and changes light intensity units
+     in r155), and the page controllers were written against this one. They load
+     as classic scripts, executed during parsing and therefore before the
+     deferred module below, which reads THREE / Plotly off the globals they
+     install. -->
 <script src="{% static 'core/vendor/plotly.min.js' %}"></script>
 <script src="{% static 'core/vendor/three.min.js' %}"></script>
 <script src="{% static 'core/vendor/OrbitControls.js' %}"></script>
 
+<!-- Page controller: FormManager, UIUpdater, Plotly charts and the Three.js
+     viewport now live in frontend/src/pages/fluids.js and its modules, bundled
+     by Vite. Three.js and Plotly come from the npm packages already declared in
+     package.json instead of the hand-maintained copies in
+     apps/core/static/core/vendor/. -->
+{% vite_asset 'pages/fluids.js' %}
+
 <script>
-/* =================================================================
-   FLUIDS DASHBOARD — JavaScript Controller
-   
-   Modules:
-     1. API Client      — fetch wrapper with CSRF + error handling
-     2. Form Manager    — reads inputs, manages preset selector
-     3. Plotly Charts   — pressure-drop sweep + velocity profile
-     4. Three.js Scene  — 3D pipe with particle animation
-     5. UI Updates      — KPI cards, table, badges, warnings
-   ================================================================= */
-
-// -----------------------------------------------------------------
-// 0. COMPARISON MODE — pinned reference result, shared by the Plotly
-//    velocity-profile chart (both read this when rendering).
-// -----------------------------------------------------------------
-let referenceResult = null;
-let lastResult = null;
-
-// -----------------------------------------------------------------
-// 1. API CLIENT
-// -----------------------------------------------------------------
-const API = {
-  baseUrl: '/api/fluids',
-  csrfToken: document.querySelector('meta[name="csrf-token"]')?.content,
-
-  async post(endpoint, data) {
-    const response = await fetch(`${this.baseUrl}${endpoint}`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'X-CSRFToken': this.csrfToken,
-      },
-      body: JSON.stringify(data),
-    });
-    const json = await response.json();
-    if (!response.ok) throw { status: response.status, ...json };
-    return json;
-  },
-
-  async get(endpoint) {
-    const response = await fetch(`${this.baseUrl}${endpoint}`);
-    const json = await response.json();
-    if (!response.ok) throw json;
-    return json;
-  },
-};
-
-// -----------------------------------------------------------------
-// 2. FORM MANAGER
-// -----------------------------------------------------------------
-const FormManager = {
-  form: document.getElementById('pipe-flow-form'),
-  presetSelect: document.getElementById('fluid-preset'),
-  calculateBtn: document.getElementById('calculate-btn'),
-
-  async init() {
-    // Load schema to populate presets
-    try {
-      const schema = await API.get('/pipe-flow/schema/');
-      this.populatePresets(schema.data.preset_fluids || []);
-    } catch (e) {
-      console.warn('Schema load failed:', e);
-    }
-
-    // Preset selector listener
-    this.presetSelect.addEventListener('change', (e) => {
-      const presets = JSON.parse(this.presetSelect.dataset.presets || '[]');
-      const preset  = presets.find(p => p.name === e.target.value);
-      if (preset) {
-        document.getElementById('density_kg_m3').value  = preset.density;
-        document.getElementById('viscosity_mpa_s').value = preset.viscosity;
-        showToast(`Loaded: ${preset.name}`, 'info', 2500);
-      }
-    });
-
-    // Form submit
-    this.form.addEventListener('submit', (e) => {
-      e.preventDefault();
-      this.handleSubmit();
-    });
-
-    // Live recalculation: debounced re-solve as the user edits any numeric
-    // input, so the flow results update without an explicit "Calculate"
-    // click. The button remains as an immediate fallback.
-    let debounceTimer = null;
-    this.form.querySelectorAll('input[type="number"]').forEach(input => {
-      input.addEventListener('input', () => {
-        clearTimeout(debounceTimer);
-        debounceTimer = setTimeout(() => this.handleSubmit(true), 350);
-      });
-    });
-  },
-
-  populatePresets(presets) {
-    this.presetSelect.dataset.presets = JSON.stringify(presets);
-    presets.forEach(p => {
-      const opt = document.createElement('option');
-      opt.value = p.name;
-      opt.textContent = p.name;
-      this.presetSelect.appendChild(opt);
-    });
-  },
-
-  getFormData() {
-    return {
-      diameter_mm:           parseFloat(document.getElementById('diameter_mm').value),
-      length_m:              parseFloat(document.getElementById('length_m').value),
-      roughness_mm:          parseFloat(document.getElementById('roughness_mm').value),
-      density_kg_m3:         parseFloat(document.getElementById('density_kg_m3').value),
-      viscosity_mpa_s:       parseFloat(document.getElementById('viscosity_mpa_s').value),
-      flow_rate_lpm:         parseFloat(document.getElementById('flow_rate_lpm').value),
-      num_elbows_90:         parseInt(document.getElementById('num_elbows_90').value) || 0,
-      num_gate_valves_open:  parseInt(document.getElementById('num_gate_valves_open').value) || 0,
-      num_check_valves:      parseInt(document.getElementById('num_check_valves').value) || 0,
-    };
-  },
-
-  setLoading(loading) {
-    this.calculateBtn.disabled = loading;
-    document.getElementById('btn-text').textContent = loading ? 'Computing…' : 'Calculate';
-    document.getElementById('btn-icon').textContent = loading ? '⏳' : '▶';
-  },
-
-  async handleSubmit(auto = false) {
-    const data = this.getFormData();
-
-    // Basic client-side validation
-    if (isNaN(data.diameter_mm) || data.diameter_mm <= 0) {
-      if (!auto) showToast('Diameter must be a positive number.', 'error');
-      return;
-    }
-    if (isNaN(data.flow_rate_lpm) || data.flow_rate_lpm < 0) {
-      if (!auto) showToast('Flow rate must be non-negative.', 'error');
-      return;
-    }
-
-    // Auto (debounced, live-input) recalculations skip the full-screen
-    // overlay and success toast — those are for the explicit "Calculate"
-    // click — so continuous typing doesn't flash the UI.
-    this.setLoading(true);
-    if (!auto) showLoading('Running Darcy-Weisbach analysis…');
-
-    try {
-      const response = await API.post('/pipe-flow/calculate/', data);
-      const result   = response.data;
-      lastResult = result;
-
-      UIUpdater.updateAll(result);
-      PlotlyCharts.renderPressureDrop(result);
-      PlotlyCharts.renderVelocityProfile(result);
-      ThreePipe.updateParticles(result, data.diameter_mm);
-      window.FloatingPanel?.markUpdated('results');
-
-      if (!auto) showToast('Calculation complete!', 'success');
-    } catch (err) {
-      console.error('Calculation error:', err);
-      const msg = err?.errors
-        ? Object.entries(err.errors).map(([k, v]) => `${k}: ${v}`).join(' | ')
-        : (err?.message || 'Server error');
-      showToast(`Error: ${msg}`, 'error', 6000);
-    } finally {
-      this.setLoading(false);
-      if (!auto) hideLoading();
-    }
-  },
-};
-
-// -----------------------------------------------------------------
-// 3. UI UPDATER
-// -----------------------------------------------------------------
-const UIUpdater = {
-  updateAll(result) {
-    // Update Workbench Title tag regime dynamically
-    const statusTag = document.getElementById('workbench-status');
-    if (statusTag) {
-      statusTag.textContent = result.flow_regime;
-      statusTag.className = 'regime-tag ' + (
-        result.flow_regime === 'Laminar' ? 'regime-tag--laminar' :
-        result.flow_regime === 'Turbulent' ? 'regime-tag--turbulent' : 'regime-tag--transition'
-      );
-    }
-
-    // KPI Cards
-    this.set('kpi-velocity-val', result.velocity_m_s.toFixed(3));
-    this.set('kpi-re-val',       this.formatNumber(result.reynolds_number));
-    this.set('kpi-friction-val', result.friction_factor.toFixed(6));
-    this.set('kpi-dp-major-val', this.formatNumber(result.pressure_drop_major_pa));
-    this.set('kpi-dp-minor-val', this.formatNumber(result.pressure_drop_minor_pa));
-    this.set('kpi-dp-total-val', result.pressure_drop_total_bar.toFixed(5));
-
-    // Top badges
-    this.set('regime-value', result.flow_regime);
-    this.set('re-value', this.formatNumber(result.reynolds_number));
-    this.set('dp-value', result.pressure_drop_total_bar.toFixed(4) + ' bar');
-
-    // Results Table
-    this.set('tbl-velocity',  result.velocity_m_s.toFixed(4) + ' m/s');
-    this.set('tbl-re',        this.formatNumber(result.reynolds_number));
-    this.set('tbl-regime',    result.flow_regime);
-    this.set('tbl-ff',        result.friction_factor.toFixed(8));
-    this.set('tbl-ffmethod',  result.friction_method);
-    this.set('tbl-dp-major',  this.formatNumber(result.pressure_drop_major_pa));
-    this.set('tbl-dp-minor',  this.formatNumber(result.pressure_drop_minor_pa));
-    this.set('tbl-dp-total-pa', this.formatNumber(result.pressure_drop_total_pa));
-    this.set('tbl-dp-total-bar', result.pressure_drop_total_bar.toFixed(6));
-
-    // Hagen-Poiseuille (laminar only)
-    const hpCard = document.getElementById('hp-card');
-    if (result.hagen_poiseuille_exact && result.flow_regime === 'Laminar') {
-      hpCard.style.display = 'block';
-      document.getElementById('hp-formula').innerHTML =
-        `\\[ \\Delta P = ${result.hagen_poiseuille_exact} \\text{ Pa} \\]`;
-      if (window.MathJax) MathJax.typesetPromise([document.getElementById('hp-formula')]);
-    } else {
-      hpCard.style.display = 'none';
-    }
-
-    // Warnings
-    const wContainer = document.getElementById('warnings-container');
-    if (result.warnings && result.warnings.length > 0) {
-      wContainer.style.display = 'block';
-      wContainer.innerHTML = result.warnings
-        .map(w => `<div class="warning-item"><span>⚠</span><span>${w}</span></div>`)
-        .join('');
-    } else {
-      wContainer.style.display = 'none';
-    }
-  },
-
-  set(id, value) {
-    const el = document.getElementById(id);
-    if (el) el.textContent = value;
-  },
-
-  formatNumber(n) {
-    if (n === undefined || n === null) return '—';
-    if (Math.abs(n) >= 1e6)  return n.toExponential(3);
-    if (Math.abs(n) >= 1000) return n.toLocaleString('en-US', {maximumFractionDigits: 0});
-    return n.toFixed(2);
-  },
-};
-
-// -----------------------------------------------------------------
-// 4. PLOTLY CHARTS
-// -----------------------------------------------------------------
-const PLOTLY_DARK_LAYOUT = {
-  paper_bgcolor: 'transparent',
-  plot_bgcolor:  '#0d1526',
-  font: { family: 'Inter, sans-serif', color: '#94a3b8', size: 11 },
-  margin: { t: 10, r: 16, b: 48, l: 64 },
-  xaxis: {
-    gridcolor: 'rgba(255,255,255,0.05)',
-    zerolinecolor: 'rgba(255,255,255,0.1)',
-    tickfont: { family: 'JetBrains Mono, monospace', size: 10 },
-  },
-  yaxis: {
-    gridcolor: 'rgba(255,255,255,0.05)',
-    zerolinecolor: 'rgba(255,255,255,0.1)',
-    tickfont: { family: 'JetBrains Mono, monospace', size: 10 },
-  },
-  legend: { bgcolor: 'rgba(0,0,0,0)', borderwidth: 0 },
-};
-
-const PLOTLY_CONFIG = {
-  responsive: true,
-  displayModeBar: true,
-  modeBarButtonsToRemove: ['sendDataToCloud'],
-  displaylogo: false,
-};
-
-const PlotlyCharts = {
-  pressureChartRendered: false,
-  profileChartRendered: false,
-
-  renderPressureDrop(result) {
-    const qLPM    = result.sweep_flow_rates_m3_s.map(q => q * 60000); // m³/s → L/min
-    const dpBar   = result.sweep_pressure_drops_pa.map(p => p / 1e5);  // Pa → bar
-
-    // Operating point marker
-    const opDp = result.pressure_drop_total_bar;
-
-    const traces = [
-      {
-        x: qLPM, y: dpBar,
-        mode: 'lines',
-        name: 'ΔP vs Q',
-        line: { color: '#3b82f6', width: 2.5, shape: 'spline' },
-        fill: 'tozeroy',
-        fillcolor: 'rgba(59,130,246,0.05)',
-      },
-      {
-        // Current operating point
-        x: [parseFloat(document.getElementById('flow_rate_lpm').value)],
-        y: [opDp],
-        mode: 'markers',
-        name: 'Operating Point',
-        marker: { color: '#ef4444', size: 10, symbol: 'circle', line: { color: '#fff', width: 1.5 } },
-      },
-    ];
-
-    const layout = {
-      ...PLOTLY_DARK_LAYOUT,
-      xaxis: {
-        ...PLOTLY_DARK_LAYOUT.xaxis,
-        title: { text: 'Flow Rate (L/min)', font: { size: 11, color: '#64748b' } },
-      },
-      yaxis: {
-        ...PLOTLY_DARK_LAYOUT.yaxis,
-        title: { text: 'Pressure Drop (bar)', font: { size: 11, color: '#64748b' } },
-      },
-    };
-
-    document.getElementById('chart-placeholder')?.remove();
-
-    if (!this.pressureChartRendered) {
-      Plotly.newPlot('plotly-chart', traces, layout, PLOTLY_CONFIG);
-      this.pressureChartRendered = true;
-    } else {
-      Plotly.react('plotly-chart', traces, layout, PLOTLY_CONFIG);
-    }
-  },
-
-  renderVelocityProfile(result) {
-    const traces = [
-      {
-        x: result.velocity_profile,
-        y: result.radial_positions,
-        mode: 'lines',
-        name: 'v(r)',
-        line: { color: '#8b5cf6', width: 2.5, shape: 'spline' },
-        fill: 'tozerox',
-        fillcolor: 'rgba(139,92,246,0.08)',
-      },
-    ];
-
-    // Comparison mode: overlay the pinned reference velocity profile,
-    // faded and dashed, alongside the current one.
-    if (referenceResult) {
-      traces.push({
-        x: referenceResult.velocity_profile,
-        y: referenceResult.radial_positions,
-        mode: 'lines',
-        name: 'Reference v(r)',
-        line: { color: '#94a3b8', width: 2, dash: 'dot', shape: 'spline' },
-        opacity: 0.6,
-      });
-    }
-
-    const layout = {
-      ...PLOTLY_DARK_LAYOUT,
-      margin: { t: 10, r: 16, b: 48, l: 56 },
-      xaxis: {
-        ...PLOTLY_DARK_LAYOUT.xaxis,
-        title: { text: 'Velocity (m/s)', font: { size: 10, color: '#64748b' } },
-      },
-      yaxis: {
-        ...PLOTLY_DARK_LAYOUT.yaxis,
-        title: { text: 'r/R (0=centre, 1=wall)', font: { size: 10, color: '#64748b' } },
-        range: [0, 1],
-        autorange: false,
-      },
-    };
-
-    document.getElementById('profile-placeholder')?.remove();
-
-    if (!this.profileChartRendered) {
-      Plotly.newPlot('profile-chart', traces, layout, PLOTLY_CONFIG);
-      this.profileChartRendered = true;
-    } else {
-      Plotly.react('profile-chart', traces, layout, PLOTLY_CONFIG);
-    }
-  },
-};
-
-// -----------------------------------------------------------------
-// 5. THREE.JS — 3D PIPE FLOW ANIMATION
-// -----------------------------------------------------------------
-// Scene length is kept fixed (pipe length ranges from mm to 100 km, which
-// cannot be mapped to scene units without making the tube invisible or the
-// camera useless). The radius, however, is scaled to the real diameter on a
-// log scale — diameter_mm ranges over 5 orders of magnitude (0.1–10000 mm),
-// so a linear mapping would make most real-world diameters look identical.
-const PIPE_SCENE_LENGTH = 4.0;
-const PIPE_DIAMETER_MM_MIN = 0.1;
-const PIPE_DIAMETER_MM_MAX = 10000.0;
-const PIPE_SCENE_RADIUS_MIN = 0.15;
-const PIPE_SCENE_RADIUS_MAX = 0.9;
-
-function diameterMmToSceneRadius(diameterMm) {
-  const clamped = Math.min(Math.max(diameterMm, PIPE_DIAMETER_MM_MIN), PIPE_DIAMETER_MM_MAX);
-  const logMin = Math.log10(PIPE_DIAMETER_MM_MIN);
-  const logMax = Math.log10(PIPE_DIAMETER_MM_MAX);
-  const frac = (Math.log10(clamped) - logMin) / (logMax - logMin);
-  return PIPE_SCENE_RADIUS_MIN + frac * (PIPE_SCENE_RADIUS_MAX - PIPE_SCENE_RADIUS_MIN);
-}
-
-const ThreePipe = {
-  scene:     null,
-  camera:    null,
-  renderer:  null,
-  controls:  null,
-  particles: null,
-  pipeMesh:  null,
-  endRings:  [],
-  pipeRadiusScene: 0.5,
-  animating: true,
-  velocities: [],
-  maxVelocity: 1,
-
-  // Camera state for transitions & auto-orbit
-  targetCameraPos: null,
-  targetLookAt: new THREE.Vector3(0, 0, 0),
-  transitioning: false,
-  autoOrbit: false,
-
-  init() {
-    const canvas = document.getElementById('three-canvas');
-    if (!canvas || typeof THREE === 'undefined') return;
-
-    // Scene
-    this.scene = new THREE.Scene();
-    this.scene.background = new THREE.Color(0x050b18);
-
-    // Camera (perspective, looking along pipe axis)
-    this.camera = new THREE.PerspectiveCamera(50, canvas.offsetWidth / canvas.offsetHeight, 0.01, 100);
-    this.camera.position.set(3, 1.5, 3);
-    this.camera.lookAt(0, 0, 0);
-
-    // Renderer
-    this.renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: false });
-    this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-    this.renderer.setSize(canvas.offsetWidth, canvas.offsetHeight);
-
-    // Orbit Controls for dynamic XYZ rotation/zoom/pan
-    if (typeof THREE.OrbitControls !== 'undefined') {
-      this.controls = new THREE.OrbitControls(this.camera, this.renderer.domElement);
-      this.controls.enableDamping = true;
-      this.controls.dampingFactor = 0.05;
-      this.controls.minDistance = 1;
-      this.controls.maxDistance = 10;
-    }
-
-    // Ambient + directional light
-    this.scene.add(new THREE.AmbientLight(0xffffff, 0.4));
-    const dirLight = new THREE.DirectionalLight(0x6699ff, 1.2);
-    dirLight.position.set(2, 4, 3);
-    this.scene.add(dirLight);
-
-    // Pipe mesh + end caps, sized from the current form diameter (falls back
-    // to the default radius if the field isn't populated yet).
-    const initialDiameterMm = parseFloat(document.getElementById('diameter_mm')?.value) || 50.0;
-    this.rebuildPipeGeometry(initialDiameterMm);
-
-    // Set up DOM elements for camera controls
-    const orbitCheckbox = document.getElementById('auto-orbit');
-    const sliderX = document.getElementById('cam-slider-x');
-    const sliderY = document.getElementById('cam-slider-y');
-    const sliderZ = document.getElementById('cam-slider-z');
-    const valX = document.getElementById('cam-val-x');
-    const valY = document.getElementById('cam-val-y');
-    const valZ = document.getElementById('cam-val-z');
-
-    // Auto-Orbit toggle
-    if (orbitCheckbox) {
-      orbitCheckbox.addEventListener('change', (e) => {
-        this.autoOrbit = e.target.checked;
-        if (this.autoOrbit) {
-          this.transitioning = false;
-          this.targetCameraPos = null;
-        }
-      });
-    }
-
-    // Camera preset helper function
-    const triggerPreset = (x, y, z) => {
-      this.targetCameraPos = new THREE.Vector3(x, y, z);
-      this.transitioning = true;
-      this.autoOrbit = false;
-      if (orbitCheckbox) orbitCheckbox.checked = false;
-    };
-
-    document.getElementById('btn-view-iso')?.addEventListener('click', () => triggerPreset(3, 1.5, 3));
-    document.getElementById('btn-view-side')?.addEventListener('click', () => triggerPreset(0, 0, 4));
-    document.getElementById('btn-view-top')?.addEventListener('click', () => triggerPreset(0, 4.2, 0.01)); // slight offset to prevent Euler gimbal lock
-    document.getElementById('btn-view-inlet')?.addEventListener('click', () => triggerPreset(-3.5, 0, 0));
-
-    // Manual slider inputs
-    const handleSliderChange = () => {
-      if (this.autoOrbit) {
-        this.autoOrbit = false;
-        if (orbitCheckbox) orbitCheckbox.checked = false;
-      }
-      this.transitioning = false;
-      this.targetCameraPos = null;
-      this.camera.position.set(
-        parseFloat(sliderX.value),
-        parseFloat(sliderY.value),
-        parseFloat(sliderZ.value)
-      );
-      this.camera.lookAt(0, 0, 0);
-      if (this.controls) this.controls.target.set(0, 0, 0);
-      
-      valX.textContent = parseFloat(sliderX.value).toFixed(2);
-      valY.textContent = parseFloat(sliderY.value).toFixed(2);
-      valZ.textContent = parseFloat(sliderZ.value).toFixed(2);
-    };
-
-    [sliderX, sliderY, sliderZ].forEach(slider => {
-      slider?.addEventListener('input', handleSliderChange);
-    });
-
-    // Initial particles with default (uniform) velocities
-    this.createParticles(1.0, 'Laminar');
-
-    // Start animation loop
-    this.animate();
-
-    // Toggle button
-    document.getElementById('toggle-animation').addEventListener('click', (e) => {
-      this.animating = !this.animating;
-      e.target.textContent = this.animating ? '⏸ Pause' : '▶ Resume';
-      if (this.animating) this.animate();
-    });
-
-    // Resize handler
-    window.addEventListener('resize', () => this.onResize());
-  },
-
-  rebuildPipeGeometry(diameterMm) {
-    if (!this.scene) return;
-
-    if (this.pipeMesh) {
-      this.scene.remove(this.pipeMesh);
-      this.pipeMesh.geometry.dispose();
-    }
-    this.endRings.forEach(ring => {
-      this.scene.remove(ring);
-      ring.geometry.dispose();
-    });
-    this.endRings = [];
-
-    const sceneRadius = diameterMmToSceneRadius(diameterMm);
-    this.pipeRadiusScene = sceneRadius;
-
-    const pipeGeo = new THREE.CylinderGeometry(sceneRadius, sceneRadius, PIPE_SCENE_LENGTH, 32, 1, true);
-    const pipeMat = new THREE.MeshPhongMaterial({
-      color: 0x1e3a5f,
-      transparent: true,
-      opacity: 0.25,
-      side: THREE.DoubleSide,
-      wireframe: false,
-    });
-    this.pipeMesh = new THREE.Mesh(pipeGeo, pipeMat);
-    this.pipeMesh.rotation.z = Math.PI / 2;  // Horizontal pipe (along X axis)
-    this.scene.add(this.pipeMesh);
-
-    // Pipe end caps (rings), radius/tube thickness scaled with the pipe
-    const ringGeo = new THREE.TorusGeometry(sceneRadius, Math.max(sceneRadius * 0.04, 0.008), 12, 32);
-    const ringMat = new THREE.MeshPhongMaterial({ color: 0x3b82f6, opacity: 0.6, transparent: true });
-    [-PIPE_SCENE_LENGTH / 2, PIPE_SCENE_LENGTH / 2].forEach(x => {
-      const ring = new THREE.Mesh(ringGeo, ringMat);
-      ring.position.x = x;
-      ring.rotation.y = Math.PI / 2;
-      this.scene.add(ring);
-      this.endRings.push(ring);
-    });
-  },
-
-  createParticles(maxVel, regime) {
-    if (this.particles) {
-      this.scene.remove(this.particles);
-      this.particles.geometry.dispose();
-    }
-
-    const N    = 600;
-    const R    = this.pipeRadiusScene;  // Pipe inner radius in scene units (real diameter, log-scaled)
-    const L    = PIPE_SCENE_LENGTH;     // Pipe length in scene units (fixed, see comment above)
-
-    const positions = new Float32Array(N * 3);
-    const colors    = new Float32Array(N * 3);
-    this.velocities = new Array(N);
-
-    for (let i = 0; i < N; i++) {
-      // Random position inside cylinder
-      const r     = R * Math.sqrt(Math.random());
-      const theta = Math.random() * Math.PI * 2;
-      const x     = (Math.random() - 0.5) * L;
-
-      positions[i * 3]     = x;
-      positions[i * 3 + 1] = r * Math.cos(theta);
-      positions[i * 3 + 2] = r * Math.sin(theta);
-
-      // Velocity from profile (normalised r/R)
-      const rNorm = r / R;
-      let vNorm;
-      if (regime === 'Laminar') {
-        vNorm = 1.0 - rNorm * rNorm;  // parabolic
-      } else {
-        vNorm = Math.pow(Math.max(0, 1 - rNorm), 1/7);  // power law
-      }
-
-      this.velocities[i] = vNorm * maxVel;
-
-      // Color: blue (slow) → cyan → green → yellow → red (fast)
-      const t = vNorm;
-      const c = new THREE.Color().setHSL(0.65 - t * 0.65, 1.0, 0.55);
-      colors[i * 3]     = c.r;
-      colors[i * 3 + 1] = c.g;
-      colors[i * 3 + 2] = c.b;
-    }
-
-    const geo = new THREE.BufferGeometry();
-    geo.setAttribute('position', new THREE.BufferAttribute(positions, 3));
-    geo.setAttribute('color',    new THREE.BufferAttribute(colors, 3));
-
-    const mat = new THREE.PointsMaterial({
-      size: 0.035,
-      vertexColors: true,
-      transparent: true,
-      opacity: 0.85,
-      sizeAttenuation: true,
-    });
-
-    this.particles = new THREE.Points(geo, mat);
-    this.scene.add(this.particles);
-    this.maxVelocity = maxVel;
-  },
-
-  updateParticles(result, diameterMm) {
-    if (!this.scene) return;
-    // Re-scale the pipe/rings to the real diameter before rebuilding
-    // particles, so the 3D geometry always matches what was submitted.
-    if (diameterMm) this.rebuildPipeGeometry(diameterMm);
-    const maxV = result.velocity_m_s > 0 ? result.velocity_m_s : 1.0;
-    this.createParticles(maxV, result.flow_regime);
-  },
-
-  animate() {
-    if (!this.animating) return;
-    requestAnimationFrame(() => this.animate());
-
-    // 1. Handle auto-orbit rotation
-    if (this.autoOrbit) {
-      const time = Date.now() * 0.0005;
-      const radius = 4.2;
-      this.camera.position.x = radius * Math.cos(time);
-      this.camera.position.z = radius * Math.sin(time);
-      this.camera.position.y = 1.2 + 0.6 * Math.sin(time * 0.5);
-      this.camera.lookAt(0, 0, 0);
-      if (this.controls) this.controls.target.set(0, 0, 0);
-    }
-
-    // 2. Handle preset transitions (lerp)
-    if (this.transitioning && this.targetCameraPos) {
-      this.camera.position.lerp(this.targetCameraPos, 0.1);
-      this.camera.lookAt(this.targetLookAt);
-      if (this.controls) this.controls.target.copy(this.targetLookAt);
-      
-      // Stop transitioning if we are close enough
-      if (this.camera.position.distanceTo(this.targetCameraPos) < 0.01) {
-        this.camera.position.copy(this.targetCameraPos);
-        this.transitioning = false;
-        this.targetCameraPos = null;
-      }
-    }
-
-    if (this.controls) {
-      this.controls.update();
-    }
-
-    // 3. Sync sliders with the actual camera position
-    const sliderX = document.getElementById('cam-slider-x');
-    const sliderY = document.getElementById('cam-slider-y');
-    const sliderZ = document.getElementById('cam-slider-z');
-    const valX = document.getElementById('cam-val-x');
-    const valY = document.getElementById('cam-val-y');
-    const valZ = document.getElementById('cam-val-z');
-
-    if (sliderX && sliderY && sliderZ) {
-      if (document.activeElement !== sliderX) {
-        sliderX.value = this.camera.position.x;
-        if (valX) valX.textContent = this.camera.position.x.toFixed(2);
-      }
-      if (document.activeElement !== sliderY) {
-        sliderY.value = this.camera.position.y;
-        if (valY) valY.textContent = this.camera.position.y.toFixed(2);
-      }
-      if (document.activeElement !== sliderZ) {
-        sliderZ.value = this.camera.position.z;
-        if (valZ) valZ.textContent = this.camera.position.z.toFixed(2);
-      }
-    }
-
-    if (this.particles) {
-      const pos = this.particles.geometry.attributes.position;
-      const L   = 4.0;
-      const dt  = 0.006;
-
-      for (let i = 0; i < pos.count; i++) {
-        // Move particle along pipe axis (X direction)
-        pos.array[i * 3] += this.velocities[i] * dt;
-
-        // Wrap around pipe length
-        if (pos.array[i * 3] > L / 2) {
-          pos.array[i * 3] = -L / 2;
-        }
-      }
-      pos.needsUpdate = true;
-
-      // Slow pipe rotation for visual depth
-      this.particles.rotation.x += 0.001;
-    }
-
-    this.renderer.render(this.scene, this.camera);
-  },
-
-  onResize() {
-    const canvas = document.getElementById('three-canvas');
-    if (!canvas || !this.renderer) return;
-    const w = canvas.offsetWidth;
-    const h = canvas.offsetHeight;
-    this.camera.aspect = w / h;
-    this.camera.updateProjectionMatrix();
-    this.renderer.setSize(w, h);
-  },
-};
-
-// -----------------------------------------------------------------
-// INIT on DOMContentLoaded
-// -----------------------------------------------------------------
-document.addEventListener('DOMContentLoaded', async () => {
-  await FormManager.init();
-  ThreePipe.init();
-
-  // Comparison mode toggle
-  const refBtn = document.getElementById('btn-toggle-reference');
-  refBtn?.addEventListener('click', () => {
-    if (referenceResult) {
-      referenceResult = null;
-      refBtn.textContent = '📌 Fix as Reference';
-    } else if (lastResult) {
-      referenceResult = lastResult;
-      refBtn.textContent = '🗑 Clear Reference';
-    } else {
-      return;
-    }
-    PlotlyCharts.renderVelocityProfile(lastResult);
-  });
-
+  // This block stays inline on purpose. base.html registers its own
+  // DOMContentLoaded listener (which calls translatePage) while the document is
+  // being parsed, and it renders the extra_scripts block *before* that point —
+  // so this listener registers first and therefore runs first, merging the
+  // fluids strings into window.TRANSLATIONS before the initial translation pass.
+  // A deferred ES module cannot preserve that ordering: module code executes
+  // after parsing, so its listener would register last and the fluids labels
+  // would stay untranslated on first paint.
+  document.addEventListener('DOMContentLoaded', () => {
   if (window.TRANSLATIONS) {
     Object.assign(window.TRANSLATIONS.pt, {
       "fluids-title": "Análise de Escoamento em Tubos",
@@ -1158,7 +495,53 @@ document.addEventListener('DOMContentLoaded', async () => {
       "fluids-presets-title": "Presets Rápidos",
       "fluids-presets-sub": "Carregar propriedades comuns de fluidos",
       "fluids-params-title": "Parâmetros do Tubo & Fluxo",
-      "fluids-params-sub": "Insira os valores nas unidades indicadas"
+      "fluids-params-sub": "Insira os valores nas unidades indicadas",
+      "fluids-badge-regime": "Regime",
+      "fluids-wb-title": "🌀 Bancada 3D de Escoamento",
+      "fluids-wb-sub": "Campo de velocidade de partículas interativo e controle de câmera",
+      "fluids-legend-low": "● Lento",
+      "fluids-legend-high": "● Rápido",
+      "fluids-profile-title": "📈 Perfil Radial de Velocidade",
+      "fluids-profile-sub": "v(r) — distribuição de velocidade parabólica ou lei de potência",
+      "fluids-profile-placeholder": "O perfil aparece após o cálculo",
+      "fluids-opt-select": "— Selecione o fluido —",
+      "fluids-sec-geometry": "📐 Geometria do Tubo",
+      "fluids-lbl-diameter": "Diâmetro Interno",
+      "fluids-help-diameter": "Diâmetro interno do tubo em milímetros",
+      "fluids-lbl-length": "Comprimento do Tubo",
+      "fluids-lbl-roughness": "Rugosidade da Parede (ε)",
+      "fluids-sec-fluid": "🧬 Propriedades do Fluido",
+      "fluids-lbl-density": "Densidade (ρ)",
+      "fluids-lbl-viscosity": "Viscosidade (μ)",
+      "fluids-sec-operating": "🌊 Condição de Operação",
+      "fluids-lbl-flowrate": "Vazão",
+      "fluids-sec-fittings": "🔧 Conexões (Perdas Localizadas)",
+      "fluids-lbl-elbows": "Cotovelos 90°",
+      "fluids-lbl-gate": "Válvulas Gaveta",
+      "fluids-lbl-check": "Válvulas de Retenção",
+      "fluids-btn-calc": "Calcular",
+      "fluids-cmp-title": "📌 Modo Comparação",
+      "fluids-cmp-desc": "Fixe o perfil de velocidade atual como referência e altere um parâmetro para comparar.",
+      "fluids-cmp-btn-fix": "📌 Fixar como Referência",
+      "fluids-cmp-btn-clear": "🗑 Limpar Referência",
+      "fluids-kpi-velocity": "Velocidade",
+      "fluids-kpi-re": "Nº de Reynolds",
+      "fluids-kpi-friction": "Atrito (Darcy)",
+      "fluids-kpi-dp-major": "ΔP Distribuída",
+      "fluids-kpi-dp-minor": "ΔP Localizada",
+      "fluids-kpi-dp-total": "ΔP Total",
+      "fluids-tbl-title": "📋 Resultados Detalhados",
+      "fluids-row-regime": "Regime de Escoamento",
+      "fluids-row-ff": "Fator de Atrito (f)",
+      "fluids-row-ffmethod": "Método de Atrito",
+      "fluids-row-dp-major": "ΔP Distribuída (Pa)",
+      "fluids-row-dp-minor": "ΔP Localizada (Pa)",
+      "fluids-row-dp-total-pa": "ΔP Total (Pa)",
+      "fluids-row-dp-total-bar": "ΔP Total (bar)",
+      "fluids-chart-title": "📊 Queda de Pressão vs. Q",
+      "fluids-chart-sub": "Varredura até 3× a vazão",
+      "fluids-chart-placeholder": "Envie os parâmetros para gerar o gráfico",
+      "fluids-hp-title": "∑ Hagen-Poiseuille (Laminar — Exato)"
     });
 
     Object.assign(window.TRANSLATIONS.en, {
@@ -1167,7 +550,53 @@ document.addEventListener('DOMContentLoaded', async () => {
       "fluids-presets-title": "Quick Presets",
       "fluids-presets-sub": "Load common fluid properties",
       "fluids-params-title": "Pipe & Flow Parameters",
-      "fluids-params-sub": "Enter values in the units shown"
+      "fluids-params-sub": "Enter values in the units shown",
+      "fluids-badge-regime": "Flow Regime",
+      "fluids-wb-title": "🌀 3D Pipe Flow Workbench",
+      "fluids-wb-sub": "Interactive particle velocity field and camera viewport control",
+      "fluids-legend-low": "● Low",
+      "fluids-legend-high": "● High",
+      "fluids-profile-title": "📈 Radial Velocity Profile",
+      "fluids-profile-sub": "v(r) — parabolic or power-law velocity distribution",
+      "fluids-profile-placeholder": "Profile renders after calculation",
+      "fluids-opt-select": "— Select fluid —",
+      "fluids-sec-geometry": "📐 Pipe Geometry",
+      "fluids-lbl-diameter": "Inner Diameter",
+      "fluids-help-diameter": "Internal pipe diameter in millimetres",
+      "fluids-lbl-length": "Pipe Length",
+      "fluids-lbl-roughness": "Wall Roughness (ε)",
+      "fluids-sec-fluid": "🧬 Fluid Properties",
+      "fluids-lbl-density": "Density (ρ)",
+      "fluids-lbl-viscosity": "Viscosity (μ)",
+      "fluids-sec-operating": "🌊 Operating Condition",
+      "fluids-lbl-flowrate": "Flow Rate",
+      "fluids-sec-fittings": "🔧 Fittings (Minor Losses)",
+      "fluids-lbl-elbows": "90° Elbows",
+      "fluids-lbl-gate": "Gate Valves",
+      "fluids-lbl-check": "Check Valves",
+      "fluids-btn-calc": "Calculate",
+      "fluids-cmp-title": "📌 Comparison Mode",
+      "fluids-cmp-desc": "Fix the current velocity profile as a reference, then change a parameter to compare.",
+      "fluids-cmp-btn-fix": "📌 Fix as Reference",
+      "fluids-cmp-btn-clear": "🗑 Clear Reference",
+      "fluids-kpi-velocity": "Velocity",
+      "fluids-kpi-re": "Reynolds No.",
+      "fluids-kpi-friction": "Friction Darcy",
+      "fluids-kpi-dp-major": "ΔP Major",
+      "fluids-kpi-dp-minor": "ΔP Minor",
+      "fluids-kpi-dp-total": "Total ΔP",
+      "fluids-tbl-title": "📋 Detailed Results",
+      "fluids-row-regime": "Flow Regime",
+      "fluids-row-ff": "Friction Factor (f)",
+      "fluids-row-ffmethod": "Friction Method",
+      "fluids-row-dp-major": "ΔP Major (Pa)",
+      "fluids-row-dp-minor": "ΔP Minor (Pa)",
+      "fluids-row-dp-total-pa": "ΔP Total (Pa)",
+      "fluids-row-dp-total-bar": "ΔP Total (bar)",
+      "fluids-chart-title": "📊 Pressure Drop vs. Q",
+      "fluids-chart-sub": "Sweep up to 3× flow rate",
+      "fluids-chart-placeholder": "Submit parameters to render chart",
+      "fluids-hp-title": "∑ Hagen-Poiseuille (Laminar — Exact)"
     });
 
     Object.assign(window.TRANSLATIONS.ja, {
@@ -1176,7 +605,53 @@ document.addEventListener('DOMContentLoaded', async () => {
       "fluids-presets-title": "ながれる液体をえらぶ",
       "fluids-presets-sub": "みず、あぶら、ガソリンなどにかえよう",
       "fluids-params-title": "パイプと流れの設定",
-      "fluids-params-sub": "太さや長さ、流すスピードを入力してね"
+      "fluids-params-sub": "太さや長さ、流すスピードを入力してね",
+      "fluids-badge-regime": "ながれ方",
+      "fluids-wb-title": "🌀 ３Dパイプの水ながしじっけん",
+      "fluids-wb-sub": "水のつぶのうごきをカメラでいろんな向きから見よう",
+      "fluids-legend-low": "● おそい",
+      "fluids-legend-high": "● はやい",
+      "fluids-profile-title": "📈 パイプの中のスピードのかたち",
+      "fluids-profile-sub": "まんなかがはやくて、かべの近くがおそいよ",
+      "fluids-profile-placeholder": "けいさんするとグラフが出るよ",
+      "fluids-opt-select": "— 液体をえらんでね —",
+      "fluids-sec-geometry": "📐 パイプの形",
+      "fluids-lbl-diameter": "パイプの内がわの太さ",
+      "fluids-help-diameter": "パイプの内がわの太さ（ミリ）だよ",
+      "fluids-lbl-length": "パイプの長さ",
+      "fluids-lbl-roughness": "かべのザラザラ度 (ε)",
+      "fluids-sec-fluid": "🧬 液体のせいしつ",
+      "fluids-lbl-density": "液体のおもさ（みつど ρ）",
+      "fluids-lbl-viscosity": "ドロドロ度（ねばりけ μ）",
+      "fluids-sec-operating": "🌊 ながす条件",
+      "fluids-lbl-flowrate": "ながす量",
+      "fluids-sec-fittings": "🔧 つなぎめ（まがりかど）",
+      "fluids-lbl-elbows": "まがりかど (90°)",
+      "fluids-lbl-gate": "ゲートバルブ",
+      "fluids-lbl-check": "ぎゃくりゅうぼうしバルブ",
+      "fluids-btn-calc": "けいさんスタート！",
+      "fluids-cmp-title": "📌 くらべっこモード",
+      "fluids-cmp-desc": "今のけっかをおぼえさせて、数字を変えてくらべてみよう。",
+      "fluids-cmp-btn-fix": "📌 これをおぼえる",
+      "fluids-cmp-btn-clear": "🗑 わすれる",
+      "fluids-kpi-velocity": "スピード",
+      "fluids-kpi-re": "レイノルズ数",
+      "fluids-kpi-friction": "こすれ度 (f)",
+      "fluids-kpi-dp-major": "ΔP パイプのこすれ",
+      "fluids-kpi-dp-minor": "ΔP まがりかど",
+      "fluids-kpi-dp-total": "ΔP ぜんぶ",
+      "fluids-tbl-title": "📋 くわしいけっか",
+      "fluids-row-regime": "ながれ方",
+      "fluids-row-ff": "こすれ度 (f)",
+      "fluids-row-ffmethod": "けいさんのやり方",
+      "fluids-row-dp-major": "ΔP パイプのこすれ (Pa)",
+      "fluids-row-dp-minor": "ΔP まがりかど (Pa)",
+      "fluids-row-dp-total-pa": "ΔP ぜんぶ (Pa)",
+      "fluids-row-dp-total-bar": "ΔP ぜんぶ (bar)",
+      "fluids-chart-title": "📊 ながす量とあつりょくのグラフ",
+      "fluids-chart-sub": "ながす量を３倍まで変えてみるよ",
+      "fluids-chart-placeholder": "けいさんするとグラフが出るよ",
+      "fluids-hp-title": "∑ ハーゲン・ポアズイユのしき"
     });
 
     // Auto-apply current language

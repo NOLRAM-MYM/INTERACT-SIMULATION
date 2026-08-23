@@ -22,6 +22,19 @@ from apps.core.validators import (
 class BeamDeflectionInputSerializer(serializers.Serializer):
     """Validates and normalises user inputs for the beam deflection calculation."""
 
+    schema_title = "Beam Deflection"
+    schema_description = (
+        "Euler-Bernoulli deflection of a simply-supported or cantilever beam "
+        "under a point or uniformly distributed load."
+    )
+    schema_field_meta = {
+        'length_m':           {'label': "Beam Span (L)",              'step': 0.01},
+        'youngs_modulus_gpa': {'label': "Young's Modulus (E)",        'step': 1.0},
+        'second_moment_m4':   {'label': "Second Moment of Area (I)",  'step': 1e-9},
+        'load_kn':            {'label': "Applied Load (total)",       'step': 0.1},
+        'load_type':          {'label': "Load Case", 'unit': None},
+    }
+
     length_m = serializers.FloatField(
         min_value=0.1,
         max_value=100.0,
@@ -40,7 +53,11 @@ class BeamDeflectionInputSerializer(serializers.Serializer):
     load_kn = serializers.FloatField(
         min_value=0.001,
         max_value=100_000.0,
-        help_text="Applied load [kN]",
+        help_text=(
+            "Applied load [kN]. For the point-load cases this is the force "
+            "itself; for the uniform cases it is the TOTAL load distributed "
+            "over the span (intensity q = load / length)."
+        ),
     )
     load_type = serializers.ChoiceField(
         choices=['point_centre', 'uniform', 'cantilever_point', 'cantilever_uniform'],

@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+{% load vite %}<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
@@ -22,6 +22,13 @@
 
   <!-- Django CSRF token available for JS fetch calls -->
   <meta name="csrf-token" content="{{ csrf_token }}">
+
+  <!-- Vite bundle: shared styles + global utilities (showToast/showLoading/…).
+       Renders the hashed production files, or dev-server URLs when
+       VITE_DEV_SERVER_URL is set. Module scripts are deferred, so these run
+       after parsing and before DOMContentLoaded. -->
+  {% vite_hmr_client %}
+  {% vite_asset 'main.js' %}
 
   {% block extra_head %}{% endblock %}
 </head>
@@ -77,7 +84,7 @@
     </nav>
 
     <div class="sidebar__footer">
-      <span class="sidebar__version" data-i18n="nav-version">v1.0.0</span>
+      <span class="sidebar__version" data-i18n="nav-version">Versão Científica v2.4.0</span>
     </div>
   </aside>
 
@@ -641,11 +648,52 @@
     .floating-panel__title { font-size: 0.95rem; font-weight: 700; color: var(--text-primary); }
     .floating-panel__body {
       flex: 1;
+      min-height: 0;
       overflow-y: auto;
+      overscroll-behavior: contain;
       padding: 20px;
       display: flex;
       flex-direction: column;
       gap: 20px;
+      /* Custom scrollbar — always visible so users know content continues */
+      scrollbar-width: thin;
+      scrollbar-color: rgba(139, 92, 246, 0.45) rgba(22, 32, 64, 0.6);
+      scroll-behavior: smooth;
+    }
+    /* Webkit custom scrollbar (Chrome, Safari, Edge) */
+    .floating-panel__body::-webkit-scrollbar {
+      width: 6px;
+    }
+    .floating-panel__body::-webkit-scrollbar-track {
+      background: rgba(22, 32, 64, 0.4);
+      border-radius: 3px;
+    }
+    .floating-panel__body::-webkit-scrollbar-thumb {
+      background: rgba(139, 92, 246, 0.4);
+      border-radius: 3px;
+      transition: background var(--transition-fast);
+    }
+    .floating-panel__body::-webkit-scrollbar-thumb:hover {
+      background: rgba(139, 92, 246, 0.7);
+    }
+    /* Scroll fade-shadow — signals more content below.
+       Applied via a sticky element inside the panel body (added by JS),
+       so it works without modifying each page's HTML structure. */
+    .panel-scroll-fade {
+      position: sticky;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      height: 52px;
+      margin: -52px -20px 0;
+      background: linear-gradient(to bottom, transparent, rgba(10, 15, 30, 0.94));
+      pointer-events: none;
+      z-index: 5;
+      flex-shrink: 0;
+      transition: opacity 0.3s;
+    }
+    .panel-scroll-fade.hidden {
+      opacity: 0;
     }
     .floating-panel__actions { display: flex; align-items: center; gap: 4px; }
     .floating-panel__close {
@@ -1420,16 +1468,56 @@
         document.getElementById('fp-backdrop')?.addEventListener('click', () => close(openPanelId));
         document.addEventListener('keydown', onGlobalKeydown);
 
+        // ---- Scroll shadow: inject sticky bottom-fade to signal more content ----
+        function injectScrollFade(body) {
+          if (body.querySelector('.panel-scroll-fade')) return;
+          const fade = document.createElement('div');
+          fade.className = 'panel-scroll-fade';
+          body.appendChild(fade);
+        }
+        function updateScrollShadow(body) {
+          const fade = body.querySelector('.panel-scroll-fade');
+          if (!fade) return;
+          const atBottom = body.scrollTop + body.clientHeight >= body.scrollHeight - 4;
+          fade.classList.toggle('hidden', atBottom);
+        }
+        document.querySelectorAll('.floating-panel__body').forEach(body => {
+          injectScrollFade(body);
+          updateScrollShadow(body);
+          body.addEventListener('scroll', () => updateScrollShadow(body), { passive: true });
+        });
+        // Also update when panels are opened (content may fit without scrolling)
+        document.querySelectorAll('.fab[data-panel]').forEach(fab => {
+          fab.addEventListener('click', () => {
+            const panelId = fab.dataset.panel + '-panel';
+            const panelEl = document.getElementById(panelId);
+            if (panelEl) {
+              requestAnimationFrame(() => {
+                panelEl.querySelectorAll('.floating-panel__body').forEach(b => updateScrollShadow(b));
+              });
+            }
+          });
+        });
+
         // Generic "Export" button: every simulator page renders its results
-        // as a #results-table of label/value rows, so this works with zero
+        // as a .results-table of label/value rows, so this works with zero
         // per-page JS — reads whatever is currently on screen.
+        //
+        // Pick the *visible* table rather than #results-table. The physics page
+        // carries two (#results-table for projectile, #results-table-mag for
+        // magnetism) and hides the inactive one; keying on the id alone always
+        // exported the projectile rows, even while the magnetism tab was up.
         document.getElementById('export-results')?.addEventListener('click', () => {
-          const table = document.getElementById('results-table');
+          const isVisible = el => !!(el.offsetParent || el.getClientRects().length);
+          const tables = Array.from(document.querySelectorAll('.results-table, #results-table'));
+          const table = tables.find(isVisible) || tables[0] || null;
           const rows = table ? Array.from(table.querySelectorAll('tbody tr')).map(tr => {
             const cells = tr.querySelectorAll('td');
             return { label: cells[0]?.textContent.trim() || '', value: cells[1]?.textContent.trim() || '' };
           }) : [];
-          if (!rows.length) { window.showToast?.('Nothing to export yet — run a simulation first.', 'error'); return; }
+          const exportLang = localStorage.getItem('app-language') || 'pt';
+          const exportT = window.TRANSLATIONS?.[exportLang] || {};
+          if (!rows.length) { window.showToast?.(exportT['toast-export-empty'] || 'Nothing to export yet — run a simulation first.', 'error'); return; }
 
           const slug = (document.title || 'results').toLowerCase()
             .replace(/[^a-z0-9]+/g, '-').replace(/(^-+|-+$)/g, '') || 'results';
@@ -1440,7 +1528,7 @@
           rows.forEach(r => { jsonObj[r.label] = r.value; });
           window.exportUtils.downloadJSON(jsonObj, filename);
           window.exportUtils.downloadCSV(rows, filename);
-          window.showToast?.('Results exported (JSON + CSV).', 'success', 2500);
+          window.showToast?.(exportT['toast-export-done'] || 'Results exported (JSON + CSV).', 'success', 2500);
         });
       });
 
@@ -1503,32 +1591,15 @@
       return { downloadJSON, downloadCSV };
     })();
 
-    // ---- Global toast utility ----
-    window.showToast = function(message, type = 'info', duration = 4000) {
-      const container = document.getElementById('toast-container');
-      const toast = document.createElement('div');
-      toast.className = `toast toast--${type}`;
-      const icons = { success: '✓', error: '✕', info: 'ℹ' };
-      toast.innerHTML = `<span>${icons[type] || 'ℹ'}</span><span>${message}</span>`;
-      container.appendChild(toast);
-      setTimeout(() => {
-        toast.style.animation = 'toast-in 0.3s ease reverse';
-        setTimeout(() => toast.remove(), 300);
-      }, duration);
-    };
-
-    // ---- Global loading overlay ----
-    window.showLoading = function(text = 'Computing…') {
-      const overlay = document.getElementById('loading-overlay');
-      document.getElementById('loading-text').textContent = text;
-      overlay.hidden = false;
-      overlay.setAttribute('aria-hidden', 'false');
-    };
-    window.hideLoading = function() {
-      const overlay = document.getElementById('loading-overlay');
-      overlay.hidden = true;
-      overlay.setAttribute('aria-hidden', 'true');
-    };
+    // ---- Global toast / loading overlay ----
+    // showToast, showLoading and hideLoading now live in
+    // frontend/src/modules/shared/utils.js and are published onto window by
+    // the Vite `main.js` entry that base.html loads. They used to be defined
+    // here as well, which meant two implementations that had already drifted
+    // (the bundled showToast guards a missing #toast-container; this one did
+    // not). Module scripts are deferred, so they are installed before
+    // DOMContentLoaded — i.e. before any handler here or in a page template
+    // can fire.
 
     // ================================================================
     // CLIENT-SIDE TRANSLATION ENGINE (PT-BR, EN, JA KIDS)
@@ -1559,7 +1630,14 @@
         "cam-title-axes": "Ajuste Fino de Eixos",
         "cam-pos-x": "Posição X",
         "cam-pos-y": "Posição Y",
-        "cam-pos-z": "Posição Z"
+        "cam-pos-z": "Posição Z",
+        // Global UI
+        "loading-computing": "Calculando…",
+        "toast-export-empty": "Nada para exportar ainda — execute uma simulação primeiro.",
+        "toast-export-done": "Resultados exportados (JSON + CSV).",
+        "panel-export": "⬇ Exportar",
+        "panel-config-title": "⚙️ Configuração",
+        "panel-results-title": "📊 Resultados"
       },
       en: {
         "nav-modules": "Modules",
@@ -1586,7 +1664,14 @@
         "cam-title-axes": "Fine-tune Axes",
         "cam-pos-x": "X Position",
         "cam-pos-y": "Y Position",
-        "cam-pos-z": "Z Position"
+        "cam-pos-z": "Z Position",
+        // Global UI
+        "loading-computing": "Computing…",
+        "toast-export-empty": "Nothing to export yet — run a simulation first.",
+        "toast-export-done": "Results exported (JSON + CSV).",
+        "panel-export": "⬇ Export",
+        "panel-config-title": "⚙️ Configuration",
+        "panel-results-title": "📊 Results"
       },
       ja: {
         "nav-modules": "じっけんコーナー",
@@ -1613,11 +1698,21 @@
         "cam-title-axes": "カメラの位置のちょうせい",
         "cam-pos-x": "左右 (X)",
         "cam-pos-y": "上下 (Y)",
-        "cam-pos-z": "前後 (Z)"
+        "cam-pos-z": "前後 (Z)",
+        // Global UI
+        "loading-computing": "けいさん中…",
+        "toast-export-empty": "まだエクスポートできないよ — 先にじっけんをスタートしてね。",
+        "toast-export-done": "けっかをほぞんしたよ (JSON + CSV)。",
+        "panel-export": "⬇ ほぞん",
+        "panel-config-title": "⚙️ せってい",
+        "panel-results-title": "📊 じっけんのけっか"
       }
     };
 
     window.translatePage = function(lang) {
+      // Keep the document language in sync for screen readers / SEO.
+      document.documentElement.lang = lang === 'pt' ? 'pt-BR' : lang;
+
       document.querySelectorAll('[data-i18n]').forEach(el => {
         const key = el.getAttribute('data-i18n');
         if (window.TRANSLATIONS[lang] && window.TRANSLATIONS[lang][key]) {

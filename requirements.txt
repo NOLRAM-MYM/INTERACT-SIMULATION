@@ -13,6 +13,16 @@ django-cors-headers>=4.4,<5.0       # CORS for local Vite dev server
 django-environ>=0.11,<0.12          # .env file loading
 
 # ---------------------------------------------------------------------------
+# Production serving
+# ---------------------------------------------------------------------------
+# config/settings/production.py inserts WhiteNoise's middleware and uses its
+# compressed-manifest storage; without the package every production request
+# dies with ModuleNotFoundError before reaching a view. `manage.py check` does
+# not build the middleware chain, so this stayed invisible.
+whitenoise[brotli]>=6.7,<7.0        # Static file serving without a web server
+gunicorn>=22.0,<23.0                # WSGI server (config.wsgi:application)
+
+# ---------------------------------------------------------------------------
 # Mathematics — Symbolic, Numeric, High-Precision
 # ---------------------------------------------------------------------------
 numpy>=1.26,<3.0                    # Core numeric arrays

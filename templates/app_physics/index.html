@@ -1,67 +1,91 @@
 {% extends "base.html" %}
 
-{% block title %}Physics — Projectile Motion{% endblock %}
-{% block meta_description %}Projectile motion simulation with quadratic air drag, Plotly.js 2D trajectory comparison, and interactive Three.js 3D flight path animation.{% endblock %}
+{% block title %}Física — Lançamento e Eletromagnetismo{% endblock %}
+{% block meta_description %}Simulador interativo de física: cinemática de projéteis com arrasto de ar, forças magnéticas de Lorentz em 3D, interação de polos e dinâmica de motores CC.{% endblock %}
 {% block nav_physics %}sidebar__link--active{% endblock %}
-{% block breadcrumb %}⚡ Physics / 3D Projectile Trajectory{% endblock %}
+{% block breadcrumb %}⚡ Física / Lançamento de Projéteis{% endblock %}
 
 {% block content %}
+<script>
+  window.PHYSICS_ACTIVE_TAB_CONTEXT = "{{ active_tab }}";
+</script>
+
 <div class="physics-dashboard" id="physics-dashboard">
 
-  <!-- Sub-navigation Tabs -->
+  <!-- Sub-navigation Tabs (Dynamic JS Toggles) -->
   <div class="physics-tabs" style="display: flex; gap: 12px; margin-bottom: 24px; border-bottom: 1px solid var(--border-subtle); padding-bottom: 12px;">
-    <a href="{% url 'physics:physics-index' %}" class="btn btn--outline" style="display: flex; align-items: center; gap: 8px; border-color: var(--accent-primary); background: rgba(139,92,246,0.12); color: var(--text-primary); box-shadow: var(--glow-violet); font-weight: 600;">
-      <span>🚀</span> Projectile Motion
-    </a>
-    <a href="{% url 'physics:magnetism-index' %}" class="btn btn--outline" style="display: flex; align-items: center; gap: 8px;">
-      <span>🧲</span> Magnetism &amp; Motors
-    </a>
+    <button type="button" class="btn btn--outline physics-tab-btn" data-tab="projectile" style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+      <span>🚀</span> <span data-i18n="physics-tab-proj">Projectile Motion</span>
+    </button>
+    <button type="button" class="btn btn--outline physics-tab-btn" data-tab="magnetism" style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+      <span>🧲</span> <span data-i18n="physics-tab-mag">Magnetismo &amp; Motores</span>
+    </button>
   </div>
 
   <!-- Page Header -->
   <div class="page-header">
     <div>
-      <h1 class="page-header__title" data-i18n="physics-proj-title">Projectile Motion with Air Resistance</h1>
-      <p class="page-header__desc" data-i18n="physics-proj-desc">
+      <h1 class="page-header__title" id="page-header-title" data-i18n="physics-proj-title">Projectile Motion with Air Resistance</h1>
+      <p class="page-header__desc" id="page-header-desc" data-i18n="physics-proj-desc">
         Quadratic drag force ($F_d = -\frac{1}{2} C_d \rho A v^2$) · Runge-Kutta numerical integration ·
         Vacuum trajectory comparison · Plotly.js plotting · Three.js 3D flight path
       </p>
     </div>
     <div class="page-header__badges">
+      <!-- Projectile Badges -->
       <span class="stat-badge stat-badge--blue" id="badge-range">
-        <span>Range (Drag)</span><span id="range-value">—</span>
+        <span data-i18n="physics-proj-badge-range">Range (Drag)</span><span id="range-value">—</span>
       </span>
       <span class="stat-badge stat-badge--green" id="badge-height">
-        <span>Height (Drag)</span><span id="height-value">—</span>
+        <span data-i18n="physics-proj-badge-height">Height (Drag)</span><span id="height-value">—</span>
+      </span>
+
+      <!-- Magnetism Badges -->
+      <span class="stat-badge stat-badge--blue" id="badge-primary" style="display: none;">
+        <span id="badge-primary-lbl">Força Ativa</span><span id="badge-primary-val">—</span>
+      </span>
+      <span class="stat-badge stat-badge--green" id="badge-secondary" style="display: none;">
+        <span id="badge-secondary-lbl">Rendimento</span><span id="badge-secondary-val">—</span>
       </span>
     </div>
   </div>
 
   <!-- ============ FULLSCREEN SIMULATION: Three.js + Plotly ============ -->
-  <section class="sim-fullscreen" aria-label="3D flight simulation and profiles">
+  <section class="sim-fullscreen" aria-label="3D simulation and plots">
 
-    <!-- Three.js Trajectory Visualizer -->
+    <!-- Three.js Visualizer Card -->
     <div class="card card--glow">
       <div class="card__header">
         <div>
           <div class="card__title" style="display:flex; align-items:center; gap:8px;">
-            <span>🌀 3D Flight Path Workbench</span>
+            <span id="workbench-title" data-i18n="physics-proj-wb-title">🌀 3D Flight Path Workbench</span>
             <span class="regime-tag" id="workbench-status" style="font-size:0.65rem; padding:2px 6px;">Idle</span>
           </div>
-          <div class="card__subtitle">3D animated projectile simulation (Three.js)</div>
+          <div class="card__subtitle" id="workbench-desc" data-i18n="physics-proj-wb-sub">3D animated projectile simulation (Three.js)</div>
         </div>
-        <button class="btn btn--outline" id="toggle-animation" style="padding:6px 12px; font-size:0.75rem;">
+        <button class="btn btn--outline" id="toggle-animation" style="padding:6px 12px; font-size:0.75rem; cursor: pointer;">
           ⏸ Pause
         </button>
       </div>
 
-      <div class="sim-canvas-wrap">
-        <canvas id="three-canvas" aria-label="3D animated projectile flight simulation"
-                style="border-radius:8px; background:#050b18;">
+      <div class="sim-canvas-wrap" style="position: relative; height: 500px; min-height: 400px; width: 100%;">
+        <!-- Projectile 3D Canvas -->
+        <canvas id="three-canvas-projectile" aria-label="3D animated projectile flight simulation"
+                style="width: 100%; height: 100%; display: block; border-radius:8px; background:#050b18; position: absolute; top:0; left:0;">
         </canvas>
 
-        <!-- 3D Camera Controls (floating overlay on the canvas corner) -->
-        <div class="camera-controls camera-controls--overlay">
+        <!-- Magnetism 3D Canvas -->
+        <canvas id="three-canvas-magnetism" aria-label="Visualização Eletromagnética 3D"
+                style="width: 100%; height: 100%; display: none; border-radius:8px; background:#050b18; position: absolute; top:0; left:0;">
+        </canvas>
+
+        <!-- Magnetism DC Motor 2D Canvas -->
+        <canvas id="motor-canvas" aria-label="Animação do Motor"
+                style="width: 100%; height: 100%; display: none; border-radius:8px; background:#050b18; position: absolute; top:0; left:0;">
+        </canvas>
+
+        <!-- 3D Camera Controls overlay -->
+        <div class="camera-controls camera-controls--overlay" id="camera-ctrls">
           <div style="font-size:0.75rem; font-weight:600; color:var(--text-secondary); margin-bottom:8px; display:flex; justify-content:space-between; align-items:center;">
             <span data-i18n="cam-title">🎥 Camera Viewpoint (XYZ)</span>
             <label style="display:flex; align-items:center; gap:6px; cursor:pointer; font-size:0.72rem; color:var(--text-muted);">
@@ -71,10 +95,10 @@
 
           <!-- View Presets -->
           <div style="display:grid; grid-template-columns:repeat(4, 1fr); gap:6px; margin-bottom:10px;">
-            <button type="button" class="btn btn--outline" id="btn-view-iso" style="padding:4px 6px; font-size:0.68rem; justify-content:center; min-height:auto;" data-i18n="cam-btn-iso">Iso</button>
-            <button type="button" class="btn btn--outline" id="btn-view-side" style="padding:4px 6px; font-size:0.68rem; justify-content:center; min-height:auto;" data-i18n="cam-btn-side">Side (Z)</button>
-            <button type="button" class="btn btn--outline" id="btn-view-top" style="padding:4px 6px; font-size:0.68rem; justify-content:center; min-height:auto;" data-i18n="cam-btn-top">Top (Y)</button>
-            <button type="button" class="btn btn--outline" id="btn-view-inlet" style="padding:4px 6px; font-size:0.68rem; justify-content:center; min-height:auto;" data-i18n="cam-btn-inlet">Inlet (X)</button>
+            <button type="button" class="btn btn--outline" id="btn-view-iso" style="padding:4px 6px; font-size:0.68rem; justify-content:center; min-height:auto; cursor: pointer;" data-i18n="cam-btn-iso">Iso</button>
+            <button type="button" class="btn btn--outline" id="btn-view-side" style="padding:4px 6px; font-size:0.68rem; justify-content:center; min-height:auto; cursor: pointer;" data-i18n="cam-btn-side">Side (Z)</button>
+            <button type="button" class="btn btn--outline" id="btn-view-top" style="padding:4px 6px; font-size:0.68rem; justify-content:center; min-height:auto; cursor: pointer;" data-i18n="cam-btn-top">Top (Y)</button>
+            <button type="button" class="btn btn--outline" id="btn-view-inlet" style="padding:4px 6px; font-size:0.68rem; justify-content:center; min-height:auto; cursor: pointer;" data-i18n="cam-btn-inlet">Inlet (X)</button>
           </div>
 
           <!-- XYZ Sliders -->
@@ -98,28 +122,34 @@
         </div>
       </div>
 
-      <div class="velocity-legend" aria-label="Component scales">
-        <span style="color:#8b5cf6">● Ideal path</span>
-        <span style="color:#ef4444">● Drag path</span>
+      <!-- Projectile Legend -->
+      <div class="velocity-legend" id="projectile-legend" aria-label="Component scales">
+        <span style="color:#8b5cf6" data-i18n="physics-proj-legend-ideal">● Ideal path</span>
+        <span style="color:#ef4444" data-i18n="physics-proj-legend-drag">● Drag path</span>
       </div>
 
-      <p style="font-size:0.7rem; color:var(--text-muted); margin-top:8px; text-align:center;">
+      <!-- Magnetism Legend -->
+      <div class="velocity-legend" id="magnetism-legend" aria-label="Magnetism scales" style="display: none; justify-content:center; gap:16px; font-size:0.75rem; margin-top:12px;">
+        <!-- Managed dynamically in JS -->
+      </div>
+
+      <p style="font-size:0.7rem; color:var(--text-muted); margin-top:8px; text-align:center;" data-i18n="physics-proj-note-scale">
         * Trajectory scaled down to fit standard viewport bounds.
       </p>
     </div>
 
-    <!-- Plotly Chart — Trajectory Curve -->
+    <!-- Plotly Chart Card -->
     <div class="card">
       <div class="card__header">
         <div>
-          <div class="card__title">📉 Trajectory Profiles Comparison</div>
-          <div class="card__subtitle">Comparison of vacuum trajectory vs. real flight path with air drag</div>
+          <div class="card__title" id="chart-title" data-i18n="physics-proj-chart-title">📉 Trajectory Profiles Comparison</div>
+          <div class="card__subtitle" id="chart-subtitle" data-i18n="physics-proj-chart-sub">Comparison of vacuum trajectory vs. real flight path with air drag</div>
         </div>
       </div>
       <div id="plotly-chart" style="height:340px; border-radius:8px; overflow:hidden;">
         <div class="chart-placeholder" id="chart-placeholder">
           <span>📉</span>
-          <p>Solve equations to render chart</p>
+          <p data-i18n="physics-proj-chart-placeholder">Solve equations to render chart</p>
         </div>
       </div>
     </div>
@@ -130,9 +160,10 @@
   <button class="fab fab--config" id="fab-config" data-panel="config" aria-label="Open configuration" aria-expanded="false" aria-controls="config-panel">⚙️</button>
   <button class="fab fab--results" id="fab-results" data-panel="results" aria-label="Open results" aria-expanded="false" aria-controls="results-panel">📊</button>
 
+  <!-- Left config drawer -->
   <aside class="floating-panel floating-panel--left" id="config-panel" role="dialog" aria-label="Configuration panel" aria-hidden="true">
     <div class="floating-panel__header">
-      <span class="floating-panel__title">⚙️ Configuration</span>
+      <span class="floating-panel__title" data-i18n="panel-config-title">⚙️ Configuration</span>
       <div class="floating-panel__actions">
         <button class="floating-panel__pin" id="pin-config" aria-label="Pin panel" aria-pressed="false">📌</button>
         <button class="floating-panel__close" aria-label="Close">✕</button>
@@ -140,688 +171,765 @@
     </div>
     <div class="floating-panel__body">
 
-      <!-- Preset Projectiles -->
-      <div class="card">
-        <div class="card__header">
-          <div>
-            <div class="card__title" data-i18n="physics-proj-preset-title">Projectile Preset</div>
-            <div class="card__subtitle" data-i18n="physics-proj-preset-sub">Load properties of standard objects</div>
+      <!-- ================= PROJECTILE CONFIG PANEL ================= -->
+      <div class="panel-section" id="panel-projectile">
+        <!-- Preset Projectiles -->
+        <div class="card" style="margin-bottom: 16px;">
+          <div class="card__header">
+            <div>
+              <div class="card__title" data-i18n="physics-proj-preset-title">Projectile Preset</div>
+              <div class="card__subtitle" data-i18n="physics-proj-preset-sub">Load properties of standard objects</div>
+            </div>
+          </div>
+          <div class="form-group" style="margin-bottom:0">
+            <select class="form-input" id="projectile-preset" aria-label="Projectile preset selector">
+              <option value="baseball" data-i18n="physics-proj-opt-baseball">Baseball (m = 145g, d = 74mm, Cd = 0.30)</option>
+              <option value="golfball" data-i18n="physics-proj-opt-golfball">Golf Ball (m = 45g, d = 43mm, Cd = 0.25)</option>
+              <option value="bullet" data-i18n="physics-proj-opt-bullet">Bullet (m = 8g, d = 9mm, Cd = 0.29)</option>
+              <option value="cannonball" data-i18n="physics-proj-opt-cannonball">Cannonball (m = 10kg, d = 150mm, Cd = 0.47)</option>
+            </select>
           </div>
         </div>
-        <div class="form-group" style="margin-bottom:0">
-          <select class="form-input" id="projectile-preset" aria-label="Projectile preset selector">
-            <option value="baseball">Baseball (m = 145g, d = 74mm, Cd = 0.30)</option>
-            <option value="golfball">Golf Ball (m = 45g, d = 43mm, Cd = 0.25)</option>
-            <option value="bullet">Bullet (m = 8g, d = 9mm, Cd = 0.29)</option>
-            <option value="cannonball">Cannonball (m = 10kg, d = 150mm, Cd = 0.47)</option>
-          </select>
+
+        <!-- Input Form -->
+        <form class="card" id="projectile-form" novalidate aria-label="Projectile parameters">
+          <div class="card__header">
+            <div>
+              <div class="card__title" data-i18n="physics-proj-params-title">Launch Parameters</div>
+              <div class="card__subtitle" data-i18n="physics-proj-params-sub">Configure physical properties</div>
+            </div>
+          </div>
+
+          <!-- LAUNCH CONDITIONS -->
+          <div class="form-section-label" data-i18n="physics-proj-sec-launch">🚀 Launch Conditions</div>
+
+          <div class="form-group">
+            <label class="form-label" for="velocity_m_s">
+              <span data-i18n="physics-proj-lbl-vel">Initial Velocity</span> <span class="unit-tag">m/s</span>
+            </label>
+            <input class="form-input" type="number" id="velocity_m_s" name="velocity_m_s"
+                   value="45.0" min="0.1" max="1000.0" step="1.0">
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="angle_deg">
+              <span data-i18n="physics-proj-lbl-ang">Launch Angle</span> <span class="unit-tag">°</span>
+            </label>
+            <input class="form-input" type="number" id="angle_deg" name="angle_deg"
+                   value="45.0" min="0.1" max="89.9" step="0.5">
+          </div>
+
+          <!-- OBJECT PROPERTIES -->
+          <div class="form-section-label" data-i18n="physics-proj-sec-object">⚽ Object Characteristics</div>
+
+          <div class="form-group">
+            <label class="form-label" for="mass_kg">
+              <span data-i18n="physics-proj-lbl-mass">Mass</span> <span class="unit-tag">kg</span>
+            </label>
+            <input class="form-input" type="number" id="mass_kg" name="mass_kg"
+                   value="0.145" min="0.001" max="10000.0" step="0.001">
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="diameter_m">
+              <span data-i18n="physics-proj-lbl-dia">Diameter</span> <span class="unit-tag">m</span>
+            </label>
+            <input class="form-input" type="number" id="diameter_m" name="diameter_m"
+                   value="0.074" min="0.001" max="10.0" step="0.001">
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="drag_coefficient">
+              <span data-i18n="physics-proj-lbl-drag">Drag Coefficient (Cd)</span> <span class="unit-tag">dim</span>
+            </label>
+            <input class="form-input" type="number" id="drag_coefficient" name="drag_coefficient"
+                   value="0.30" min="0.0" max="5.0" step="0.01">
+          </div>
+
+          <!-- Submit -->
+          <button class="btn btn--primary btn--full" type="submit" id="projectile-calculate-btn" style="cursor: pointer;">
+            <span>▶</span>
+            <span id="projectile-btn-text" data-i18n="physics-proj-btn-calc">Solve Trajectory</span>
+          </button>
+        </form>
+
+        <!-- Drag Coefficient Reference Card -->
+        <div class="card" style="padding:16px; margin-top:0;">
+          <div class="card__header" style="margin-bottom:10px;">
+            <div>
+              <div class="card__title" style="font-size:0.9rem;">🎯 Drag Coefficient (Cd) Guide</div>
+              <div class="card__subtitle">Cd values for common projectile shapes</div>
+            </div>
+          </div>
+          <table style="width:100%; font-size:0.72rem; border-collapse:collapse;">
+            <thead>
+              <tr style="border-bottom:1px solid var(--border-subtle);">
+                <th style="text-align:left; padding:4px 4px; color:var(--text-muted); font-weight:700; font-size:0.65rem; text-transform:uppercase;">Object</th>
+                <th style="text-align:right; padding:4px 4px; color:var(--text-muted); font-weight:700; font-size:0.65rem; text-transform:uppercase;">Cd</th>
+                <th style="text-align:right; padding:4px 4px; color:var(--text-muted); font-weight:700; font-size:0.65rem; text-transform:uppercase;">Re range</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr style="border-bottom:1px solid var(--border-subtle);">
+                <td style="padding:4px 4px; color:var(--text-secondary);">Sphere (smooth)</td>
+                <td style="padding:4px 4px; text-align:right; font-family:var(--font-mono); color:#60a5fa;">0.47</td>
+                <td style="padding:4px 4px; text-align:right; font-family:var(--font-mono); color:var(--text-muted);">subcritical</td>
+              </tr>
+              <tr style="border-bottom:1px solid var(--border-subtle);">
+                <td style="padding:4px 4px; color:var(--text-secondary);">Golf ball (dimpled)</td>
+                <td style="padding:4px 4px; text-align:right; font-family:var(--font-mono); color:#60a5fa;">0.25</td>
+                <td style="padding:4px 4px; text-align:right; font-family:var(--font-mono); color:var(--text-muted);">supercritical</td>
+              </tr>
+              <tr style="border-bottom:1px solid var(--border-subtle);">
+                <td style="padding:4px 4px; color:var(--text-secondary);">Baseball</td>
+                <td style="padding:4px 4px; text-align:right; font-family:var(--font-mono); color:#60a5fa;">0.30</td>
+                <td style="padding:4px 4px; text-align:right; font-family:var(--font-mono); color:var(--text-muted);">Re ≈ 2×10⁵</td>
+              </tr>
+              <tr style="border-bottom:1px solid var(--border-subtle);">
+                <td style="padding:4px 4px; color:var(--text-secondary);">Bullet (cylindrical)</td>
+                <td style="padding:4px 4px; text-align:right; font-family:var(--font-mono); color:#60a5fa;">0.29</td>
+                <td style="padding:4px 4px; text-align:right; font-family:var(--font-mono); color:var(--text-muted);">supersonic</td>
+              </tr>
+              <tr>
+                <td style="padding:4px 4px; color:var(--text-secondary);">Cannonball (rough)</td>
+                <td style="padding:4px 4px; text-align:right; font-family:var(--font-mono); color:#fbbf24;">0.47</td>
+                <td style="padding:4px 4px; text-align:right; font-family:var(--font-mono); color:var(--text-muted);">subsonic</td>
+              </tr>
+            </tbody>
+          </table>
         </div>
+
+        <!-- Atmospheric Conditions Reference -->
+        <div class="card" style="padding:16px; margin-top:0;">
+          <div class="card__header" style="margin-bottom:10px;">
+            <div>
+              <div class="card__title" style="font-size:0.9rem;">🌍 Atmospheric Conditions</div>
+              <div class="card__subtitle">ISA standard values at altitude</div>
+            </div>
+          </div>
+          <table style="width:100%; font-size:0.72rem; border-collapse:collapse;">
+            <thead>
+              <tr style="border-bottom:1px solid var(--border-subtle);">
+                <th style="text-align:left; padding:4px 4px; color:var(--text-muted); font-weight:700; font-size:0.65rem; text-transform:uppercase;">Alt (m)</th>
+                <th style="text-align:right; padding:4px 4px; color:var(--text-muted); font-weight:700; font-size:0.65rem; text-transform:uppercase;">ρ (kg/m³)</th>
+                <th style="text-align:right; padding:4px 4px; color:var(--text-muted); font-weight:700; font-size:0.65rem; text-transform:uppercase;">T (°C)</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr style="border-bottom:1px solid var(--border-subtle);">
+                <td style="padding:4px 4px; color:var(--text-secondary);">0 (sea level)</td>
+                <td style="padding:4px 4px; text-align:right; font-family:var(--font-mono); color:#6ee7b7;">1.225</td>
+                <td style="padding:4px 4px; text-align:right; font-family:var(--font-mono); color:var(--text-muted);">+15.0</td>
+              </tr>
+              <tr style="border-bottom:1px solid var(--border-subtle);">
+                <td style="padding:4px 4px; color:var(--text-secondary);">1 000</td>
+                <td style="padding:4px 4px; text-align:right; font-family:var(--font-mono); color:#6ee7b7;">1.112</td>
+                <td style="padding:4px 4px; text-align:right; font-family:var(--font-mono); color:var(--text-muted);">+8.5</td>
+              </tr>
+              <tr style="border-bottom:1px solid var(--border-subtle);">
+                <td style="padding:4px 4px; color:var(--text-secondary);">3 000</td>
+                <td style="padding:4px 4px; text-align:right; font-family:var(--font-mono); color:#6ee7b7;">0.909</td>
+                <td style="padding:4px 4px; text-align:right; font-family:var(--font-mono); color:var(--text-muted);">−4.5</td>
+              </tr>
+              <tr>
+                <td style="padding:4px 4px; color:var(--text-secondary);">5 000</td>
+                <td style="padding:4px 4px; text-align:right; font-family:var(--font-mono); color:#fbbf24;">0.736</td>
+                <td style="padding:4px 4px; text-align:right; font-family:var(--font-mono); color:var(--text-muted);">−17.5</td>
+              </tr>
+            </tbody>
+          </table>
+          <div style="margin-top:6px; font-size:0.65rem; color:var(--text-muted);">Simulator uses sea-level ρ = 1.225 kg/m³ by default</div>
+        </div>
+
       </div>
 
-      <!-- Input Form -->
-      <form class="card" id="projectile-form" novalidate aria-label="Projectile parameters">
-        <div class="card__header">
-          <div>
-            <div class="card__title" data-i18n="physics-proj-params-title">Launch Parameters</div>
-            <div class="card__subtitle" data-i18n="physics-proj-params-sub">Configure physical properties</div>
+      <!-- ================= MAGNETISM CONFIG PANEL ================= -->
+      <div class="panel-section" id="panel-magnetism" style="display:none;">
+        <!-- Mode Selector -->
+        <div class="card" style="margin-bottom:16px;">
+          <div class="card__header">
+            <div>
+              <div class="card__title" data-i18n="physics-mag-mode-title">Modo de Simulação</div>
+              <div class="card__subtitle" data-i18n="physics-mag-mode-sub">Selecione o experimento físico</div>
+            </div>
+          </div>
+          <div class="mode-selector" style="display: flex; flex-direction: column; gap: 8px;">
+            <button type="button" class="btn btn--outline btn--full mode-tab-btn mode-tab-btn--active" data-mode="lorentz" style="justify-content: flex-start; gap: 10px; cursor: pointer;">
+              <span>🌀</span> <span data-i18n="physics-mag-tab1">Força de Lorentz 3D</span>
+            </button>
+            <button type="button" class="btn btn--outline btn--full mode-tab-btn" data-mode="poles" style="justify-content: flex-start; gap: 10px; cursor: pointer;">
+              <span>🧲</span> <span data-i18n="physics-mag-tab2">Interação de Polos</span>
+            </button>
+            <button type="button" class="btn btn--outline btn--full mode-tab-btn" data-mode="motor" style="justify-content: flex-start; gap: 10px; cursor: pointer;">
+              <span>⚙️</span> <span data-i18n="physics-mag-tab3">Dinâmica de Motor CC</span>
+            </button>
           </div>
         </div>
 
-        <!-- LAUNCH CONDITIONS -->
-        <div class="form-section-label">🚀 Launch Conditions</div>
+        <!-- Input Form -->
+        <form class="card" id="magnetism-form" novalidate aria-label="Parâmetros físico-químicos">
+          <div class="card__header">
+            <div>
+              <div class="card__title" data-i18n="physics-mag-params-title">Parâmetros do Sistema</div>
+              <div class="card__subtitle" id="form-subtitle" data-i18n="physics-mag-params-sub">Configurações para Força de Lorentz</div>
+            </div>
+          </div>
 
-        <div class="form-group">
-          <label class="form-label" for="velocity_m_s">
-            <span data-i18n="physics-proj-lbl-vel">Initial Velocity</span> <span class="unit-tag">m/s</span>
-          </label>
-          <input class="form-input" type="number" id="velocity_m_s" name="velocity_m_s"
-                 value="45.0" min="0.1" max="1000.0" step="1.0">
+          <input type="hidden" id="simulation-mode" name="mode" value="lorentz">
+
+          <!-- PRESETS WIDGET -->
+          <div class="form-group">
+            <label class="form-label" data-i18n="physics-mag-lbl-presets">Presets Rápidos</label>
+            <div id="presets-container" style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 6px;">
+              <!-- Rendered dynamically -->
+            </div>
+          </div>
+
+          <div class="form-divider" style="height: 1px; background: var(--border-subtle); margin: 16px 0;"></div>
+
+          <!-- DYNAMIC FIELDS -->
+          <div id="fields-container">
+            <!-- Lorentz fields (default active) -->
+            <div class="dynamic-group" id="group-lorentz">
+              <div class="form-section-label" data-i18n="physics-mag-sec-particle">⚡ Propriedades da Partícula</div>
+              <div class="form-group">
+                <label class="form-label" for="q_uc"><span data-i18n="physics-mag-lbl-charge">Carga Elétrica</span> <span class="unit-tag">&mu;C</span></label>
+                <input class="form-input" type="number" id="q_uc" name="q_uc" value="10.0" step="1.0" min="-100.0" max="100.0">
+              </div>
+              <div class="form-group">
+                <label class="form-label" for="m_mg"><span data-i18n="physics-mag-lbl-mass">Massa</span> <span class="unit-tag">mg</span></label>
+                <input class="form-input" type="number" id="m_mg" name="m_mg" value="1.0" step="0.1" min="0.1" max="1000.0">
+              </div>
+
+              <div class="form-section-label" data-i18n="physics-mag-sec-velocity">🏃 Velocidade Inicial (m/s)</div>
+              <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px;">
+                <div class="form-group">
+                  <label class="form-label" for="vx" style="color:#3b82f6;">v_x</label>
+                  <input class="form-input" type="number" id="vx" name="vx" value="10.0" step="1.0">
+                </div>
+                <div class="form-group">
+                  <label class="form-label" for="vy" style="color:#10b981;">v_y</label>
+                  <input class="form-input" type="number" id="vy" name="vy" value="10.0" step="1.0">
+                </div>
+                <div class="form-group">
+                  <label class="form-label" for="vz" style="color:#8b5cf6;">v_z</label>
+                  <input class="form-input" type="number" id="vz" name="vz" value="0.0" step="1.0">
+                </div>
+              </div>
+
+              <div class="form-section-label" data-i18n="physics-mag-sec-field">🧭 Campo Magnético (Tesla)</div>
+              <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px;">
+                <div class="form-group">
+                  <label class="form-label" for="Bx" style="color:#3b82f6;">B_x</label>
+                  <input class="form-input" type="number" id="Bx" name="Bx" value="0.0" step="0.1">
+                </div>
+                <div class="form-group">
+                  <label class="form-label" for="By" style="color:#10b981;">B_y</label>
+                  <input class="form-input" type="number" id="By" name="By" value="0.0" step="0.1">
+                </div>
+                <div class="form-group">
+                  <label class="form-label" for="Bz" style="color:#8b5cf6;">B_z</label>
+                  <input class="form-input" type="number" id="Bz" name="Bz" value="1.0" step="0.1">
+                </div>
+              </div>
+            </div>
+
+            <!-- Poles fields (hidden initially) -->
+            <div class="dynamic-group" id="group-poles" style="display:none;">
+              <div class="form-section-label" data-i18n="physics-mag-sec-poles">🧲 Força dos Polos</div>
+              <div class="form-group">
+                <label class="form-label" for="qm1"><span data-i18n="physics-mag-lbl-pole1">Polo Magnético 1</span> <span class="unit-tag">A&middot;m</span></label>
+                <input class="form-input" type="number" id="qm1" name="qm1" value="100.0" step="10.0">
+                <span style="font-size:0.68rem; color:var(--text-muted);" data-i18n="physics-mag-help-pole">Positivo = Norte, Negativo = Sul</span>
+              </div>
+              <div class="form-group">
+                <label class="form-label" for="qm2"><span data-i18n="physics-mag-lbl-pole2">Polo Magnético 2</span> <span class="unit-tag">A&middot;m</span></label>
+                <input class="form-input" type="number" id="qm2" name="qm2" value="-100.0" step="10.0">
+              </div>
+              <div class="form-section-label" data-i18n="physics-mag-sec-distance">📏 Distância Espacial</div>
+              <div class="form-group">
+                <label class="form-label" for="r"><span data-i18n="physics-mag-lbl-distance">Distância (r)</span> <span class="unit-tag">m</span></label>
+                <input class="form-input" type="number" id="r" name="r" value="0.20" step="0.01" min="0.05" max="2.0">
+              </div>
+            </div>
+
+            <!-- Motor fields (hidden initially) -->
+            <div class="dynamic-group" id="group-motor" style="display:none;">
+              <div class="form-section-label" data-i18n="physics-mag-sec-power">⚡ Alimentação e Armadura</div>
+              <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
+                <div class="form-group">
+                  <label class="form-label" for="V"><span data-i18n="physics-mag-lbl-voltage">Tensão (V)</span> <span class="unit-tag">V</span></label>
+                  <input class="form-input" type="number" id="V" name="V" value="24.0" step="1.0" min="1.0">
+                </div>
+                <div class="form-group">
+                  <label class="form-label" for="R"><span data-i18n="physics-mag-lbl-resistance">Resistência (R)</span> <span class="unit-tag">&Omega;</span></label>
+                  <input class="form-input" type="number" id="R" name="R" value="2.0" step="0.1" min="0.1">
+                </div>
+              </div>
+              <div class="form-group">
+                <label class="form-label" for="L"><span data-i18n="physics-mag-lbl-inductance">Indutância (L)</span> <span class="unit-tag">H</span></label>
+                <input class="form-input" type="number" id="L" name="L" value="0.05" step="0.01" min="0.001">
+              </div>
+
+              <div class="form-section-label" data-i18n="physics-mag-sec-mech">⚙️ Mecânica e Constantes</div>
+              <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
+                <div class="form-group">
+                  <label class="form-label" for="J"><span data-i18n="physics-mag-lbl-inertia">Inércia (J)</span> <span class="unit-tag">kg&middot;m²</span></label>
+                  <input class="form-input" type="number" id="J" name="J" value="0.02" step="0.005" min="0.001">
+                </div>
+                <div class="form-group">
+                  <label class="form-label" for="b"><span data-i18n="physics-mag-lbl-friction">Atrito (b)</span> <span class="unit-tag">N&middot;m&middot;s</span></label>
+                  <input class="form-input" type="number" id="b" name="b" value="0.005" step="0.001" min="0.0001">
+                </div>
+              </div>
+              <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
+                <div class="form-group">
+                  <label class="form-label" for="Kt" data-i18n="physics-mag-lbl-kt">Torque (Kt)</label>
+                  <input class="form-input" type="number" id="Kt" name="Kt" value="0.5" step="0.05" min="0.01">
+                </div>
+                <div class="form-group">
+                  <label class="form-label" for="Ke" data-i18n="physics-mag-lbl-ke">Back-EMF (Ke)</label>
+                  <input class="form-input" type="number" id="Ke" name="Ke" value="0.5" step="0.05" min="0.01">
+                </div>
+              </div>
+              <div class="form-group">
+                <label class="form-label" for="tl"><span data-i18n="physics-mag-lbl-tload">Torque de Carga (&tau;_load)</span> <span class="unit-tag">N&middot;m</span></label>
+                <input class="form-input" type="number" id="tl" name="tl" value="0.5" step="0.1" min="0.0">
+              </div>
+
+              <div class="form-group">
+                <label class="form-label" for="motor_poles">
+                  <span data-i18n="physics-mag-lbl-poles-count">Quantidade de Ímãs / Polos</span> <span class="unit-tag">estator</span>
+                </label>
+                <select class="form-input" id="motor_poles" name="motor_poles" style="background: var(--bg-input); color: var(--text-primary); cursor: pointer;">
+                  <option value="2" selected>2 Ímãs / Polos (1 Par N-S)</option>
+                  <option value="4">4 Ímãs / Polos (2 Pares N-S-N-S)</option>
+                  <option value="6">6 Ímãs / Polos (3 Pares N-S-N-S-N-S)</option>
+                  <option value="8">8 Ímãs / Polos (4 Pares N-S-N-S-N-S-N-S)</option>
+                  <option value="12">12 Ímãs / Polos (6 Pares N-S-N-S...)</option>
+                </select>
+              </div>
+
+              <div class="form-group">
+                <label class="form-label" for="magnet_material">
+                  <span data-i18n="physics-mag-lbl-material">Material dos Ímãs Permanentes</span>
+                </label>
+                <select class="form-input" id="magnet_material" name="magnet_material" style="background: var(--bg-input); color: var(--text-primary); cursor: pointer;">
+                  <option value="ndfeb_n52" selected>Neodímio N52 (1.45 T - Máxima Potência)</option>
+                  <option value="ndfeb_n42">Neodímio N42 (1.30 T - Padrão Industrial)</option>
+                  <option value="smco">Samário-Cobalto Sm2Co17 (1.10 T - Alta Temp 300°C)</option>
+                  <option value="alnico5">AlNiCo 5 (1.25 T - Temp Extrema 525°C)</option>
+                  <option value="ferrite">Ferrite Bário Y30 (0.40 T - Econômico)</option>
+                </select>
+              </div>
+
+              <div class="form-group">
+                <label class="form-label" for="pole_span_deg">
+                  <span data-i18n="physics-mag-lbl-span">Cobertura Angular do Polo (&alpha;_p)</span> <span class="unit-tag">graus (°)</span>
+                </label>
+                <input class="form-input" type="number" id="pole_span_deg" name="pole_span_deg" value="120.0" min="30.0" max="170.0" step="5.0">
+                <span style="font-size:0.68rem; color:var(--text-muted);">Ângulo de abrangência do arco do estator (30° a 170°)</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Submit -->
+          <button class="btn btn--primary btn--full" type="submit" id="calculate-btn" style="margin-top: 16px; cursor: pointer;">
+            <span>▶</span>
+            <span data-i18n="physics-mag-btn-run">Executar Simulação</span>
+          </button>
+        </form>
+
+        <!-- Electromagnetic Quick Reference -->
+        <div class="card" style="padding:16px; margin-top:0;">
+          <div class="card__header" style="margin-bottom:10px;">
+            <div>
+              <div class="card__title" style="font-size:0.9rem;">⚡ Electromagnetic Reference</div>
+              <div class="card__subtitle">Key formulas and constants</div>
+            </div>
+          </div>
+          <div style="display:flex; flex-direction:column; gap:7px; font-size:0.72rem;">
+            <div style="padding:7px 8px; background:var(--bg-elevated); border-radius:6px; border-left:3px solid #3b82f6;">
+              <div style="color:var(--text-muted); font-size:0.62rem; text-transform:uppercase; letter-spacing:0.08em; margin-bottom:2px;">Lorentz Force</div>
+              <code style="font-family:var(--font-mono); color:#93c5fd;">F = q(v × B)</code>
+            </div>
+            <div style="padding:7px 8px; background:var(--bg-elevated); border-radius:6px; border-left:3px solid #8b5cf6;">
+              <div style="color:var(--text-muted); font-size:0.62rem; text-transform:uppercase; letter-spacing:0.08em; margin-bottom:2px;">Larmor Radius</div>
+              <code style="font-family:var(--font-mono); color:#c4b5fd;">r = mv / |q|B</code>
+            </div>
+            <div style="padding:7px 8px; background:var(--bg-elevated); border-radius:6px; border-left:3px solid #10b981;">
+              <div style="color:var(--text-muted); font-size:0.62rem; text-transform:uppercase; letter-spacing:0.08em; margin-bottom:2px;">Cyclotron Frequency</div>
+              <code style="font-family:var(--font-mono); color:#6ee7b7;">f_c = |q|B / (2πm)</code>
+            </div>
+            <div style="padding:7px 8px; background:var(--bg-elevated); border-radius:6px; border-left:3px solid #f59e0b;">
+              <div style="color:var(--text-muted); font-size:0.62rem; text-transform:uppercase; letter-spacing:0.08em; margin-bottom:2px;">Coulomb Magnetic (Poles)</div>
+              <code style="font-family:var(--font-mono); color:#fcd34d;">F = μ₀q_m1·q_m2 / (4πr²)</code>
+            </div>
+            <div style="padding:7px 8px; background:var(--bg-elevated); border-radius:6px; border-left:3px solid #ef4444;">
+              <div style="color:var(--text-muted); font-size:0.62rem; text-transform:uppercase; letter-spacing:0.08em; margin-bottom:2px;">DC Motor — Torque</div>
+              <code style="font-family:var(--font-mono); color:#fca5a5;">τ = K_t · I − b·ω − τ_load</code>
+            </div>
+          </div>
+          <div style="margin-top:10px; padding:7px 8px; background:rgba(139,92,246,0.06); border-radius:6px; font-size:0.68rem; color:var(--text-muted); line-height:1.5;">
+            <strong style="color:var(--text-secondary);">Constants:</strong> μ₀ = 4π×10⁻⁷ T·m/A &nbsp;|&nbsp; e = 1.602×10⁻¹⁹ C
+          </div>
         </div>
 
-        <div class="form-group">
-          <label class="form-label" for="angle_deg">
-            <span data-i18n="physics-proj-lbl-ang">Launch Angle</span> <span class="unit-tag">°</span>
-          </label>
-          <input class="form-input" type="number" id="angle_deg" name="angle_deg"
-                 value="45.0" min="0.1" max="89.9" step="0.5">
+        <!-- Typical B-Field Strengths -->
+        <div class="card" style="padding:16px; margin-top:0;">
+          <div class="card__header" style="margin-bottom:10px;">
+            <div>
+              <div class="card__title" style="font-size:0.9rem;">🧲 Typical B-Field Strengths</div>
+              <div class="card__subtitle">Reference magnetic flux densities</div>
+            </div>
+          </div>
+          <table style="width:100%; font-size:0.72rem; border-collapse:collapse;">
+            <tbody>
+              <tr style="border-bottom:1px solid var(--border-subtle);">
+                <td style="padding:4px 4px; color:var(--text-secondary);">Earth's field</td>
+                <td style="padding:4px 4px; text-align:right; font-family:var(--font-mono); color:#6ee7b7;">~50 μT</td>
+              </tr>
+              <tr style="border-bottom:1px solid var(--border-subtle);">
+                <td style="padding:4px 4px; color:var(--text-secondary);">Fridge magnet</td>
+                <td style="padding:4px 4px; text-align:right; font-family:var(--font-mono); color:#6ee7b7;">5 mT</td>
+              </tr>
+              <tr style="border-bottom:1px solid var(--border-subtle);">
+                <td style="padding:4px 4px; color:var(--text-secondary);">DC motor (stator)</td>
+                <td style="padding:4px 4px; text-align:right; font-family:var(--font-mono); color:#60a5fa;">0.1 – 1 T</td>
+              </tr>
+              <tr style="border-bottom:1px solid var(--border-subtle);">
+                <td style="padding:4px 4px; color:var(--text-secondary);">NdFeB magnet</td>
+                <td style="padding:4px 4px; text-align:right; font-family:var(--font-mono); color:#c4b5fd;">1.0 – 1.4 T</td>
+              </tr>
+              <tr>
+                <td style="padding:4px 4px; color:var(--text-secondary);">MRI scanner</td>
+                <td style="padding:4px 4px; text-align:right; font-family:var(--font-mono); color:#fca5a5;">1.5 – 7 T</td>
+              </tr>
+            </tbody>
+          </table>
         </div>
 
-        <!-- OBJECT PROPERTIES -->
-        <div class="form-section-label">⚽ Object Characteristics</div>
-
-        <div class="form-group">
-          <label class="form-label" for="mass_kg">
-            <span data-i18n="physics-proj-lbl-mass">Mass</span> <span class="unit-tag">kg</span>
-          </label>
-          <input class="form-input" type="number" id="mass_kg" name="mass_kg"
-                 value="0.145" min="0.001" max="10000.0" step="0.001">
-        </div>
-
-        <div class="form-group">
-          <label class="form-label" for="diameter_m">
-            <span data-i18n="physics-proj-lbl-dia">Diameter</span> <span class="unit-tag">m</span>
-          </label>
-          <input class="form-input" type="number" id="diameter_m" name="diameter_m"
-                 value="0.074" min="0.001" max="10.0" step="0.001">
-        </div>
-
-        <div class="form-group">
-          <label class="form-label" for="drag_coefficient">
-            <span data-i18n="physics-proj-lbl-drag">Drag Coefficient (Cd)</span> <span class="unit-tag">dim</span>
-          </label>
-          <input class="form-input" type="number" id="drag_coefficient" name="drag_coefficient"
-                 value="0.30" min="0.0" max="5.0" step="0.01">
-        </div>
-
-        <!-- Submit -->
-        <button class="btn btn--primary btn--full" type="submit" id="calculate-btn" data-i18n="physics-proj-btn-calc">
-          <span>▶</span>
-          <span id="btn-text">Solve Trajectory</span>
-        </button>
-      </form>
+      </div>
 
     </div>
   </aside>
 
+  <!-- Right results drawer -->
   <aside class="floating-panel floating-panel--right" id="results-panel" role="dialog" aria-label="Results panel" aria-hidden="true">
     <div class="floating-panel__header">
-      <span class="floating-panel__title">📊 Results</span>
+      <span class="floating-panel__title" data-i18n="panel-results-title">📊 Results</span>
       <div class="floating-panel__actions">
         <button class="floating-panel__pin" id="pin-results" aria-label="Pin panel" aria-pressed="false">📌</button>
-        <button class="floating-panel__export" id="export-results">⬇ Export</button>
+        <button class="floating-panel__export" id="export-results" data-i18n="panel-export">⬇ Export</button>
         <button class="floating-panel__close" aria-label="Close">✕</button>
       </div>
     </div>
     <div class="floating-panel__body">
 
-      <!-- Comparison mode: pin the current trajectory as a reference to
-           see how the next parameter change affects it, drawn dashed/faded
-           alongside the live curve in both the chart and the 3D view. -->
-      <div class="card" id="comparison-card">
-        <div class="card__title" style="margin-bottom:8px; font-size:0.85rem;">📌 Comparison Mode</div>
-        <p style="font-size:0.72rem; color:var(--text-muted); margin-bottom:10px;">Fix the current trajectory as a reference, then change a parameter to compare.</p>
-        <button type="button" class="btn btn--outline btn--full" id="btn-toggle-reference" style="font-size:0.78rem;">📌 Fix as Reference</button>
+      <!-- ================= PROJECTILE RESULTS PANEL ================= -->
+      <div class="panel-section" id="results-projectile">
+        <!-- Comparison Mode -->
+        <div class="card" id="comparison-card" style="margin-bottom: 12px;">
+          <div class="card__title" style="margin-bottom:8px; font-size:0.85rem;" data-i18n="physics-proj-cmp-title">📌 Comparison Mode</div>
+          <p style="font-size:0.72rem; color:var(--text-muted); margin-bottom:10px;" data-i18n="physics-proj-cmp-desc">Fix the current trajectory as a reference, then change a parameter to compare.</p>
+          <button type="button" class="btn btn--outline btn--full" id="btn-toggle-reference" style="font-size:0.78rem; cursor: pointer;" data-i18n="physics-proj-cmp-btn-fix">📌 Fix as Reference</button>
+        </div>
+
+        <!-- KPI Cards -->
+        <div class="kpi-grid" style="grid-template-columns: 1fr 1fr; gap: 10px;">
+          <div class="kpi-card kpi-card--range" id="kpi-range">
+            <div class="kpi-label" data-i18n="physics-proj-kpi-range">Max Range</div>
+            <div class="kpi-value" id="kpi-range-val">—</div>
+            <div class="kpi-unit" data-i18n="physics-proj-unit-m">meters (drag)</div>
+          </div>
+          <div class="kpi-card kpi-card--height" id="kpi-height">
+            <div class="kpi-label" data-i18n="physics-proj-kpi-height">Peak Altitude</div>
+            <div class="kpi-value" id="kpi-height-val">—</div>
+            <div class="kpi-unit" data-i18n="physics-proj-unit-m">meters (drag)</div>
+          </div>
+          <div class="kpi-card kpi-card--time kpi-card--highlight" id="kpi-time" style="grid-column: span 2;">
+            <div class="kpi-label" data-i18n="physics-proj-kpi-time">Time of Flight</div>
+            <div class="kpi-value" id="kpi-time-val">—</div>
+            <div class="kpi-unit" data-i18n="physics-proj-unit-s">seconds (drag)</div>
+          </div>
+        </div>
+
+        <!-- Detailed Results Table -->
+        <div class="card" id="results-table-card" style="margin-top: 12px;">
+          <div class="card__title" style="margin-bottom:12px;" data-i18n="physics-proj-tbl-title">📋 Flight Dynamics Table</div>
+          <table class="results-table" id="results-table" aria-label="Numerical results">
+            <tbody>
+              <tr><td data-i18n="physics-proj-row-range-vac">Vacuum Range</td><td id="tbl-range-vac">—</td></tr>
+              <tr><td data-i18n="physics-proj-row-range-drag">Drag Range</td><td id="tbl-range-drag">—</td></tr>
+              <tr><td data-i18n="physics-proj-row-height-vac">Vacuum Peak Height</td><td id="tbl-height-vac">—</td></tr>
+              <tr><td data-i18n="physics-proj-row-height-drag">Drag Peak Height</td><td id="tbl-height-drag">—</td></tr>
+              <tr><td data-i18n="physics-proj-row-time-vac">Vacuum Flight Time</td><td id="tbl-time-vac">—</td></tr>
+              <tr><td data-i18n="physics-proj-row-time-drag">Drag Flight Time</td><td id="tbl-time-drag">—</td></tr>
+              <tr class="results-table__highlight"><td data-i18n="physics-proj-row-speed-final">Final Speed (Drag)</td><td id="tbl-speed-final">—</td></tr>
+            </tbody>
+          </table>
+        </div>
       </div>
 
-      <!-- KPI Cards -->
-      <div class="kpi-grid" style="grid-template-columns: 1fr 1fr; gap: 10px;">
-        <div class="kpi-card kpi-card--range" id="kpi-range">
-          <div class="kpi-label">Max Range</div>
-          <div class="kpi-value" id="kpi-range-val">—</div>
-          <div class="kpi-unit">meters (drag)</div>
+      <!-- ================= MAGNETISM RESULTS PANEL ================= -->
+      <div class="panel-section" id="results-magnetism" style="display:none;">
+        <!-- KPI Cards -->
+        <div class="kpi-grid" style="grid-template-columns: 1fr 1fr; gap: 10px;">
+          <div class="kpi-card kpi-card--range" id="kpi-card-1" style="border-left-color: var(--accent-secondary);">
+            <div class="kpi-label" id="kpi-lbl-1">Raio de Larmor</div>
+            <div class="kpi-value" id="kpi-val-1">—</div>
+            <div class="kpi-unit" id="kpi-unit-1">metros</div>
+          </div>
+          <div class="kpi-card kpi-card--height" id="kpi-card-2" style="border-left-color: var(--accent-success);">
+            <div class="kpi-label" id="kpi-lbl-2">Frequência Ciclotrônica</div>
+            <div class="kpi-value" id="kpi-val-2">—</div>
+            <div class="kpi-unit" id="kpi-unit-2">Hz</div>
+          </div>
+          <div class="kpi-card kpi-card-time kpi-card--highlight" id="kpi-card-3" style="grid-column: span 2; border-left-color: var(--accent-primary);">
+            <div class="kpi-label" id="kpi-lbl-3">Força Máxima Calculada</div>
+            <div class="kpi-value" id="kpi-val-3">—</div>
+            <div class="kpi-unit" id="kpi-unit-3">Newtons</div>
+          </div>
         </div>
-        <div class="kpi-card kpi-card--height" id="kpi-height">
-          <div class="kpi-label">Peak Altitude</div>
-          <div class="kpi-value" id="kpi-height-val">—</div>
-          <div class="kpi-unit">meters (drag)</div>
-        </div>
-        <div class="kpi-card kpi-card--time kpi-card--highlight" id="kpi-time" style="grid-column: span 2;">
-          <div class="kpi-label">Time of Flight</div>
-          <div class="kpi-value" id="kpi-time-val">—</div>
-          <div class="kpi-unit">seconds (drag)</div>
-        </div>
-      </div>
 
-      <!-- Numerical details table -->
-      <div class="card" id="results-table-card">
-        <div class="card__title" style="margin-bottom:12px;">📋 Flight Dynamics Table</div>
-        <table class="results-table" id="results-table" aria-label="Numerical results">
-          <tbody>
-            <tr><td>Vacuum Range</td><td id="tbl-range-vac">—</td></tr>
-            <tr><td>Drag Range</td><td id="tbl-range-drag">—</td></tr>
-            <tr><td>Vacuum Peak Height</td><td id="tbl-height-vac">—</td></tr>
-            <tr><td>Drag Peak Height</td><td id="tbl-height-drag">—</td></tr>
-            <tr><td>Vacuum Flight Time</td><td id="tbl-time-vac">—</td></tr>
-            <tr><td>Drag Flight Time</td><td id="tbl-time-drag">—</td></tr>
-            <tr class="results-table__highlight"><td>Final Speed (Drag)</td><td id="tbl-speed-final">—</td></tr>
-          </tbody>
-        </table>
+        <!-- Calculations Details Table -->
+        <div class="card" id="results-table-card-mag" style="margin-top: 12px;">
+          <div class="card__title" style="margin-bottom:12px;" data-i18n="physics-mag-tbl-title">📋 Relatório Analítico</div>
+          <table class="results-table" id="results-table-mag" aria-label="Tabela de Cálculos">
+            <tbody id="results-table-body-mag">
+              <!-- Rendered dynamically -->
+            </tbody>
+          </table>
+        </div>
+
+        <!-- ENCYCLOPEDIA WIDGET (Tabs inside right panel card) -->
+        <div class="card" style="margin-top: 12px;">
+          <div class="card__header" style="padding-bottom: 8px;">
+            <div>
+              <div class="card__title" data-i18n="physics-mag-ency-title">📚 Centro de Eletromagnetismo</div>
+              <div class="card__subtitle" data-i18n="physics-mag-ency-sub">Biblioteca Química &amp; Física Técnica</div>
+            </div>
+          </div>
+
+          <!-- Encyclopedia Tabs -->
+          <div class="encyclopedia-tabs" style="display: flex; gap: 4px; border-bottom: 1px solid var(--border-subtle); margin-bottom: 12px;">
+            <button type="button" class="encyclopedia-tab-btn active" data-tab="magnetos" style="flex: 1; padding: 6px; font-size: 0.72rem; font-weight:600; background:none; border:none; color:var(--text-secondary); cursor:pointer;" data-i18n="physics-mag-ency-tab1">
+              Magnetos
+            </button>
+            <button type="button" class="encyclopedia-tab-btn" data-tab="motores" style="flex: 1; padding: 6px; font-size: 0.72rem; font-weight:600; background:none; border:none; color:var(--text-secondary); cursor:pointer;" data-i18n="physics-mag-ency-tab2">
+              Motores
+            </button>
+            <button type="button" class="encyclopedia-tab-btn" data-tab="formulas" style="flex: 1; padding: 6px; font-size: 0.72rem; font-weight:600; background:none; border:none; color:var(--text-secondary); cursor:pointer;" data-i18n="physics-mag-ency-tab3">
+              Formulários
+            </button>
+          </div>
+
+          <div class="encyclopedia-content" style="max-height: 380px; overflow-y: auto; font-size:0.75rem; line-height: 1.45;">
+            
+            <!-- Magnetos Section -->
+            <div class="ency-panel" id="ency-magnetos">
+              <h4 style="color:var(--accent-info); margin-bottom: 6px;">Magnetos Permanentes (Duros)</h4>
+              <div style="display:flex; flex-direction:column; gap:8px;">
+                <div style="border-bottom: 1px solid var(--border-subtle); padding-bottom: 6px;">
+                  <strong>Neodímio (NdFeB):</strong> <code style="color:var(--text-accent); font-family:var(--font-mono);">$Nd_2Fe_{14}B$</code><br>
+                  <span>Liga sinterizada de Neodímio, Ferro e Boro. É o magneto permanente mais poderoso comercialmente.</span><br>
+                  <span style="color:var(--text-muted);">BH_max: 30-52 MGOe | B_r: 1.0-1.4 T | Curie: 310-350°C</span>
+                </div>
+                <div style="border-bottom: 1px solid var(--border-subtle); padding-bottom: 6px;">
+                  <strong>Samário-Cobalto (SmCo):</strong> <code style="color:var(--text-accent); font-family:var(--font-mono);">$SmCo_5$ / $Sm_2Co_{17}$</code><br>
+                  <span>Altamente resistente à corrosão e à desmagnetização em temperaturas de até 350°C. Muito frágil.</span><br>
+                  <span style="color:var(--text-muted);">BH_max: 15-33 MGOe | B_r: 0.8-1.1 T | Curie: 700-800°C</span>
+                </div>
+                <div style="border-bottom: 1px solid var(--border-subtle); padding-bottom: 6px;">
+                  <strong>Alnico:</strong> <code style="color:var(--text-accent); font-family:var(--font-mono);">Al-Ni-Co-Fe</code><br>
+                  <span>Liga de Alumínio, Níquel, Cobalto e Ferro. Excelente estabilidade de temperatura. Coercividade muito baixa.</span><br>
+                  <span style="color:var(--text-muted);">BH_max: 5-9 MGOe | B_r: 0.6-1.3 T | Curie: 800-850°C</span>
+                </div>
+                <div style="border-bottom: 1px solid var(--border-subtle); padding-bottom: 6px;">
+                  <strong>Ferrite / Cerâmico:</strong> <code style="color:var(--text-accent); font-family:var(--font-mono);">$BaFe_{12}O_{19}$ / $SrFe_{12}O_{19}$</code><br>
+                  <span>Óxidos de ferro com Estrôncio ou Bário. Custo extremamente baixo, resiste a corrosões químicas. Força magnética fraca.</span><br>
+                  <span style="color:var(--text-muted);">BH_max: 2-4 MGOe | B_r: 0.2-0.4 T | Curie: 450°C</span>
+                </div>
+              </div>
+
+              <h4 style="color:var(--accent-success); margin: 10px 0 6px;">Magnetos Temporários (Moles)</h4>
+              <div style="display:flex; flex-direction:column; gap:8px;">
+                <div style="border-bottom: 1px solid var(--border-subtle); padding-bottom: 6px;">
+                  <strong>Aço Silício:</strong> <code style="color:var(--text-accent); font-family:var(--font-mono);">Fe-Si</code><br>
+                  <span>Ferro ligado com 1,5% a 4.5% de Silício para aumentar a resistividade e mitigar correntes parasitas (Foucault) em núcleos de motores.</span>
+                </div>
+                <div style="border-bottom: 1px solid var(--border-subtle); padding-bottom: 6px;">
+                  <strong>Permalloy:</strong> <code style="color:var(--text-accent); font-family:var(--font-mono);">Ni-Fe</code><br>
+                  <span>Liga de Níquel (~80%) e Ferro. Altíssima permeabilidade magnética, ideal para blindagens magnéticas e sensores de alta sensibilidade.</span>
+                </div>
+              </div>
+
+              <h4 style="color:var(--accent-warning); margin: 10px 0 6px;">Magnetos Supercondutores</h4>
+              <div>
+                <strong>Ligas Nióbio-Titânio ($NbTi$) ou Nióbio-Estanho ($Nb_3Sn$):</strong><br>
+                <span>Bobinas condutoras resfriadas a temperaturas criogênicas (&lt; 4.2 K). Permitem condução sem resistividade elétrica, gerando intensos campos estáveis para Ressonâncias Magnéticas (RMN) e aceleradores de partículas (LHC).</span>
+              </div>
+            </div>
+
+            <!-- Motores Section -->
+            <div class="ency-panel" id="ency-motores" style="display:none;">
+              <h4 style="color:var(--accent-info); margin-bottom: 6px;">Modelos de Motores Eletromagnéticos</h4>
+              <div style="display:flex; flex-direction:column; gap:8px;">
+                <div style="border-bottom: 1px solid var(--border-subtle); padding-bottom: 6px;">
+                  <strong>PMDC (Motor CC de Ímã Permanente):</strong><br>
+                  <span>Motor clássico alimentado por corrente contínua com comutação mecânica via escovas e estator magnético fixo. O torque é proporcional à corrente e a força eletromotriz (Back-EMF) é proporcional à velocidade.</span>
+                </div>
+                <div style="border-bottom: 1px solid var(--border-subtle); padding-bottom: 6px;">
+                  <strong>BLDC (Motor de Corrente Contínua Sem Escovas):</strong><br>
+                  <span>Substitui as escovas por comutação eletrônica via inversores. Ímãs permanentes estão acoplados ao rotor e o estator possui as bobinas trifásicas acionadas eletronicamente. Eficiente e silencioso.</span>
+                </div>
+                <div style="border-bottom: 1px solid var(--border-subtle); padding-bottom: 6px;">
+                  <strong>PMSM (Motor Síncrono de Ímã Permanente):</strong><br>
+                  <span>Semelhante ao BLDC, mas projeta campos magnéticos puramente senoidais, garantindo um controle de torque altamente linear através do controle orientado a campo (FOC). Usado em veículos elétricos e servomotores industriais.</span>
+                </div>
+                <div style="border-bottom: 1px solid var(--border-subtle); padding-bottom: 6px;">
+                  <strong>ACIM (Motor de Indução CA):</strong><br>
+                  <span>Rotor no formato "gaiola de esquilo" sem ímãs permanentes. O campo giratório do estator induz uma corrente no rotor, criando torque baseado no escorregamento mecânico. Robusto e livre de terras raras.</span>
+                </div>
+                <div>
+                  <strong>Motor de Passo:</strong><br>
+                  <span>Divide uma rotação completa em passos discretos e precisos. As bobinas do estator são energizadas sequencialmente sem feedback em malha fechada, ideal para impressoras 3D e sistemas CNC.</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Fórmulas Section -->
+            <div class="ency-panel" id="ency-formulas" style="display:none;">
+              <h4 style="color:var(--accent-info); margin-bottom: 6px;">Equações Fundamentais</h4>
+              <div style="display:flex; flex-direction:column; gap:8px;">
+                <div>
+                  <strong>Força de Lorentz:</strong>
+                  <p style="font-family:var(--font-mono); background:var(--bg-input); padding:6px; border-radius:4px; margin:4px 0;">
+                    F = q * (v &times; B)
+                  </p>
+                  <span>Vetorialmente, a força é perpendicular ao plano da velocidade e do campo magnético, seguindo a regra da mão direita.</span>
+                </div>
+                <div>
+                  <strong>Interação de Coulomb Magnético:</strong>
+                  <p style="font-family:var(--font-mono); background:var(--bg-input); padding:6px; border-radius:4px; margin:4px 0;">
+                    F = (&mu;_0 * q_m1 * q_m2) / (4*&pi;*r&sup2;)
+                  </p>
+                  <span>Decai quadraticamente com a distância de afastamento entre os dois polos fictícios.</span>
+                </div>
+                <div>
+                  <strong>Equações Diferenciais do Motor CC:</strong>
+                  <p style="font-family:var(--font-mono); background:var(--bg-input); padding:6px; border-radius:4px; margin:4px 0;">
+                    L * dI/dt = V - R*I - Ke*&omega;<br>
+                    J * d&omega;/dt = Kt*I - b*&omega; - &tau;_load
+                  </p>
+                  <span>A primeira equação representa a malha elétrica da armadura e a segunda representa o balanço mecânico rotativo do rotor.</span>
+                </div>
+              </div>
+            </div>
+
+          </div>
+        </div>
       </div>
 
     </div>
   </aside>
+
 </div>
 
 <style>
   .physics-dashboard { max-width: 1650px; margin: 0 auto; }
   .sim-fullscreen { display: flex; flex-direction: column; gap: 24px; width: 100%; }
+  .sim-canvas-wrap {
+    height: 78vh;
+    min-height: 480px;
+  }
+  
   .kpi-card--range { border-left-color: var(--accent-secondary); }
   .kpi-card--height { border-left-color: var(--accent-info); }
   .kpi-card--time { border-left-color: var(--accent-primary); }
+
+  /* Mode buttons styles */
+  .mode-tab-btn {
+    border: 1px solid var(--border-default);
+    color: var(--text-secondary);
+    background: transparent;
+    text-align: left;
+    transition: all var(--transition-fast);
+  }
+  .mode-tab-btn:hover {
+    border-color: var(--accent-primary);
+    background: rgba(139,92,246,0.04);
+  }
+  .mode-tab-btn--active {
+    background: rgba(139,92,246,0.12) !important;
+    border-color: var(--accent-primary) !important;
+    color: var(--text-primary) !important;
+    box-shadow: inset 4px 0 12px -4px rgba(139,92,246,0.3);
+    font-weight: 600;
+  }
+
+  /* Physics Tabs styles */
+  .physics-tab-btn {
+    border: 1px solid var(--border-default);
+    color: var(--text-secondary);
+    background: transparent;
+    transition: all var(--transition-fast);
+  }
+  .physics-tab-btn:hover {
+    border-color: var(--accent-primary);
+    background: rgba(139,92,246,0.04);
+  }
+  .physics-tab-btn--active {
+    background: rgba(139,92,246,0.12) !important;
+    border-color: var(--accent-primary) !important;
+    color: var(--text-primary) !important;
+    box-shadow: var(--glow-violet);
+    font-weight: 600;
+  }
+
+  /* Encyclopedia tab buttons */
+  .encyclopedia-tab-btn.active {
+    border-bottom: 2px solid var(--accent-primary) !important;
+    color: var(--text-primary) !important;
+  }
+  .encyclopedia-tab-btn:hover {
+    color: var(--text-primary);
+  }
+
+  .form-divider {
+    height: 1px;
+    background: var(--border-subtle);
+    margin: 16px 0;
+  }
 </style>
 
-{% load static %}
+{% load static vite %}
+
+<!-- Vendored libraries: three r128 (2021) and plotly.js-dist 2.33.0. Neither is
+     an npm dependency any more — nothing imports them, so shipping them twice
+     was pure weight. three in particular is NOT interchangeable with a current
+     npm build (0.166 is ~38 revisions ahead and changes light intensity units
+     in r155), and the page controllers were written against this one. They load
+     as classic scripts, executed during parsing and therefore before the
+     deferred module below, which reads THREE / Plotly off the globals they
+     install. -->
 <script src="{% static 'core/vendor/plotly.min.js' %}"></script>
 <script src="{% static 'core/vendor/three.min.js' %}"></script>
 <script src="{% static 'core/vendor/OrbitControls.js' %}"></script>
 
+<!-- Page controller: bundled by Vite from frontend/src/pages/physics.js.
+     Three.js and Plotly come from the npm packages in package.json rather than
+     the hand-maintained copies under apps/core/static/core/vendor/. -->
+{% vite_asset 'pages/physics.js' %}
+
 <script>
-// -----------------------------------------------------------------
-// 0. COMPARISON MODE — pinned reference result, shared by the Plotly
-//    chart and the Three.js scene (both read this when rendering).
-// -----------------------------------------------------------------
-let referenceResult = null;
-let lastResult = null;
-
-// -----------------------------------------------------------------
-// 1. API CLIENT
-// -----------------------------------------------------------------
-const API = {
-  baseUrl: '/api/physics',
-  csrfToken: document.querySelector('meta[name="csrf-token"]')?.content,
-
-  async post(endpoint, data) {
-    const response = await fetch(`${this.baseUrl}${endpoint}`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'X-CSRFToken': this.csrfToken,
-      },
-      body: JSON.stringify(data),
-    });
-    const json = await response.json();
-    if (!response.ok) throw json;
-    return json;
-  }
-};
-
-// -----------------------------------------------------------------
-// 2. FORM & PRESET MANAGER
-// -----------------------------------------------------------------
-const FormManager = {
-  form: document.getElementById('projectile-form'),
-  presetSelect: document.getElementById('projectile-preset'),
-  calculateBtn: document.getElementById('calculate-btn'),
-
-  init() {
-    // Preset Selector
-    this.presetSelect.addEventListener('change', (e) => {
-      const presets = {
-        baseball:   { mass: 0.145, diameter: 0.074, cd: 0.30, v0: 45 },
-        golfball:   { mass: 0.045, diameter: 0.043, cd: 0.25, v0: 60 },
-        bullet:     { mass: 0.008, diameter: 0.009, cd: 0.29, v0: 340 },
-        cannonball: { mass: 10.0,  diameter: 0.150, cd: 0.47, v0: 150 }
-      };
-      const p = presets[e.target.value];
-      if (p) {
-        document.getElementById('mass_kg').value = p.mass;
-        document.getElementById('diameter_m').value = p.diameter;
-        document.getElementById('drag_coefficient').value = p.cd;
-        document.getElementById('velocity_m_s').value = p.v0;
-        showToast(`Loaded ${e.target.value.toUpperCase()} properties`, 'info', 2000);
-      }
-    });
-
-    this.form.addEventListener('submit', (e) => {
-      e.preventDefault();
-      this.handleSubmit();
-    });
-
-    // Live recalculation: debounced re-solve as the user edits/drags any
-    // numeric input, so the trajectory updates without an explicit click on
-    // "Calculate". The button remains as an immediate fallback.
-    let debounceTimer = null;
-    this.form.querySelectorAll('input[type="number"]').forEach(input => {
-      input.addEventListener('input', () => {
-        clearTimeout(debounceTimer);
-        debounceTimer = setTimeout(() => this.handleSubmit(true), 350);
-      });
-    });
-
-    // Solve initially
-    this.handleSubmit();
-  },
-
-  getInputs() {
-    return {
-      velocity_m_s:     parseFloat(document.getElementById('velocity_m_s').value),
-      angle_deg:        parseFloat(document.getElementById('angle_deg').value),
-      mass_kg:          parseFloat(document.getElementById('mass_kg').value),
-      diameter_m:       parseFloat(document.getElementById('diameter_m').value),
-      drag_coefficient: parseFloat(document.getElementById('drag_coefficient').value),
-    };
-  },
-
-  async handleSubmit(auto = false) {
-    const data = this.getInputs();
-
-    this.calculateBtn.disabled = true;
-    // Auto (debounced, live-slider) recalculations skip the full-screen
-    // overlay and success toast — those are for the explicit "Calculate"
-    // click — so continuous typing/dragging doesn't flash the UI.
-    if (!auto) showLoading('Integrating launch trajectory equations…');
-
-    try {
-      const response = await API.post('/projectile/calculate/', data);
-      const result = response.data;
-      lastResult = result;
-
-      UIUpdater.updateAll(result, data);
-      PlotlyChart.render(result);
-      ThreeTrajectory.buildTrajectory(result);
-      window.FloatingPanel?.markUpdated('results');
-
-      if (!auto) showToast('Trajectory equations solved!', 'success');
-    } catch (e) {
-      console.error(e);
-      showToast('Solving failed. Check parameter constraints.', 'error');
-    } finally {
-      this.calculateBtn.disabled = false;
-      if (!auto) hideLoading();
-    }
-  }
-};
-
-// -----------------------------------------------------------------
-// 3. UI UPDATER
-// -----------------------------------------------------------------
-const UIUpdater = {
-  updateAll(result, data) {
-    const s = result.stats;
-    
-    // Top badges
-    document.getElementById('range-value').textContent = s.range_drag_m.toFixed(1) + ' m';
-    document.getElementById('height-value').textContent = s.height_drag_m.toFixed(1) + ' m';
-
-    // KPIs
-    document.getElementById('kpi-range-val').textContent = s.range_drag_m.toFixed(1);
-    document.getElementById('kpi-height-val').textContent = s.height_drag_m.toFixed(1);
-    document.getElementById('kpi-time-val').textContent = s.time_drag_s.toFixed(2);
-
-    // Update workbench badge text
-    const statusTag = document.getElementById('workbench-status');
-    if (statusTag && data) {
-      statusTag.textContent = `Angle: ${data.angle_deg}° | Speed: ${data.velocity_m_s}m/s`;
-    }
-
-    // Table
-    document.getElementById('tbl-range-vac').textContent = s.range_vacuum_m.toFixed(2) + ' m';
-    document.getElementById('tbl-range-drag').textContent = s.range_drag_m.toFixed(2) + ' m';
-    document.getElementById('tbl-height-vac').textContent = s.height_vacuum_m.toFixed(2) + ' m';
-    document.getElementById('tbl-height-drag').textContent = s.height_drag_m.toFixed(2) + ' m';
-    document.getElementById('tbl-time-vac').textContent = s.time_vacuum_s.toFixed(2) + ' s';
-    document.getElementById('tbl-time-drag').textContent = s.time_drag_s.toFixed(2) + ' s';
-    document.getElementById('tbl-speed-final').textContent = s.final_velocity_drag_m_s.toFixed(2) + ' m/s';
-  }
-};
-
-// -----------------------------------------------------------------
-// 4. PLOTLY CHART
-// -----------------------------------------------------------------
-const PlotlyChart = {
-  rendered: false,
-
-  render(result) {
-    const traceIdeal = {
-      x: result.x_vacuum,
-      y: result.y_vacuum,
-      mode: 'lines',
-      name: 'Vacuum (Ideal)',
-      line: { color: '#8b5cf6', width: 2, dash: 'dash' }
-    };
-
-    const traceReal = {
-      x: result.x_drag,
-      y: result.y_drag,
-      mode: 'lines',
-      name: 'Air Drag (Real)',
-      line: { color: '#ef4444', width: 3 },
-      fill: 'tozeroy',
-      fillcolor: 'rgba(239,68,68,0.04)'
-    };
-
-    const traces = [traceIdeal, traceReal];
-
-    // Comparison mode: overlay the pinned reference trajectory, faded and
-    // dashed, so the effect of the latest parameter change is visible
-    // against the previous run.
-    if (referenceResult) {
-      traces.push({
-        x: referenceResult.x_drag,
-        y: referenceResult.y_drag,
-        mode: 'lines',
-        name: 'Reference (Air Drag)',
-        line: { color: '#94a3b8', width: 2, dash: 'dot' },
-        opacity: 0.6,
-      });
-    }
-
-    const layout = {
-      paper_bgcolor: 'transparent',
-      plot_bgcolor:  '#0d1526',
-      font: { family: 'Inter, sans-serif', color: '#94a3b8', size: 11 },
-      margin: { t: 10, r: 16, b: 48, l: 64 },
-      xaxis: {
-        gridcolor: 'rgba(255,255,255,0.05)',
-        zerolinecolor: 'rgba(255,255,255,0.15)',
-        title: { text: 'Distance x (m)', font: { size: 11, color: '#64748b' } },
-        tickfont: { family: 'JetBrains Mono, monospace', size: 10 }
-      },
-      yaxis: {
-        gridcolor: 'rgba(255,255,255,0.05)',
-        zerolinecolor: 'rgba(255,255,255,0.15)',
-        title: { text: 'Height y (m)', font: { size: 11, color: '#64748b' } },
-        tickfont: { family: 'JetBrains Mono, monospace', size: 10 }
-      }
-    };
-
-    document.getElementById('chart-placeholder')?.remove();
-
-    if (!this.rendered) {
-      Plotly.newPlot('plotly-chart', traces, layout, { responsive: true, displaylogo: false });
-      this.rendered = true;
-    } else {
-      Plotly.react('plotly-chart', traces, layout, { responsive: true, displaylogo: false });
-    }
-  }
-};
-
-// -----------------------------------------------------------------
-// 5. THREE.JS 3D TRAJECTORY VISUALIZATION
-// -----------------------------------------------------------------
-const ThreeTrajectory = {
-  scene: null,
-  camera: null,
-  renderer: null,
-  controls: null,
-  idealPathLine: null,
-  realPathLine: null,
-  projectile: null,
-  grid: null,
-
-  animating: true,
-  dragCoords: [],
-  dragDuration: 0,
-  animElapsed: 0,
-  _lastFrameTime: null,
-  scaleFactor: 1.0,
-
-  // Camera states
-  targetCameraPos: null,
-  targetLookAt: new THREE.Vector3(0, 0, 0),
-  transitioning: false,
-  autoOrbit: false,
-
-  init() {
-    const canvas = document.getElementById('three-canvas');
-    if (!canvas || typeof THREE === 'undefined') return;
-
-    // Scene
-    this.scene = new THREE.Scene();
-    this.scene.background = new THREE.Color(0x050b18);
-
-    // Camera
-    this.camera = new THREE.PerspectiveCamera(45, canvas.offsetWidth / canvas.offsetHeight, 0.1, 100);
-    this.camera.position.set(0, 1.5, 4);
-    this.camera.lookAt(0, 0, 0);
-
-    // Renderer
-    this.renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
-    this.renderer.setSize(canvas.offsetWidth, canvas.offsetHeight);
-    this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-
-    // Controls
-    if (typeof THREE.OrbitControls !== 'undefined') {
-      this.controls = new THREE.OrbitControls(this.camera, this.renderer.domElement);
-      this.controls.enableDamping = true;
-      this.controls.dampingFactor = 0.05;
-      this.controls.minDistance = 1;
-      this.controls.maxDistance = 15;
-    }
-
-    // Lights
-    this.scene.add(new THREE.AmbientLight(0xffffff, 0.5));
-    const pointLight = new THREE.PointLight(0xffffff, 0.8);
-    pointLight.position.set(5, 5, 5);
-    this.scene.add(pointLight);
-
-    // Grid Floor
-    this.grid = new THREE.GridHelper(8, 20, 0x1e3a5f, 0x111e35);
-    this.grid.position.y = -0.5;
-    this.scene.add(this.grid);
-
-    // Add Orbit Controls DOM elements
-    const orbitCheckbox = document.getElementById('auto-orbit');
-    const sliderX = document.getElementById('cam-slider-x');
-    const sliderY = document.getElementById('cam-slider-y');
-    const sliderZ = document.getElementById('cam-slider-z');
-    const valX = document.getElementById('cam-val-x');
-    const valY = document.getElementById('cam-val-y');
-    const valZ = document.getElementById('cam-val-z');
-
-    if (orbitCheckbox) {
-      orbitCheckbox.addEventListener('change', (e) => {
-        this.autoOrbit = e.target.checked;
-        if (this.autoOrbit) {
-          this.transitioning = false;
-          this.targetCameraPos = null;
-        }
-      });
-    }
-
-    const triggerPreset = (x, y, z) => {
-      this.targetCameraPos = new THREE.Vector3(x, y, z);
-      this.transitioning = true;
-      this.autoOrbit = false;
-      if (orbitCheckbox) orbitCheckbox.checked = false;
-    };
-
-    document.getElementById('btn-view-iso')?.addEventListener('click', () => triggerPreset(2.5, 1.8, 2.8));
-    document.getElementById('btn-view-side')?.addEventListener('click', () => triggerPreset(0, 0, 4));
-    document.getElementById('btn-view-top')?.addEventListener('click', () => triggerPreset(0, 4.2, 0.01));
-    document.getElementById('btn-view-inlet')?.addEventListener('click', () => triggerPreset(-3.5, 0, 0));
-
-    const handleSliderChange = () => {
-      if (this.autoOrbit) {
-        this.autoOrbit = false;
-        if (orbitCheckbox) orbitCheckbox.checked = false;
-      }
-      this.transitioning = false;
-      this.targetCameraPos = null;
-      this.camera.position.set(
-        parseFloat(sliderX.value),
-        parseFloat(sliderY.value),
-        parseFloat(sliderZ.value)
-      );
-      this.camera.lookAt(0, 0, 0);
-      if (this.controls) this.controls.target.set(0, 0, 0);
-      
-      valX.textContent = parseFloat(sliderX.value).toFixed(2);
-      valY.textContent = parseFloat(sliderY.value).toFixed(2);
-      valZ.textContent = parseFloat(sliderZ.value).toFixed(2);
-    };
-
-    [sliderX, sliderY, sliderZ].forEach(slider => {
-      slider?.addEventListener('input', handleSliderChange);
-    });
-
-    // Start animation loop
-    this.animate();
-
-    // Toggle button
-    document.getElementById('toggle-animation').addEventListener('click', (e) => {
-      this.animating = !this.animating;
-      e.target.textContent = this.animating ? '⏸ Pause' : '▶ Resume';
-      if (this.animating) this.animate();
-    });
-
-    window.addEventListener('resize', () => this.onResize());
-  },
-
-  buildTrajectory(result) {
-    // Clear old lines/objects
-    if (this.idealPathLine) this.scene.remove(this.idealPathLine);
-    if (this.realPathLine) this.scene.remove(this.realPathLine);
-    if (this.projectile) this.scene.remove(this.projectile);
-    if (this.referencePathLine) { this.scene.remove(this.referencePathLine); this.referencePathLine = null; }
-
-    const xReal = result.x_drag;
-    const yReal = result.y_drag;
-    const xIdeal = result.x_vacuum;
-    const yIdeal = result.y_vacuum;
-
-    // Determine scale to fit within viewport coordinate range [-2.0, 2.0]
-    const maxVal = Math.max(xIdeal[xIdeal.length - 1] || 1, Math.max(...yIdeal) || 1);
-    this.scaleFactor = 4.0 / maxVal;
-
-    // Create Ideal Path Line (Purple)
-    const idealPoints = [];
-    for (let i = 0; i < xIdeal.length; i++) {
-      // Map 2D (x, y) to 3D: X axis is left-to-right (centered), Y is vertical height.
-      // Let's center the start point at x = -2
-      idealPoints.push(new THREE.Vector3(xIdeal[i] * this.scaleFactor - 2, yIdeal[i] * this.scaleFactor - 0.5, 0));
-    }
-    const idealGeo = new THREE.BufferGeometry().setFromPoints(idealPoints);
-    const idealMat = new THREE.LineBasicMaterial({ color: 0x8b5cf6, transparent: true, opacity: 0.4 });
-    this.idealPathLine = new THREE.Line(idealGeo, idealMat);
-    this.scene.add(this.idealPathLine);
-
-    // Create Real Drag Path Line (Red)
-    const realPoints = [];
-    this.dragCoords = [];
-    for (let i = 0; i < xReal.length; i++) {
-      const vec = new THREE.Vector3(xReal[i] * this.scaleFactor - 2, yReal[i] * this.scaleFactor - 0.5, 0);
-      realPoints.push(vec);
-      this.dragCoords.push(vec);
-    }
-    const realGeo = new THREE.BufferGeometry().setFromPoints(realPoints);
-    const realMat = new THREE.LineBasicMaterial({ color: 0xef4444, linewidth: 2 });
-    this.realPathLine = new THREE.Line(realGeo, realMat);
-    this.scene.add(this.realPathLine);
-
-    // Comparison mode: draw the pinned reference trajectory (faded grey),
-    // reusing the current scaleFactor so both curves share the same axes.
-    if (referenceResult) {
-      const refPoints = [];
-      const xRef = referenceResult.x_drag, yRef = referenceResult.y_drag;
-      for (let i = 0; i < xRef.length; i++) {
-        refPoints.push(new THREE.Vector3(xRef[i] * this.scaleFactor - 2, yRef[i] * this.scaleFactor - 0.5, 0));
-      }
-      const refGeo = new THREE.BufferGeometry().setFromPoints(refPoints);
-      const refMat = new THREE.LineBasicMaterial({ color: 0x94a3b8, transparent: true, opacity: 0.35 });
-      this.referencePathLine = new THREE.Line(refGeo, refMat);
-      this.scene.add(this.referencePathLine);
-    }
-
-    // Create Projectile (Sphere)
-    const sphereGeo = new THREE.SphereGeometry(0.08, 32, 32);
-    const sphereMat = new THREE.MeshPhongMaterial({ color: 0xef4444, emissive: 0x5a1a1a, shininess: 80 });
-    this.projectile = new THREE.Mesh(sphereGeo, sphereMat);
-    this.projectile.position.copy(this.dragCoords[0] || new THREE.Vector3(-2, -0.5, 0));
-    this.scene.add(this.projectile);
-
-    // Real flight duration drives playback speed, so a 0.5s launch and a 5s
-    // launch no longer animate at the same on-screen pace.
-    this.dragDuration = Math.max(result.stats.time_drag_s || 0, 1e-3);
-    this.animElapsed = 0;
-    this._lastFrameTime = null;
-  },
-
-  animate() {
-    if (!this.animating) return;
-    requestAnimationFrame(() => this.animate());
-
-    // 1. Auto-orbit
-    if (this.autoOrbit) {
-      const time = Date.now() * 0.0005;
-      const radius = 4.0;
-      this.camera.position.x = radius * Math.cos(time);
-      this.camera.position.z = radius * Math.sin(time);
-      this.camera.position.y = 1.5 + 0.5 * Math.sin(time * 0.5);
-      this.camera.lookAt(0, 0, 0);
-      if (this.controls) this.controls.target.set(0, 0, 0);
-    }
-
-    // 2. Camera preset lerping
-    if (this.transitioning && this.targetCameraPos) {
-      this.camera.position.lerp(this.targetCameraPos, 0.1);
-      this.camera.lookAt(this.targetLookAt);
-      if (this.controls) this.controls.target.copy(this.targetLookAt);
-      
-      if (this.camera.position.distanceTo(this.targetCameraPos) < 0.01) {
-        this.camera.position.copy(this.targetCameraPos);
-        this.transitioning = false;
-        this.targetCameraPos = null;
-      }
-    }
-
-    if (this.controls) this.controls.update();
-
-    // 3. Coordinate Sliders Sync
-    const sliderX = document.getElementById('cam-slider-x');
-    const sliderY = document.getElementById('cam-slider-y');
-    const sliderZ = document.getElementById('cam-slider-z');
-    const valX = document.getElementById('cam-val-x');
-    const valY = document.getElementById('cam-val-y');
-    const valZ = document.getElementById('cam-val-z');
-
-    if (sliderX && sliderY && sliderZ) {
-      if (document.activeElement !== sliderX) {
-        sliderX.value = this.camera.position.x;
-        if (valX) valX.textContent = this.camera.position.x.toFixed(2);
-      }
-      if (document.activeElement !== sliderY) {
-        sliderY.value = this.camera.position.y;
-        if (valY) valY.textContent = this.camera.position.y.toFixed(2);
-      }
-      if (document.activeElement !== sliderZ) {
-        sliderZ.value = this.camera.position.z;
-        if (valZ) valZ.textContent = this.camera.position.z.toFixed(2);
-      }
-    }
-
-    // 4. Animate sphere along flight path, paced by the real flight time
-    // (time_drag_s) rather than a fixed number of frames.
-    if (this.projectile && this.dragCoords.length > 1 && this.dragDuration) {
-      const now = performance.now();
-      const dtReal = this._lastFrameTime ? (now - this._lastFrameTime) / 1000 : 0;
-      this._lastFrameTime = now;
-
-      this.animElapsed = (this.animElapsed + dtReal) % this.dragDuration;
-      const frac = this.animElapsed / this.dragDuration;
-      const idxFloat = frac * (this.dragCoords.length - 1);
-      const i0 = Math.max(0, Math.min(this.dragCoords.length - 2, Math.floor(idxFloat)));
-      const i1 = i0 + 1;
-      const t = idxFloat - i0;
-      this.projectile.position.lerpVectors(this.dragCoords[i0], this.dragCoords[i1], t);
-    } else if (this.projectile && this.dragCoords.length > 0) {
-      this.projectile.position.copy(this.dragCoords[0]);
-    }
-
-    this.renderer.render(this.scene, this.camera);
-  },
-
-  onResize() {
-    const canvas = document.getElementById('three-canvas');
-    if (!canvas || !this.renderer) return;
-    const w = canvas.offsetWidth;
-    const h = canvas.offsetHeight;
-    this.camera.aspect = w / h;
-    this.camera.updateProjectionMatrix();
-    this.renderer.setSize(w, h);
-  }
-};
-
-document.addEventListener('DOMContentLoaded', () => {
-  FormManager.init();
-  ThreeTrajectory.init();
-
-  // Comparison mode toggle
-  const refBtn = document.getElementById('btn-toggle-reference');
-  refBtn?.addEventListener('click', () => {
-    if (referenceResult) {
-      referenceResult = null;
-      refBtn.textContent = '📌 Fix as Reference';
-    } else if (lastResult) {
-      referenceResult = lastResult;
-      refBtn.textContent = '🗑 Clear Reference';
-    } else {
-      return;
-    }
-    PlotlyChart.render(lastResult);
-    ThreeTrajectory.buildTrajectory(lastResult);
-  });
-
+  // This block stays inline on purpose. base.html registers its own
+  // DOMContentLoaded listener (which calls translatePage) while the document is
+  // being parsed, and it renders the extra_scripts block *before* that point —
+  // so this listener registers first and therefore runs first, merging this
+  // page's strings into window.TRANSLATIONS before the initial translation
+  // pass. A deferred ES module cannot preserve that ordering.
+  document.addEventListener('DOMContentLoaded', () => {
   if (window.TRANSLATIONS) {
     Object.assign(window.TRANSLATIONS.pt, {
       "physics-proj-title": "Lançamento de Projéteis",
@@ -835,9 +943,107 @@ document.addEventListener('DOMContentLoaded', () => {
       "physics-proj-lbl-mass": "Massa do Projétil",
       "physics-proj-lbl-dia": "Diâmetro do Projétil",
       "physics-proj-lbl-drag": "Coeficiente de Arrasto (Cd)",
-      "physics-proj-btn-calc": "Calcular Trajetória"
+      "physics-proj-btn-calc": "Calcular Trajetória",
+      "physics-tab-proj": "Lançamento de Projéteis",
+      "physics-tab-mag": "Magnetismo & Motores",
+      "physics-proj-badge-range": "Alcance (Arrasto)",
+      "physics-proj-badge-height": "Altura (Arrasto)",
+      "physics-proj-wb-title": "🌀 Bancada 3D de Trajetória de Voo",
+      "physics-proj-wb-sub": "Simulação 3D animada do projétil (Three.js)",
+      "physics-proj-legend-ideal": "● Trajetória ideal (vácuo)",
+      "physics-proj-legend-drag": "● Trajetória com arrasto",
+      "physics-proj-note-scale": "* Trajetória reduzida para caber nos limites da tela.",
+      "physics-proj-chart-title": "📉 Comparação de Perfis de Trajetória",
+      "physics-proj-chart-sub": "Trajetória no vácuo vs. voo real com arrasto do ar",
+      "physics-mag-chart-title-lorentz": "📉 Projeção de Trajetória Bidimensional",
+      "physics-mag-chart-sub-lorentz": "Projeções XY e XZ da espiral ciclotrônica da partícula",
+      "physics-mag-chart-title-poles": "📉 Perfil de Força Magnética vs. Distância",
+      "physics-mag-chart-sub-poles": "Gráfico com decaimento quadrático de Coulomb (1/r²)",
+      "physics-mag-chart-title-motor": "📉 Resposta Transiente de Inicialização",
+      "physics-mag-chart-sub-motor": "Constante de tempo elétrica e mecânica sob carga constante",
+      "physics-proj-chart-placeholder": "Resolva as equações para gerar o gráfico",
+      "physics-proj-opt-baseball": "Bola de Beisebol (m = 145g, d = 74mm, Cd = 0.30)",
+      "physics-proj-opt-golfball": "Bola de Golfe (m = 45g, d = 43mm, Cd = 0.25)",
+      "physics-proj-opt-bullet": "Projétil (m = 8g, d = 9mm, Cd = 0.29)",
+      "physics-proj-opt-cannonball": "Bala de Canhão (m = 10kg, d = 150mm, Cd = 0.47)",
+      "physics-proj-sec-launch": "🚀 Condições de Lançamento",
+      "physics-proj-sec-object": "⚽ Características do Objeto",
+      "physics-proj-cmp-title": "📌 Modo Comparação",
+      "physics-proj-cmp-desc": "Fixe a trajetória atual como referência e altere um parâmetro para comparar.",
+      "physics-proj-cmp-btn-fix": "📌 Fixar como Referência",
+      "physics-proj-cmp-btn-clear": "🗑 Limpar Referência",
+      "physics-proj-kpi-range": "Alcance Máximo",
+      "physics-proj-kpi-height": "Altitude Máxima",
+      "physics-proj-kpi-time": "Tempo de Voo",
+      "physics-proj-unit-m": "metros (arrasto)",
+      "physics-proj-unit-s": "segundos (arrasto)",
+      "physics-proj-tbl-title": "📋 Tabela de Dinâmica de Voo",
+      "physics-proj-row-range-vac": "Alcance no Vácuo",
+      "physics-proj-row-range-drag": "Alcance com Arrasto",
+      "physics-proj-row-height-vac": "Altura Máxima no Vácuo",
+      "physics-proj-row-height-drag": "Altura Máxima com Arrasto",
+      "physics-proj-row-time-vac": "Tempo de Voo no Vácuo",
+      "physics-proj-row-time-drag": "Tempo de Voo com Arrasto",
+      "physics-proj-row-speed-final": "Velocidade Final (Arrasto)",
+
+      // Magnetism translation mappings
+      "physics-mag-title": "Simulador de Eletromagnetismo e Motores Magnéticos",
+      "physics-mag-desc": "Força de Lorentz ($\\\\mathbf{F} = q(\\\\mathbf{v} \\\\times \\\\mathbf{B})$) · Atração/Repulsão de Polos · Equações Diferenciais de Motores de CC · Catálogo Químico de Magnetos",
+      "physics-mag-mode-title": "Modo de Simulação",
+      "physics-mag-mode-sub": "Selecione o experimento físico",
+      "physics-mag-tab1": "Força de Lorentz 3D",
+      "physics-mag-tab2": "Interação de Polos",
+      "physics-mag-tab3": "Dinâmica de Motor CC",
+      "physics-mag-params-title": "Parâmetros do Sistema",
+      "physics-mag-params-sub": "Configurações para Força de Lorentz",
+      "physics-mag-lbl-presets": "Presets Rápidos",
+      "physics-mag-lbl-charge": "Carga Elétrica",
+      "physics-mag-lbl-mass": "Massa",
+      "physics-mag-sec-velocity": "🏃 Velocidade Inicial (m/s)",
+      "physics-mag-sec-field": "🧭 Campo Magnético (Tesla)",
+      "physics-mag-sec-poles": "🧲 Força dos Polos",
+      "physics-mag-lbl-pole1": "Polo Magnético 1",
+      "physics-mag-lbl-pole2": "Polo Magnético 2",
+      "physics-mag-help-pole": "Positivo = Norte, Negativo = Sul",
+      "physics-mag-sec-distance": "📏 Distância Espacial",
+      "physics-mag-lbl-distance": "Distância (r)",
+      "physics-mag-sec-power": "⚡ Alimentação e Armadura",
+      "physics-mag-lbl-voltage": "Tensão (V)",
+      "physics-mag-lbl-resistance": "Resistência (R)",
+      "physics-mag-lbl-inductance": "Indutância (L)",
+      "physics-mag-sec-mech": "⚙️ Mecânica e Constantes",
+      "physics-mag-lbl-inertia": "Inércia (J)",
+      "physics-mag-lbl-friction": "Atrito (b)",
+      "physics-mag-lbl-kt": "Constante de Torque (Kt)",
+      "physics-mag-lbl-ke": "Constante Back-EMF (Ke)",
+      "physics-mag-lbl-tload": "Torque de Carga (&tau;_load)",
+      "physics-mag-btn-run": "Executar Simulação",
+      "physics-mag-tbl-title": "📋 Relatório Analítico",
+      "physics-mag-ency-title": "📚 Centro de Eletromagnetismo",
+      "physics-mag-ency-sub": "Biblioteca Química & Física Técnica",
+      "physics-mag-ency-tab1": "Magnetos",
+      "physics-mag-ency-tab2": "Motores",
+      "physics-mag-ency-tab3": "Formulários",
+      "physics-mag-lbl-larmor": "Raio de Larmor",
+      "physics-mag-lbl-cyclotron": "Frequência Ciclotrônica",
+      "physics-mag-lbl-lorentz-init": "Força de Lorentz Inicial",
+      "physics-mag-lbl-pole-force": "Força de Polo",
+      "physics-mag-lbl-behavior": "Comportamento",
+      "physics-mag-val-attraction": "Atração",
+      "physics-mag-val-repulsion": "Repulsão",
+      "physics-mag-lbl-resultant": "Força Resultante",
+      "physics-mag-lbl-rpm": "Rpm Estacionário",
+      "physics-mag-lbl-efficiency": "Rendimento Máx",
+      "physics-mag-lbl-final-speed": "Velocidade Final",
+      "physics-mag-lbl-starting-current": "Corrente de Partida",
+      "physics-mag-lbl-settling-time": "Tempo de Acomodação (5%)",
+      "physics-mag-chart-placeholder": "Os gráficos serão desenhados ao iniciar a simulação",
+      "physics-mag-wb-title-motor": "⚙️ Análise Dinâmica: Motor CC",
+      "physics-mag-wb-desc-motor": "Representação física do rotor com escovas alimentadas",
+      "physics-mag-wb-title-field": "🌀 Campo Físico e Trajetória 3D",
+      "physics-mag-wb-desc-field": "Visualização vetorial interativa"
     });
-    
+
     Object.assign(window.TRANSLATIONS.en, {
       "physics-proj-title": "Projectile Motion Simulator",
       "physics-proj-desc": "Study projectile kinematics with classical air drag and gravity using 4th-order Runge-Kutta integration.",
@@ -850,14 +1056,112 @@ document.addEventListener('DOMContentLoaded', () => {
       "physics-proj-lbl-mass": "Projectile Mass",
       "physics-proj-lbl-dia": "Projectile Diameter",
       "physics-proj-lbl-drag": "Drag Coefficient (Cd)",
-      "physics-proj-btn-calc": "Calculate Trajectory"
+      "physics-proj-btn-calc": "Calculate Trajectory",
+      "physics-tab-proj": "Projectile Motion",
+      "physics-tab-mag": "Magnetism & Motors",
+      "physics-proj-badge-range": "Range (Drag)",
+      "physics-proj-badge-height": "Height (Drag)",
+      "physics-proj-wb-title": "🌀 3D Flight Path Workbench",
+      "physics-proj-wb-sub": "3D animated projectile simulation (Three.js)",
+      "physics-proj-legend-ideal": "● Ideal path",
+      "physics-proj-legend-drag": "● Drag path",
+      "physics-proj-note-scale": "* Trajectory scaled down to fit standard viewport bounds.",
+      "physics-proj-chart-title": "📉 Trajectory Profiles Comparison",
+      "physics-proj-chart-sub": "Comparison of vacuum trajectory vs. real flight path with air drag",
+      "physics-mag-chart-title-lorentz": "📉 Two-Dimensional Trajectory Projection",
+      "physics-mag-chart-sub-lorentz": "XY and XZ projections of the particle's cyclotron spiral",
+      "physics-mag-chart-title-poles": "📉 Magnetic Force vs. Distance Profile",
+      "physics-mag-chart-sub-poles": "Inverse-square Coulomb decay (1/r²)",
+      "physics-mag-chart-title-motor": "📉 Start-Up Transient Response",
+      "physics-mag-chart-sub-motor": "Electrical and mechanical time constants under constant load",
+      "physics-proj-chart-placeholder": "Solve equations to render chart",
+      "physics-proj-opt-baseball": "Baseball (m = 145g, d = 74mm, Cd = 0.30)",
+      "physics-proj-opt-golfball": "Golf Ball (m = 45g, d = 43mm, Cd = 0.25)",
+      "physics-proj-opt-bullet": "Bullet (m = 8g, d = 9mm, Cd = 0.29)",
+      "physics-proj-opt-cannonball": "Cannonball (m = 10kg, d = 150mm, Cd = 0.47)",
+      "physics-proj-sec-launch": "🚀 Launch Conditions",
+      "physics-proj-sec-object": "⚽ Object Characteristics",
+      "physics-proj-cmp-title": "📌 Comparison Mode",
+      "physics-proj-cmp-desc": "Fix the current trajectory as a reference, then change a parameter to compare.",
+      "physics-proj-cmp-btn-fix": "📌 Fix as Reference",
+      "physics-proj-cmp-btn-clear": "🗑 Clear Reference",
+      "physics-proj-kpi-range": "Max Range",
+      "physics-proj-kpi-height": "Peak Altitude",
+      "physics-proj-kpi-time": "Time of Flight",
+      "physics-proj-unit-m": "meters (drag)",
+      "physics-proj-unit-s": "seconds (drag)",
+      "physics-proj-tbl-title": "📋 Flight Dynamics Table",
+      "physics-proj-row-range-vac": "Vacuum Range",
+      "physics-proj-row-range-drag": "Drag Range",
+      "physics-proj-row-height-vac": "Vacuum Peak Height",
+      "physics-proj-row-height-drag": "Drag Peak Height",
+      "physics-proj-row-time-vac": "Vacuum Flight Time",
+      "physics-proj-row-time-drag": "Drag Flight Time",
+      "physics-proj-row-speed-final": "Final Speed (Drag)",
+
+      // Magnetism translation mappings
+      "physics-mag-title": "Electromagnetism & Magnetic Motors Simulator",
+      "physics-mag-desc": "Lorentz force ($\\\\mathbf{F} = q(\\\\mathbf{v} \\\\times \\\\mathbf{B})$) · Pole Attraction/Repulsion · DC Motor Differential Equations · Chemical Magnet Catalog",
+      "physics-mag-mode-title": "Simulation Mode",
+      "physics-mag-mode-sub": "Select the physical experiment",
+      "physics-mag-tab1": "3D Lorentz Force",
+      "physics-mag-tab2": "Pole Interaction",
+      "physics-mag-tab3": "DC Motor Dynamics",
+      "physics-mag-params-title": "System Parameters",
+      "physics-mag-params-sub": "Configure settings for Lorentz simulation",
+      "physics-mag-lbl-presets": "Quick Presets",
+      "physics-mag-lbl-charge": "Electric Charge",
+      "physics-mag-lbl-mass": "Mass",
+      "physics-mag-sec-velocity": "🏃 Initial Velocity (m/s)",
+      "physics-mag-sec-field": "🧭 Magnetic Field (Tesla)",
+      "physics-mag-sec-poles": "🧲 Pole Strength",
+      "physics-mag-lbl-pole1": "Magnetic Pole 1",
+      "physics-mag-lbl-pole2": "Magnetic Pole 2",
+      "physics-mag-help-pole": "Positive = North, Negative = South",
+      "physics-mag-sec-distance": "📏 Spatial Distance",
+      "physics-mag-lbl-distance": "Distance (r)",
+      "physics-mag-sec-power": "⚡ Power & Armature",
+      "physics-mag-lbl-voltage": "Voltage (V)",
+      "physics-mag-lbl-resistance": "Resistance (R)",
+      "physics-mag-lbl-inductance": "Inductance (L)",
+      "physics-mag-sec-mech": "⚙️ Mechanics & Constants",
+      "physics-mag-lbl-inertia": "Inertia (J)",
+      "physics-mag-lbl-friction": "Friction (b)",
+      "physics-mag-lbl-kt": "Torque Constant (Kt)",
+      "physics-mag-lbl-ke": "Back-EMF Constant (Ke)",
+      "physics-mag-lbl-tload": "Load Torque (&tau;_load)",
+      "physics-mag-btn-run": "Run Simulation",
+      "physics-mag-tbl-title": "📋 Analytical Report",
+      "physics-mag-ency-title": "📚 Electromagnetism Center",
+      "physics-mag-ency-sub": "Technical Physics & Chemistry Library",
+      "physics-mag-ency-tab1": "Magnets",
+      "physics-mag-ency-tab2": "Motors",
+      "physics-mag-ency-tab3": "Formulas",
+      "physics-mag-lbl-larmor": "Larmor Radius",
+      "physics-mag-lbl-cyclotron": "Cyclotron Frequency",
+      "physics-mag-lbl-lorentz-init": "Initial Lorentz Force",
+      "physics-mag-lbl-pole-force": "Pole Force",
+      "physics-mag-lbl-behavior": "Behavior",
+      "physics-mag-val-attraction": "Attraction",
+      "physics-mag-val-repulsion": "Repulsion",
+      "physics-mag-lbl-resultant": "Resultant Force",
+      "physics-mag-lbl-rpm": "Steady State Speed",
+      "physics-mag-lbl-efficiency": "Max Efficiency",
+      "physics-mag-lbl-final-speed": "Final Speed",
+      "physics-mag-lbl-starting-current": "Starting Current",
+      "physics-mag-lbl-settling-time": "Settling Time (5%)",
+      "physics-mag-chart-placeholder": "Charts will render when simulation starts",
+      "physics-mag-wb-title-motor": "⚙️ Dynamic Analysis: DC Motor",
+      "physics-mag-wb-desc-motor": "Physical rendering of brush-fed armature rotor",
+      "physics-mag-wb-title-field": "🌀 Physical Field and 3D Trajectory",
+      "physics-mag-wb-desc-field": "Interactive vector visualization"
     });
 
     Object.assign(window.TRANSLATIONS.ja, {
       "physics-proj-title": "大砲とびだせ！シミュレーター",
-      "physics-proj-desc": "空気のじゃま（抵抗）や重力があるなかで、大砲からうちだした弾がどう飛ぶか、スーパーコンピュータ（ルンゲクッタ法）で計算して軌道を見よう！",
+      "physics-proj-desc": "空気のじゃま（抵抗）や重力があるなかで、大砲からうちだした弾がどう飛ぶか、スーパーコンピュータ（ルンgeクッタ法）で計算して軌道を見よう！",
       "physics-proj-preset-title": "うちだすモノを選ぶ",
-      "physics-proj-preset-sub": "ボールや大砲の弾を設定できるよ",
+      "physics-proj-preset-sub": "ボールや大砲 of 弾を設定できるよ",
       "physics-proj-params-title": "うちあげる設定",
       "physics-proj-params-sub": "スピードや角度を決めてみよう！",
       "physics-proj-lbl-vel": "うちあげるスピード",
@@ -865,10 +1169,107 @@ document.addEventListener('DOMContentLoaded', () => {
       "physics-proj-lbl-mass": "玉の重さ (kg)",
       "physics-proj-lbl-dia": "玉の大きさ (m)",
       "physics-proj-lbl-drag": "空気のじゃまレベル (Cd)",
-      "physics-proj-btn-calc": "計算スタート！"
+      "physics-proj-btn-calc": "計算スタート！",
+      "physics-tab-proj": "たいほうのとび方",
+      "physics-tab-mag": "じしゃくとモーター",
+      "physics-proj-badge-range": "とんだきょり",
+      "physics-proj-badge-height": "たかさ",
+      "physics-proj-wb-title": "🌀 ３Dひこうコースのじっけん",
+      "physics-proj-wb-sub": "とんでいくようすを３Dで見よう (Three.js)",
+      "physics-proj-legend-ideal": "● 空気なしのコース",
+      "physics-proj-legend-drag": "● 空気ありのコース",
+      "physics-proj-note-scale": "* コースはがめんに入るように小さくしてあるよ。",
+      "physics-proj-chart-title": "📉 とび方くらべのグラフ",
+      "physics-proj-chart-sub": "空気がある時とない時のとび方をくらべよう",
+      "physics-mag-chart-title-lorentz": "📉 へいめんのきどうグラフ",
+      "physics-mag-chart-sub-lorentz": "つぶがえがくらせんを XY と XZ から見てみよう",
+      "physics-mag-chart-title-poles": "📉 じしゃくの力ときょりのグラフ",
+      "physics-mag-chart-sub-poles": "はなれるほど力は急に弱くなるよ (1/r²)",
+      "physics-mag-chart-title-motor": "📉 モーターが動きだすときのグラフ",
+      "physics-mag-chart-sub-motor": "電気と回転がおちつくまでの時間を見てみよう",
+      "physics-proj-chart-placeholder": "けいさんするとグラフが出るよ",
+      "physics-proj-opt-baseball": "やきゅうのボール (m = 145g, d = 74mm, Cd = 0.30)",
+      "physics-proj-opt-golfball": "ゴルフボール (m = 45g, d = 43mm, Cd = 0.25)",
+      "physics-proj-opt-bullet": "てっぽうの弾 (m = 8g, d = 9mm, Cd = 0.29)",
+      "physics-proj-opt-cannonball": "たいほうの弾 (m = 10kg, d = 150mm, Cd = 0.47)",
+      "physics-proj-sec-launch": "🚀 うちあげの条件",
+      "physics-proj-sec-object": "⚽ 玉のとくちょう",
+      "physics-proj-cmp-title": "📌 くらべっこモード",
+      "physics-proj-cmp-desc": "今のとび方をおぼえさせて、数字を変えてくらべてみよう。",
+      "physics-proj-cmp-btn-fix": "📌 これをおぼえる",
+      "physics-proj-cmp-btn-clear": "🗑 わすれる",
+      "physics-proj-kpi-range": "とんだきょり",
+      "physics-proj-kpi-height": "いちばん高いところ",
+      "physics-proj-kpi-time": "とんでいた時間",
+      "physics-proj-unit-m": "メートル（空気あり）",
+      "physics-proj-unit-s": "びょう（空気あり）",
+      "physics-proj-tbl-title": "📋 くわしいけっか",
+      "physics-proj-row-range-vac": "空気なしのきょり",
+      "physics-proj-row-range-drag": "空気ありのきょり",
+      "physics-proj-row-height-vac": "空気なしの高さ",
+      "physics-proj-row-height-drag": "空気ありの高さ",
+      "physics-proj-row-time-vac": "空気なしの時間",
+      "physics-proj-row-time-drag": "空気ありの時間",
+      "physics-proj-row-speed-final": "さいごのスピード",
+
+      // Magnetism translation mappings
+      "physics-mag-title": "じしゃくの力とうごくモーターの冒険",
+      "physics-mag-desc": "じしゃくのちから（磁石）や、電気のちから（ローレンツ力）、そしてモーターがどうやって回るかを３Dで見てみよう！",
+      "physics-mag-mode-title": "じっけんモード",
+      "physics-mag-mode-sub": "なにを調べるか選んでね",
+      "physics-mag-tab1": "電気の玉と３Dの力",
+      "physics-mag-tab2": "じしゃくのペタペタ・反発",
+      "physics-mag-tab3": "モーターをまわそう！",
+      "physics-mag-params-title": "じっけんの数値",
+      "physics-mag-params-sub": "すうじを変えて、ちからを変えてみよう",
+      "physics-mag-lbl-presets": "はやく読み込む",
+      "physics-mag-lbl-charge": "電気の量",
+      "physics-mag-lbl-mass": "重さ",
+      "physics-mag-sec-velocity": "🏃 じっけんのはじめのスピード (m/s)",
+      "physics-mag-sec-field": "🧭 じしゃくの強さ (Tesla)",
+      "physics-mag-sec-poles": "🧲 磁極の強さ",
+      "physics-mag-lbl-pole1": "じしゃくのしっぽ 1",
+      "physics-mag-lbl-pole2": "じしゃくのしっぽ 2",
+      "physics-mag-help-pole": "プラス = 北極 (N), マイナス = 南極 (S)",
+      "physics-mag-sec-distance": "📏 はなれ具合",
+      "physics-mag-lbl-distance": "きょり (r)",
+      "physics-mag-sec-power": "⚡ でんきとコイル",
+      "physics-mag-lbl-voltage": "でんあつ (V)",
+      "physics-mag-lbl-resistance": "ていこう (R)",
+      "physics-mag-lbl-inductance": "インダクタンス (L)",
+      "physics-mag-sec-mech": "⚙️ ローターと機械",
+      "physics-mag-lbl-inertia": "おもさ（慣性モーメント J）",
+      "physics-mag-lbl-friction": "こすれ摩擦 (b)",
+      "physics-mag-lbl-kt": "トルク係数 (Kt)",
+      "physics-mag-lbl-ke": "逆起電力係数 (Ke)",
+      "physics-mag-lbl-tload": "じゃまトルク (&tau;_load)",
+      "physics-mag-btn-run": "じっけんスタート！",
+      "physics-mag-tbl-title": "📋 くわしい計算結果",
+      "physics-mag-ency-title": "📚 じしゃくの図書館",
+      "physics-mag-ency-sub": "じしゃくやモーターのひみつ",
+      "physics-mag-ency-tab1": "じしゃくの種類",
+      "physics-mag-ency-tab2": "モーターの種類",
+      "physics-mag-ency-tab3": "こうしき",
+      "physics-mag-lbl-larmor": "ラーモア半径",
+      "physics-mag-lbl-cyclotron": "回転周波数",
+      "physics-mag-lbl-lorentz-init": "さいしょのローレンツ力",
+      "physics-mag-lbl-pole-force": "じしゃくの力",
+      "physics-mag-lbl-behavior": "ちからの向き",
+      "physics-mag-val-attraction": "ひきあう",
+      "physics-mag-val-repulsion": "しりぞけあう",
+      "physics-mag-lbl-resultant": "合わさった力",
+      "physics-mag-lbl-rpm": "回転スピード",
+      "physics-mag-lbl-efficiency": "最高効率",
+      "physics-mag-lbl-final-speed": "さいごのスピード",
+      "physics-mag-lbl-starting-current": "さいしょの電流",
+      "physics-mag-lbl-settling-time": "おちつく時間",
+      "physics-mag-chart-placeholder": "じっけんをはじめるとグラフが出るよ",
+      "physics-mag-wb-title-motor": "⚙️ モーターの回転分析",
+      "physics-mag-wb-desc-motor": "ブラシと整流子のモデルが回る様子だよ",
+      "physics-mag-wb-title-field": "🌀 磁界と３Dの動き",
+      "physics-mag-wb-desc-field": "ちからの方向が矢印でわかるよ"
     });
-    
-    // Auto-apply current language
+
     const currentLang = localStorage.getItem('app-language') || 'pt';
     window.translatePage(currentLang);
   }

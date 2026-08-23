@@ -4,15 +4,16 @@ apps/app_fluids/views.py
 REST API views for the Fluid Mechanics module.
 
 Endpoints:
-    POST /api/fluids/pipe-flow/
+    POST /api/fluids/pipe-flow/calculate/
         → Compute full pipe flow analysis. Returns JSON with Reynolds number,
           friction factor, pressure drop, velocity profile, and sweep data.
 
     GET  /api/fluids/pipe-flow/schema/
         → Returns the input schema (field names, units, defaults, constraints)
-          so the frontend can auto-generate the form without hard-coding field names.
+          so the frontend can auto-generate the form without hard-coding field
+          names. Derived from PipeFlowInputSerializer — see apps.core.schema.
 
-    GET  /api/fluids/pipe-flow/
+    GET  /api/fluids/
         → Returns the pipe flow HTML template (full page view).
 """
 
@@ -23,7 +24,12 @@ from django.views.generic import TemplateView
 from rest_framework.views import APIView
 from rest_framework import status
 
-from apps.core.responses import error_response, success_response
+from apps.core.responses import (
+    computation_error_response,
+    error_response,
+    success_response,
+)
+from apps.core.schema import SerializerSchemaView
 from .serializers import PipeFlowInputSerializer
 from .services import PipeFlowService
 
@@ -98,12 +104,10 @@ class PipeFlowCalculateView(APIView):
             service = PipeFlowService(pipe_input)
             result  = service.compute()
         except Exception as exc:
-            logger.exception("PipeFlowService.compute() failed: %s", exc)
-            return error_response(
-                message="Computation failed. Check input values and try again.",
-                code="computation_error",
-                errors={"detail": str(exc)},
-                http_status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            return computation_error_response(
+                exc,
+                view_name="PipeFlowCalculateView",
+                view_logger=logger,
             )
 
         # 4. Serialize result (dataclass → dict)
@@ -116,130 +120,13 @@ class PipeFlowCalculateView(APIView):
 # API View — Input Schema (for form auto-generation)
 # ---------------------------------------------------------------------------
 
-class PipeFlowSchemaView(APIView):
+class PipeFlowSchemaView(SerializerSchemaView):
     """
     GET /api/fluids/pipe-flow/schema/
 
-    Returns the input schema so the frontend can dynamically build the form.
-    Each field includes: label, unit, default, min, max, type.
+    Field constraints (type, default, min, max) are read off
+    ``PipeFlowInputSerializer`` rather than restated here, so tightening a
+    bound on the serializer updates the form automatically. Labels, units and
+    UI step sizes live in that serializer's ``schema_field_meta``.
     """
-
-    def get(self, request, *args, **kwargs):
-        schema = {
-            "title": "Pipe Flow Analysis",
-            "description": (
-                "Darcy-Weisbach analysis for incompressible Newtonian pipe flow. "
-                "Computes Reynolds number, friction factor, pressure drop, "
-                "and velocity profile."
-            ),
-            "fields": [
-                {
-                    "name": "diameter_mm",
-                    "label": "Inner Diameter",
-                    "unit": "mm",
-                    "type": "float",
-                    "default": 50.0,
-                    "min": 0.1,
-                    "max": 10000.0,
-                    "step": 0.1,
-                    "help": "Internal pipe diameter in millimetres.",
-                },
-                {
-                    "name": "length_m",
-                    "label": "Pipe Length",
-                    "unit": "m",
-                    "type": "float",
-                    "default": 100.0,
-                    "min": 0.001,
-                    "max": 100000.0,
-                    "step": 0.1,
-                    "help": "Total straight pipe length.",
-                },
-                {
-                    "name": "roughness_mm",
-                    "label": "Wall Roughness (ε)",
-                    "unit": "mm",
-                    "type": "float",
-                    "default": 0.046,
-                    "min": 0.0,
-                    "max": 10.0,
-                    "step": 0.001,
-                    "help": "Absolute roughness of the pipe wall. Commercial steel: 0.046 mm.",
-                },
-                {
-                    "name": "density_kg_m3",
-                    "label": "Fluid Density",
-                    "unit": "kg/m³",
-                    "type": "float",
-                    "default": 1000.0,
-                    "min": 0.001,
-                    "max": 100000.0,
-                    "step": 0.1,
-                    "help": "Fluid density. Water at 20°C: 998.2 kg/m³.",
-                },
-                {
-                    "name": "viscosity_mpa_s",
-                    "label": "Dynamic Viscosity (μ)",
-                    "unit": "mPa·s",
-                    "type": "float",
-                    "default": 1.002,
-                    "min": 1e-6,
-                    "max": 100000.0,
-                    "step": 0.001,
-                    "help": "Dynamic viscosity. Water at 20°C: 1.002 mPa·s.",
-                },
-                {
-                    "name": "flow_rate_lpm",
-                    "label": "Flow Rate",
-                    "unit": "L/min",
-                    "type": "float",
-                    "default": 120.0,
-                    "min": 0.0,
-                    "max": 1000000.0,
-                    "step": 0.1,
-                    "help": "Volumetric flow rate entering the pipe.",
-                },
-                {
-                    "name": "num_elbows_90",
-                    "label": "90° Elbows",
-                    "unit": "count",
-                    "type": "integer",
-                    "default": 0,
-                    "min": 0,
-                    "max": 100,
-                    "step": 1,
-                    "help": "Number of 90° standard radius elbows.",
-                },
-                {
-                    "name": "num_gate_valves_open",
-                    "label": "Gate Valves (open)",
-                    "unit": "count",
-                    "type": "integer",
-                    "default": 0,
-                    "min": 0,
-                    "max": 100,
-                    "step": 1,
-                    "help": "Number of fully open gate valves.",
-                },
-                {
-                    "name": "num_check_valves",
-                    "label": "Check Valves",
-                    "unit": "count",
-                    "type": "integer",
-                    "default": 0,
-                    "min": 0,
-                    "max": 100,
-                    "step": 1,
-                    "help": "Number of swing check valves.",
-                },
-            ],
-            "preset_fluids": [
-                {"name": "Water (20°C)",    "density": 998.2,  "viscosity": 1.002},
-                {"name": "Water (60°C)",    "density": 983.2,  "viscosity": 0.467},
-                {"name": "Engine Oil",      "density": 888.0,  "viscosity": 100.0},
-                {"name": "Air (20°C, 1atm)","density": 1.204,  "viscosity": 0.0181},
-                {"name": "Mercury (20°C)", "density": 13546.0, "viscosity": 1.526},
-                {"name": "Ethanol (20°C)", "density": 789.0,  "viscosity": 1.2},
-            ],
-        }
-        return success_response(schema)
+    serializer_class = PipeFlowInputSerializer

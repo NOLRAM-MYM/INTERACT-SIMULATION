@@ -7,6 +7,20 @@ Physics service for computing projectile trajectories with air drag.
 import math
 import numpy as np
 
+# ---------------------------------------------------------------------------
+# DC motor reference point
+# ---------------------------------------------------------------------------
+# The torque and back-EMF constants a user enters describe a nominal machine.
+# The magnet material, pole span and pole count then scale those constants away
+# from that nominal point, so the nominal point itself has to be stated
+# somewhere. These two names are it.
+
+#: Airgap flux density the entered Kt/Ke are assumed to have been measured at.
+B_GAP_REFERENCE_T = 1.0
+
+#: Pole count the entered Kt/Ke are assumed to describe (a 2-pole machine).
+POLES_REFERENCE_COUNT = 2
+
 
 class ProjectileMotionService:
     """
@@ -71,6 +85,7 @@ class ProjectileMotionService:
         trajectory = [state.copy()]
         t = 0.0
         max_steps = 10000
+        warnings: list[str] = []
 
         while state[1] >= 0.0 and len(trajectory) < max_steps:
             # RK4 Integration step
@@ -88,7 +103,21 @@ class ProjectileMotionService:
                 break
 
         traj_arr = np.array(trajectory)
-        
+
+        # The loop above also exits on max_steps, which at dt = 0.01 s caps the
+        # flight at 100 s. A fast, low-drag launch (the serializer allows up to
+        # 1000 m/s and a drag coefficient of 0) is still climbing or falling
+        # when that hits, and every KPI below then describes a projectile that
+        # never landed. Say so rather than reporting a landing that didn't
+        # happen.
+        if len(trajectory) >= max_steps and traj_arr[-1, 1] > 0.0:
+            warnings.append(
+                f"Integration stopped at the {max_steps}-step limit "
+                f"({max_steps * dt:.0f} s) with the projectile still "
+                f"{traj_arr[-1, 1]:.1f} m above the ground. Range and flight "
+                f"time are lower bounds, not the true impact values."
+            )
+
         # Interpolate final hit point for precision
         if len(traj_arr) > 1 and traj_arr[-1, 1] < 0.0:
             last = traj_arr[-2]
@@ -106,11 +135,14 @@ class ProjectileMotionService:
         step_sz = max(1, len(x_drag) // 100)
         x_drag_resampled = x_drag[::step_sz].tolist()
         y_drag_resampled = y_drag[::step_sz].tolist()
-        
-        # Ensure exact end point is added
-        if len(x_drag) > 0:
-            x_drag_resampled.append(x_drag[-1])
-            y_drag_resampled.append(y_drag[-1])
+
+        # Ensure the exact impact point is the last sample. The slice above only
+        # lands on it when len-1 is a multiple of step_sz; appending
+        # unconditionally duplicated it in exactly those cases, which draws a
+        # zero-length final segment and repeats a row in the exported data.
+        if len(x_drag) > 0 and (len(x_drag) - 1) % step_sz != 0:
+            x_drag_resampled.append(float(x_drag[-1]))
+            y_drag_resampled.append(float(y_drag[-1]))
 
         # KPIs for drag case
         range_drag = float(x_drag[-1])
@@ -123,6 +155,7 @@ class ProjectileMotionService:
             "y_vacuum": y_vac.tolist(),
             "x_drag": x_drag_resampled,
             "y_drag": y_drag_resampled,
+            "warnings": warnings,
             "stats": {
                 "range_vacuum_m": float(range_vac),
                 "height_vacuum_m": float(h_max_vac),
@@ -131,6 +164,7 @@ class ProjectileMotionService:
                 "height_drag_m": h_max_drag,
                 "time_drag_s": t_flight_drag,
                 "final_velocity_drag_m_s": v_final_drag,
+                "truncated": bool(warnings),
             }
         }
 
@@ -237,10 +271,26 @@ class MagnetismService:
     def compute_poles(qm1: float, qm2: float, r: float):
         # Coulomb's law for magnetism: F = mu_0 * qm1 * qm2 / (4 * pi * r^2)
         # F = 1e-7 * qm1 * qm2 / r^2
-        r_profile = np.linspace(0.05, 2.0, 100)
+        # Sweep a window centred on the operating separation instead of a fixed
+        # 0.05-2 m span. `r` has no upper bound and only a cross-field check for
+        # positivity, so outside that span the operating-point marker the chart
+        # draws fell off the plotted curve entirely.
+        r_lo = max(r * 0.2, 1e-4)
+        r_hi = max(r * 2.0, r_lo * 1.01)
+        r_profile = np.linspace(r_lo, r_hi, 100)
         f_profile = (1e-7 * qm1 * qm2) / (r_profile ** 2)
 
         force_val = (1e-7 * qm1 * qm2) / (r ** 2) if r > 0 else 0.0
+
+        # Sign convention: like poles give a positive (repulsive) product,
+        # opposite poles a negative (attractive) one. Zero is neither — it used
+        # to fall through to "Repulsion".
+        if force_val > 0:
+            interaction = "Repulsion"
+        elif force_val < 0:
+            interaction = "Attraction"
+        else:
+            interaction = "None"
 
         return {
             "r_profile": r_profile.tolist(),
@@ -248,20 +298,58 @@ class MagnetismService:
             "stats": {
                 "distance_m": r,
                 "force_n": force_val,
-                "type": "Attraction" if force_val < 0 else "Repulsion",
+                "type": interaction,
             }
         }
 
     @staticmethod
-    def compute_motor(V: float, R: float, L: float, J: float, b: float, Kt: float, Ke: float, tl: float, t_max: float = 1.5):
+    def compute_motor(
+        V: float, R: float, L: float, J: float, b: float, Kt: float, Ke: float, tl: float,
+        poles_count: int = 2, magnet_material: str = "ndfeb_n52", pole_span_deg: float = 120.0,
+        t_max: float = 1.5
+    ):
+        MATERIALS = {
+            "ndfeb_n52": {"name": "Neodímio N52 (NdFeB)", "br": 1.45, "temp_max": "80°C"},
+            "ndfeb_n42": {"name": "Neodímio N42 (NdFeB)", "br": 1.30, "temp_max": "80°C"},
+            "smco": {"name": "Samário-Cobalto (Sm2Co17)", "br": 1.10, "temp_max": "300°C"},
+            "alnico5": {"name": "AlNiCo 5", "br": 1.25, "temp_max": "525°C"},
+            "ferrite": {"name": "Ferrite Bário (Y30)", "br": 0.40, "temp_max": "250°C"},
+        }
+        mat_info = MATERIALS.get(magnet_material, MATERIALS["ndfeb_n52"])
+        br = mat_info["br"]
+
+        # Calculated Airgap Flux Density: B_gap = B_r * (span_deg / 180.0) * leakage_factor (0.85)
+        span_clamped = max(30.0, min(170.0, float(pole_span_deg)))
+        b_gap = br * (span_clamped / 180.0) * 0.85
+
+        # Effective torque & back-EMF constants.
+        #
+        # Kt and Ke are entered for a nominal machine; the magnet choice, pole
+        # span and pole count scale them away from that nominal point. Both
+        # reference values are named rather than left as bare literals — the
+        # airgap ratio used to be written `b_gap / 1.0`, which read as a no-op
+        # and hid the fact that 1 T is the assumed design point.
+        #
+        # Torque per amp is proportional to the number of active pole pairs, so
+        # `poles_count` scales the constants relative to the 2-pole reference.
+        # It used to be validated, threaded all the way down here, and then only
+        # echoed back in the response — changing "Pole Count" in the UI moved no
+        # number at all.
+        pole_pairs = max(1, int(poles_count) // 2)
+        pole_factor = pole_pairs / (POLES_REFERENCE_COUNT // 2)
+
+        flux_factor = (b_gap / B_GAP_REFERENCE_T) * pole_factor
+        Kt_eff = Kt * flux_factor
+        Ke_eff = Ke * flux_factor
+
         dt = 0.001
         # State: [I, omega]
         state = np.array([0.0, 0.0])
 
         def derivatives(s):
             I, omega = s[0], s[1]
-            dI = (V - R * I - Ke * omega) / L
-            domega = (Kt * I - b * omega - tl) / J
+            dI = (V - R * I - Ke_eff * omega) / L
+            domega = (Kt_eff * I - b * omega - tl) / J
             return np.array([dI, domega])
 
         t_pts = np.arange(0, t_max + dt, dt)
@@ -279,8 +367,8 @@ class MagnetismService:
         I = traj_arr[:, 0]
         omega = traj_arr[:, 1]
 
-        # Calculate torque: tau = Kt * I
-        torque = Kt * I
+        # Calculate torque: tau = Kt_eff * I
+        torque = Kt_eff * I
 
         # Calculate efficiency: eta = (tau * omega) / (V * I) * 100
         efficiency = []
@@ -289,21 +377,25 @@ class MagnetismService:
             p_out = t_val * o_val
             if p_in > 1e-5 and p_out > 0:
                 eff = (p_out / p_in) * 100.0
-                efficiency.append(min(100.0, eff))
+                efficiency.append(min(99.5, eff))
             else:
                 efficiency.append(0.0)
 
-        # Steady state speed: last 5% average
+        # Steady state values: last 50 points average
         steady_speed = float(np.mean(omega[-50:]))
         steady_speed_rpm = steady_speed * (30.0 / math.pi)
+        steady_current = float(np.mean(I[-50:]))
+        steady_torque = float(np.mean(torque[-50:]))
 
-        # Starting current: max(I)
+        # Power calculations at steady state
+        p_elec = V * steady_current
+        p_mech = steady_torque * steady_speed
+        p_cu = (steady_current ** 2) * R
+        efficiency_steady = (p_mech / p_elec * 100.0) if p_elec > 1e-3 and p_mech > 0 else 0.0
+        efficiency_steady = min(99.5, max(0.0, efficiency_steady))
+
         starting_current = float(np.max(I))
-
-        # Max torque
         max_torque = float(np.max(torque))
-
-        # Max efficiency
         max_eff = float(np.max(efficiency))
 
         # Settling time: time to reach within 5% of final steady state speed
@@ -344,6 +436,16 @@ class MagnetismService:
                 "settling_time_s": settling_time,
                 "max_torque_nm": max_torque,
                 "max_efficiency_pct": max_eff,
+                "poles_count": poles_count,
+                "magnet_material": magnet_material,
+                "magnet_material_name": mat_info["name"],
+                "remanence_br_t": br,
+                "b_gap_t": round(b_gap, 3),
+                "pole_span_deg": round(span_clamped, 1),
+                "p_elec_w": round(p_elec, 2),
+                "p_mech_w": round(p_mech, 2),
+                "p_cu_w": round(p_cu, 2),
+                "efficiency_steady_pct": round(efficiency_steady, 1),
             }
         }
 

@@ -11,10 +11,10 @@
   <!-- Sub-navigation Tabs -->
   <div class="chemistry-tabs" style="display: flex; gap: 12px; margin-bottom: 24px; border-bottom: 1px solid var(--border-subtle); padding-bottom: 12px;">
     <button type="button" class="btn btn--outline chem-tab-btn chem-tab-btn--active" data-tab="explorer" style="display: flex; align-items: center; gap: 8px;">
-      <span>⚛️</span> Tabela Periódica &amp; Átomo 3D
+      <span>⚛️</span> <span data-i18n="chem-tab-explorer">Tabela Periódica &amp; Átomo 3D</span>
     </button>
     <button type="button" class="btn btn--outline chem-tab-btn" data-tab="simulator" style="display: flex; align-items: center; gap: 8px;">
-      <span>🧲</span> Simulador de Ligações &amp; Reações
+      <span>🧲</span> <span data-i18n="chem-tab-simulator">Simulador de Ligações &amp; Reações</span>
     </button>
   </div>
 
@@ -28,7 +28,7 @@
     </div>
     <div class="page-header__badges">
       <span class="stat-badge stat-badge--blue" id="badge-element">
-        <span>Selecionado</span><span id="element-value">Ferro (Fe)</span>
+        <span data-i18n="chem-badge-selected">Selecionado</span><span id="element-value">Ferro (Fe)</span>
       </span>
       <span class="stat-badge stat-badge--green" id="badge-number">
         <span>Z</span><span id="number-value">26</span>
@@ -70,6 +70,29 @@
             <button type="button" class="btn btn--outline" id="btn-view-top" style="padding:4px 6px; font-size:0.68rem; justify-content:center; min-height:auto;" data-i18n="cam-btn-top">Superior</button>
             <button type="button" class="btn btn--outline" id="btn-view-inlet" style="padding:4px 6px; font-size:0.68rem; justify-content:center; min-height:auto;" data-i18n="cam-btn-inlet">Frontal</button>
           </div>
+
+          <!-- XYZ Sliders. chemistry.js has always driven these (it syncs them
+               from the camera each frame and moves the camera on input), but
+               the markup was missing here — chemistry was the only 3D page
+               without fine camera control, and the per-frame sync ran against
+               elements that never existed. -->
+          <div style="display:flex; flex-direction:column; gap:6px;">
+            <div style="display:flex; align-items:center; gap:8px; font-size:0.7rem; font-family:var(--font-mono);">
+              <span style="width:12px; color:#ef4444; font-weight:bold;">X</span>
+              <input type="range" id="cam-slider-x" min="-8" max="8" step="0.05" value="0" style="flex:1; height:4px; background:var(--bg-input); border-radius:2px; accent-color:#ef4444;" aria-label="Camera X">
+              <span id="cam-val-x" style="width:28px; text-align:right;">0.00</span>
+            </div>
+            <div style="display:flex; align-items:center; gap:8px; font-size:0.7rem; font-family:var(--font-mono);">
+              <span style="width:12px; color:#10b981; font-weight:bold;">Y</span>
+              <input type="range" id="cam-slider-y" min="-8" max="8" step="0.05" value="3" style="flex:1; height:4px; background:var(--bg-input); border-radius:2px; accent-color:#10b981;" aria-label="Camera Y">
+              <span id="cam-val-y" style="width:28px; text-align:right;">3.00</span>
+            </div>
+            <div style="display:flex; align-items:center; gap:8px; font-size:0.7rem; font-family:var(--font-mono);">
+              <span style="width:12px; color:#3b82f6; font-weight:bold;">Z</span>
+              <input type="range" id="cam-slider-z" min="-8" max="8" step="0.05" value="6" style="flex:1; height:4px; background:var(--bg-input); border-radius:2px; accent-color:#3b82f6;" aria-label="Camera Z">
+              <span id="cam-val-z" style="width:28px; text-align:right;">6.00</span>
+            </div>
+          </div>
         </div>
       </div>
 
@@ -89,7 +112,7 @@
 
   <aside class="floating-panel floating-panel--left" id="config-panel" role="dialog" aria-label="Controles Químicos" aria-hidden="true">
     <div class="floating-panel__header">
-      <span class="floating-panel__title">⚙️ Configuração</span>
+      <span class="floating-panel__title" data-i18n="panel-config-title">⚙️ Configuração</span>
       <div class="floating-panel__actions">
         <button class="floating-panel__pin" id="pin-config" aria-label="Fixar painel" aria-pressed="false">📌</button>
         <button class="floating-panel__close" aria-label="Fechar">✕</button>
@@ -103,14 +126,14 @@
         <div class="card" style="margin-bottom:16px;">
           <div class="card__header">
             <div>
-              <div class="card__title">Buscar Elemento</div>
-              <div class="card__subtitle">Digite o nome, símbolo ou número atômico</div>
+              <div class="card__title" data-i18n="chem-search-title">Buscar Elemento</div>
+              <div class="card__subtitle" data-i18n="chem-search-sub">Digite o nome, símbolo ou número atômico</div>
             </div>
           </div>
           <div class="form-group" style="margin-bottom:12px">
-            <input class="form-input" type="text" id="element-search" placeholder="Ex: Fe, Carbono, 8" aria-label="Buscar elemento">
+            <input class="form-input" type="text" id="element-search" placeholder="Ex: Fe, Carbono, 8" data-i18n-placeholder="chem-search-placeholder" aria-label="Buscar elemento">
           </div>
-          <button class="btn btn--primary btn--full" id="search-btn">Buscar</button>
+          <button class="btn btn--primary btn--full" id="search-btn" data-i18n="chem-search-btn">Buscar</button>
         </div>
 
         <!-- PERIODIC TABLE TRIGGER (opens the full-size wide panel — the
@@ -119,31 +142,31 @@
         <div class="card" id="periodic-table-card" style="margin-bottom:16px;">
           <div class="card__header">
             <div>
-              <div class="card__title">Tabela Periódica</div>
-              <div class="card__subtitle">Veja todos os 118 elementos em tamanho completo</div>
+              <div class="card__title" data-i18n="chem-pt-title">Tabela Periódica</div>
+              <div class="card__subtitle" data-i18n="chem-pt-sub">Veja todos os 118 elementos em tamanho completo</div>
             </div>
           </div>
-          <button type="button" class="btn btn--primary btn--full" id="btn-open-periodic-table">🧪 Abrir Tabela Periódica Completa</button>
+          <button type="button" class="btn btn--primary btn--full" id="btn-open-periodic-table" data-i18n="chem-pt-open">🧪 Abrir Tabela Periódica Completa</button>
         </div>
 
         <!-- Quick Info Card -->
         <div class="card">
           <div class="card__header">
             <div>
-              <div class="card__title">Famílias Químicas</div>
-              <div class="card__subtitle">Legenda de Cores da Tabela</div>
+              <div class="card__title" data-i18n="chem-fam-title">Famílias Químicas</div>
+              <div class="card__subtitle" data-i18n="chem-fam-sub">Legenda de Cores da Tabela</div>
             </div>
           </div>
           <div style="display:flex; flex-direction:column; gap:6px; font-size:0.75rem; color:var(--text-secondary);">
-            <div style="display:flex; align-items:center; gap:8px;"><span style="width:12px; height:12px; border-radius:3px; background:rgba(239, 68, 68, 0.3); border:1px solid rgba(239,68,68,0.7);"></span> Metais Alcalinos</div>
-            <div style="display:flex; align-items:center; gap:8px;"><span style="width:12px; height:12px; border-radius:3px; background:rgba(245, 158, 11, 0.3); border:1px solid rgba(245,158,11,0.7);"></span> Alcalinoterrosos</div>
-            <div style="display:flex; align-items:center; gap:8px;"><span style="width:12px; height:12px; border-radius:3px; background:rgba(51, 65, 85, 0.4); border:1px solid rgba(51,65,85,0.8);"></span> Metais de Transição</div>
-            <div style="display:flex; align-items:center; gap:8px;"><span style="width:12px; height:12px; border-radius:3px; background:rgba(59, 130, 246, 0.3); border:1px solid rgba(59,130,246,0.7);"></span> Semimetais</div>
-            <div style="display:flex; align-items:center; gap:8px;"><span style="width:12px; height:12px; border-radius:3px; background:rgba(16, 185, 129, 0.3); border:1px solid rgba(16,185,129,0.7);"></span> Não-Metais / H</div>
-            <div style="display:flex; align-items:center; gap:8px;"><span style="width:12px; height:12px; border-radius:3px; background:rgba(139, 92, 246, 0.3); border:1px solid rgba(139,92,246,0.7);"></span> Halogênios</div>
-            <div style="display:flex; align-items:center; gap:8px;"><span style="width:12px; height:12px; border-radius:3px; background:rgba(6, 182, 212, 0.3); border:1px solid rgba(6,182,212,0.7);"></span> Gases Nobres</div>
-            <div style="display:flex; align-items:center; gap:8px;"><span style="width:12px; height:12px; border-radius:3px; background:rgba(167, 139, 250, 0.3); border:1px solid rgba(167,139,250,0.7);"></span> Lantanídeos</div>
-            <div style="display:flex; align-items:center; gap:8px;"><span style="width:12px; height:12px; border-radius:3px; background:rgba(244, 114, 182, 0.3); border:1px solid rgba(244,114,182,0.7);"></span> Actinídeos</div>
+            <div style="display:flex; align-items:center; gap:8px;"><span style="width:12px; height:12px; border-radius:3px; background:rgba(239, 68, 68, 0.3); border:1px solid rgba(239,68,68,0.7);"></span> <span data-i18n="chem-fam-alkali">Metais Alcalinos</span></div>
+            <div style="display:flex; align-items:center; gap:8px;"><span style="width:12px; height:12px; border-radius:3px; background:rgba(245, 158, 11, 0.3); border:1px solid rgba(245,158,11,0.7);"></span> <span data-i18n="chem-fam-alkaline">Alcalinoterrosos</span></div>
+            <div style="display:flex; align-items:center; gap:8px;"><span style="width:12px; height:12px; border-radius:3px; background:rgba(51, 65, 85, 0.4); border:1px solid rgba(51,65,85,0.8);"></span> <span data-i18n="chem-fam-transition">Metais de Transição</span></div>
+            <div style="display:flex; align-items:center; gap:8px;"><span style="width:12px; height:12px; border-radius:3px; background:rgba(59, 130, 246, 0.3); border:1px solid rgba(59,130,246,0.7);"></span> <span data-i18n="chem-fam-metalloid">Semimetais</span></div>
+            <div style="display:flex; align-items:center; gap:8px;"><span style="width:12px; height:12px; border-radius:3px; background:rgba(16, 185, 129, 0.3); border:1px solid rgba(16,185,129,0.7);"></span> <span data-i18n="chem-fam-nonmetal">Não-Metais / H</span></div>
+            <div style="display:flex; align-items:center; gap:8px;"><span style="width:12px; height:12px; border-radius:3px; background:rgba(139, 92, 246, 0.3); border:1px solid rgba(139,92,246,0.7);"></span> <span data-i18n="chem-fam-halogen">Halogênios</span></div>
+            <div style="display:flex; align-items:center; gap:8px;"><span style="width:12px; height:12px; border-radius:3px; background:rgba(6, 182, 212, 0.3); border:1px solid rgba(6,182,212,0.7);"></span> <span data-i18n="chem-fam-noble">Gases Nobres</span></div>
+            <div style="display:flex; align-items:center; gap:8px;"><span style="width:12px; height:12px; border-radius:3px; background:rgba(167, 139, 250, 0.3); border:1px solid rgba(167,139,250,0.7);"></span> <span data-i18n="chem-fam-lanthanide">Lantanídeos</span></div>
+            <div style="display:flex; align-items:center; gap:8px;"><span style="width:12px; height:12px; border-radius:3px; background:rgba(244, 114, 182, 0.3); border:1px solid rgba(244,114,182,0.7);"></span> <span data-i18n="chem-fam-actinide">Actinídeos</span></div>
           </div>
         </div>
       </div>
@@ -154,81 +177,42 @@
         <div class="card" style="margin-bottom:16px;">
           <div class="card__header">
             <div>
-              <div class="card__title">🧪 Montador de Moléculas</div>
-              <div class="card__subtitle">Sintetize compostos ou monte um personalizado</div>
+              <div class="card__title" data-i18n="chem-builder-title">🧪 Montador de Moléculas</div>
+              <div class="card__subtitle" data-i18n="chem-builder-sub">Sintetize compostos ou monte um personalizado</div>
             </div>
           </div>
 
           <!-- Mode switcher tabs inside card -->
           <div style="display:flex; gap:6px; margin-bottom:14px; background:rgba(0,0,0,0.2); padding:3px; border-radius:6px; border:1px solid var(--border-subtle);">
-            <button type="button" class="btn btn--full chem-mode-tab-btn chem-mode-tab-btn--active" id="btn-mode-preset" style="padding:4px 6px; font-size:0.7rem; min-height:auto; font-weight:600; border:none; background:transparent;">Predefinidos</button>
-            <button type="button" class="btn btn--full chem-mode-tab-btn" id="btn-mode-custom" style="padding:4px 6px; font-size:0.7rem; min-height:auto; font-weight:500; border:none; background:transparent;">Criador Dinâmico</button>
+            <button type="button" class="btn btn--full chem-mode-tab-btn chem-mode-tab-btn--active" id="btn-mode-preset" style="padding:4px 6px; font-size:0.7rem; min-height:auto; font-weight:600; border:none; background:transparent;" data-i18n="chem-mode-preset">Predefinidos</button>
+            <button type="button" class="btn btn--full chem-mode-tab-btn" id="btn-mode-custom" style="padding:4px 6px; font-size:0.7rem; min-height:auto; font-weight:500; border:none; background:transparent;" data-i18n="chem-mode-custom">Criador Dinâmico</button>
           </div>
 
           <!-- PRESETS VIEW -->
           <div id="view-preset-molecule">
             <div class="form-group" style="margin-bottom:14px;">
-              <label class="form-label" for="compound-select">Selecione uma Molécula</label>
+              <label class="form-label" for="compound-select" data-i18n="chem-lbl-molecule">Selecione uma Molécula</label>
               <select class="form-input" id="compound-select" aria-label="Selecionar composto">
-                <option value="H2O">Água (H2O)</option>
-                <option value="NaCl">Sal de Cozinha (NaCl)</option>
-                <option value="CO2">Dióxido de Carbono (CO2)</option>
-                <option value="NH3">Amônia (NH3)</option>
-                <option value="CH4">Metano (CH4)</option>
-                <option value="HCl">Ácido Clorídrico (HCl)</option>
-                <option value="Fe2O3">Ferrugem (Fe2O3)</option>
-                <option value="LiF">Fluoreto de Lítio (LiF)</option>
-                <option value="MgO">Óxido de Magnésio (MgO)</option>
+                <option value="H2O" data-i18n="chem-opt-h2o">Água (H2O)</option>
+                <option value="NaCl" data-i18n="chem-opt-nacl">Sal de Cozinha (NaCl)</option>
+                <option value="CO2" data-i18n="chem-opt-co2">Dióxido de Carbono (CO2)</option>
+                <option value="NH3" data-i18n="chem-opt-nh3">Amônia (NH3)</option>
+                <option value="CH4" data-i18n="chem-opt-ch4">Metano (CH4)</option>
+                <option value="HCl" data-i18n="chem-opt-hcl">Ácido Clorídrico (HCl)</option>
+                <option value="Fe2O3" data-i18n="chem-opt-fe2o3">Ferrugem (Fe2O3)</option>
+                <option value="LiF" data-i18n="chem-opt-lif">Fluoreto de Lítio (LiF)</option>
+                <option value="MgO" data-i18n="chem-opt-mgo">Óxido de Magnésio (MgO)</option>
               </select>
             </div>
-            <button class="btn btn--primary btn--full" id="synthesize-btn">Sintetizar Molécula</button>
+            <button class="btn btn--primary btn--full" id="synthesize-btn" data-i18n="chem-btn-synthesize">Sintetizar Molécula</button>
           </div>
 
           <!-- CUSTOM CREATOR VIEW (Hidden by default) -->
           <div id="view-custom-molecule" style="display:none;">
-            <!-- 1. Add Atom -->
-            <div style="font-size:0.75rem; font-weight:600; color:var(--text-secondary); margin-bottom:6px; display:flex; align-items:center; gap:4px;">
-              <span>⚛️</span> 1. Adicionar Átomos
-            </div>
-            <div style="display:flex; gap:6px; margin-bottom:10px;">
-              <select class="form-input" id="custom-atom-select" style="flex:2; font-size:0.75rem;" aria-label="Elemento">
-                <option value="H">Carregando elementos…</option>
-              </select>
-              <button type="button" class="btn btn--outline" id="btn-add-atom" style="flex:1; padding:4px 8px; font-size:0.72rem; min-height:auto;">+ Átomo</button>
-            </div>
-            
-            <!-- Atoms List -->
-            <div style="max-height:90px; overflow-y:auto; background:rgba(0,0,0,0.15); border:1px solid var(--border-subtle); border-radius:6px; padding:6px 10px; margin-bottom:12px; font-size:0.72rem; display:flex; flex-direction:column; gap:4px;" id="atoms-list-container">
-              <span style="color:var(--text-muted); font-style:italic;">Nenhum átomo adicionado.</span>
-            </div>
-
-            <!-- 2. Add Bond -->
-            <div style="font-size:0.75rem; font-weight:600; color:var(--text-secondary); margin-bottom:6px; display:flex; align-items:center; gap:4px;">
-              <span>🔗</span> 2. Conectar Ligações
-            </div>
-            <div style="display:grid; grid-template-columns:1fr 1fr; gap:6px; margin-bottom:8px;">
-              <select class="form-input" id="bond-atom1" aria-label="Átomo 1" style="font-size:0.72rem; padding:4px 8px; min-height:auto;"><option value="">— Átomo A —</option></select>
-              <select class="form-input" id="bond-atom2" aria-label="Átomo 2" style="font-size:0.72rem; padding:4px 8px; min-height:auto;"><option value="">— Átomo B —</option></select>
-            </div>
-            <div style="display:flex; gap:6px; margin-bottom:12px;">
-              <select class="form-input" id="bond-type-select" style="flex:2; font-size:0.72rem; padding:4px 8px; min-height:auto;" aria-label="Tipo de ligação">
-                <option value="1">Ligação Simples (Sigma)</option>
-                <option value="2">Ligação Dupla (Sigma + Pi)</option>
-                <option value="3">Ligação Tríplice (Sigma + 2 Pi)</option>
-              </select>
-              <button type="button" class="btn btn--outline" id="btn-add-bond" style="flex:1; padding:4px 8px; font-size:0.72rem; min-height:auto;">+ Conexão</button>
-            </div>
-
-            <!-- Bonds List -->
-            <div style="max-height:90px; overflow-y:auto; background:rgba(0,0,0,0.15); border:1px solid var(--border-subtle); border-radius:6px; padding:6px 10px; margin-bottom:14px; font-size:0.72rem; display:flex; flex-direction:column; gap:4px;" id="bonds-list-container">
-              <span style="color:var(--text-muted); font-style:italic;">Nenhuma ligação criada.</span>
-            </div>
-
-            <!-- Actions -->
-            <div style="display:flex; gap:6px;">
-              <button type="button" class="btn btn--outline" id="btn-clear-custom" style="flex:1; padding:6px 8px; font-size:0.75rem; min-height:auto;">Limpar</button>
-              <button type="button" class="btn btn--primary" id="btn-simulate-custom" style="flex:2; padding:6px 8px; font-size:0.75rem; min-height:auto; background:linear-gradient(135deg, var(--accent-primary) 0%, #6d28d9 100%); font-weight:600;">Simular Átomos</button>
-            </div>
+            <p style="font-size:0.78rem; color:var(--text-secondary); margin-bottom:12px; line-height:1.5;" data-i18n="chem-custom-desc">
+              Monte moléculas arrastando elementos da tabela periódica e conectando átomos para criar ligações — a bancada valida as regras de valência em tempo real.
+            </p>
+            <button type="button" class="btn btn--primary btn--full" id="btn-open-molecule-builder" data-i18n="chem-btn-open-builder">🧪 Abrir Bancada de Montagem</button>
           </div>
         </div>
 
@@ -236,39 +220,39 @@
         <div class="card">
           <div class="card__header">
             <div>
-              <div class="card__title">Reações Químicas</div>
-              <div class="card__subtitle">Gere produtos e subprodutos</div>
+              <div class="card__title" data-i18n="chem-rxn-title">Reações Químicas</div>
+              <div class="card__subtitle" data-i18n="chem-rxn-sub">Gere produtos e subprodutos</div>
             </div>
           </div>
           
           <div class="form-group">
-            <label class="form-label" for="reaction-select">Preset de Reação</label>
+            <label class="form-label" for="reaction-select" data-i18n="chem-lbl-rxn">Preset de Reação</label>
             <select class="form-input" id="reaction-select" aria-label="Selecionar reação">
-              <option value="sodium_water">Metal Sódio + Água</option>
-              <option value="haber_bosch">Síntese de Amônia (Haber-Bosch)</option>
-              <option value="combustion_methane">Combustão Completa de Metano</option>
-              <option value="neutralization">Neutralização Ácido-Base (HCl + NaOH)</option>
+              <option value="sodium_water" data-i18n="chem-opt-rxn-sodium">Metal Sódio + Água</option>
+              <option value="haber_bosch" data-i18n="chem-opt-rxn-haber">Síntese de Amônia (Haber-Bosch)</option>
+              <option value="combustion_methane" data-i18n="chem-opt-rxn-combustion">Combustão Completa de Metano</option>
+              <option value="neutralization" data-i18n="chem-opt-rxn-neutral">Neutralização Ácido-Base (HCl + NaOH)</option>
             </select>
           </div>
           
-          <button class="btn btn--primary btn--full" id="react-btn" style="background: linear-gradient(135deg, var(--accent-success) 0%, #047857 100%); box-shadow: 0 4px 14px rgba(16,185,129,0.3);">Desencadear Reação</button>
+          <button class="btn btn--primary btn--full" id="react-btn" style="background: linear-gradient(135deg, var(--accent-success) 0%, #047857 100%); box-shadow: 0 4px 14px rgba(16,185,129,0.3);" data-i18n="chem-btn-react">Desencadear Reação</button>
         </div>
 
         <!-- Stoichiometry engine: arbitrary formula -> real molar mass -->
         <div class="card" style="margin-top:16px;">
           <div class="card__header">
             <div>
-              <div class="card__title">⚖️ Motor de Estequiometria</div>
-              <div class="card__subtitle">Massa molar de qualquer fórmula (ex: C6H12O6, Fe2(SO4)3)</div>
+              <div class="card__title" data-i18n="chem-stoich-title">⚖️ Motor de Estequiometria</div>
+              <div class="card__subtitle" data-i18n="chem-stoich-sub">Massa molar de qualquer fórmula (ex: C6H12O6, Fe2(SO4)3)</div>
             </div>
           </div>
 
           <div class="form-group">
-            <label class="form-label" for="stoich-formula">Fórmula Química</label>
+            <label class="form-label" for="stoich-formula" data-i18n="chem-lbl-formula">Fórmula Química</label>
             <input class="form-input" type="text" id="stoich-formula" placeholder="Ex: C6H12O6" value="C6H12O6" aria-label="Fórmula química">
           </div>
 
-          <button class="btn btn--primary btn--full" id="stoich-btn">Calcular Massa Molar</button>
+          <button class="btn btn--primary btn--full" id="stoich-btn" data-i18n="chem-btn-stoich">Calcular Massa Molar</button>
 
           <div id="stoich-result" style="margin-top:12px; font-size:0.8rem;"></div>
         </div>
@@ -279,10 +263,10 @@
 
   <aside class="floating-panel floating-panel--right" id="results-panel" role="dialog" aria-label="Relatórios e Propriedades" aria-hidden="true">
     <div class="floating-panel__header">
-      <span class="floating-panel__title">📊 Resultados</span>
+      <span class="floating-panel__title" data-i18n="panel-results-title">📊 Resultados</span>
       <div class="floating-panel__actions">
         <button class="floating-panel__pin" id="pin-results" aria-label="Fixar painel" aria-pressed="false">📌</button>
-        <button class="floating-panel__export" id="export-results">⬇ Exportar</button>
+        <button class="floating-panel__export" id="export-results" data-i18n="panel-export">⬇ Exportar</button>
         <button class="floating-panel__close" aria-label="Fechar">✕</button>
       </div>
     </div>
@@ -329,10 +313,10 @@
     </div>
   </aside>
 
-  <!-- ============ WIDE PANEL: Full Periodic Table ============ -->
+  <!-- ============ WIDE PANEL: Full Periodic Table / Molecule Builder ============ -->
   <aside class="floating-panel floating-panel--wide" id="periodic-panel" role="dialog" aria-label="Tabela Periódica Completa" aria-hidden="true">
     <div class="floating-panel__header">
-      <span class="floating-panel__title">🧪 Tabela Periódica dos Elementos Químicos</span>
+      <span class="floating-panel__title" id="periodic-panel-title">🧪 Tabela Periódica dos Elementos Químicos</span>
       <div class="floating-panel__actions">
         <button class="floating-panel__close" aria-label="Fechar">✕</button>
       </div>
@@ -341,6 +325,35 @@
       <div class="periodic-table-container" style="background:none; border:none; padding:0;">
         <div class="periodic-table" id="periodic-table-grid">
           <!-- Rendered dynamically in JS -->
+        </div>
+      </div>
+
+      <!-- Molecule builder bench: only shown/relevant when the panel is
+           opened from the "Criador Dinâmico" (Simulator) context. -->
+      <div id="molecule-builder" style="display:none;">
+        <div class="molecule-builder__toolbar">
+          <div class="molecule-builder__mode-toggle">
+            <button type="button" class="molecule-builder__mode-btn molecule-builder__mode-btn--active" id="btn-canvas-mode-move" data-mode="move" data-i18n="chem-mode-move">✋ Mover</button>
+            <button type="button" class="molecule-builder__mode-btn" id="btn-canvas-mode-bond" data-mode="bond" data-i18n="chem-mode-bond">🔗 Ligar</button>
+          </div>
+          <select class="form-input" id="builder-bond-order" aria-label="Ordem da próxima ligação" style="font-size:0.72rem; padding:4px 8px; min-height:auto; width:auto;">
+            <option value="1" data-i18n="chem-opt-bond1">Simples</option>
+            <option value="2" data-i18n="chem-opt-bond2">Dupla</option>
+            <option value="3" data-i18n="chem-opt-bond3">Tríplice</option>
+          </select>
+        </div>
+
+        <div class="molecule-canvas" id="molecule-canvas">
+          <svg class="molecule-canvas__bonds" id="molecule-canvas-svg"></svg>
+          <div class="molecule-canvas__hint" id="molecule-canvas-hint" data-i18n="chem-canvas-hint">Arraste um elemento da tabela até aqui para adicionar um átomo</div>
+        </div>
+
+        <div class="molecule-builder__status" id="molecule-equilibrium-status">Nenhum átomo adicionado.</div>
+        <div class="molecule-builder__summary" id="molecule-builder-summary"></div>
+
+        <div style="display:flex; gap:6px;">
+          <button type="button" class="btn btn--outline" id="btn-clear-custom" style="flex:1; padding:6px 8px; font-size:0.75rem; min-height:auto;" data-i18n="chem-btn-clear">Limpar Tudo</button>
+          <button type="button" class="btn btn--primary" id="btn-simulate-custom" style="flex:2; padding:6px 8px; font-size:0.75rem; min-height:auto; background:linear-gradient(135deg, var(--accent-primary) 0%, #6d28d9 100%); font-weight:600;" data-i18n="chem-btn-simulate">Simular Átomos</button>
         </div>
       </div>
     </div>
@@ -483,1448 +496,184 @@
     border-radius: 4px;
     background: rgba(255,255,255,0.01);
   }
+
+  /* Molecule builder bench (wide periodic-table panel, builder mode) */
+  .periodic-panel--builder .floating-panel__body {
+    display: grid;
+    grid-template-columns: 1.3fr 1fr;
+    gap: 20px;
+    align-items: start;
+  }
+  @media (max-width: 900px) {
+    .periodic-panel--builder .floating-panel__body { grid-template-columns: 1fr; }
+  }
+
+  #molecule-builder {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    height: 100%;
+  }
+
+  .molecule-builder__toolbar {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+  .molecule-builder__mode-toggle {
+    display: flex;
+    gap: 4px;
+    background: rgba(0,0,0,0.2);
+    padding: 3px;
+    border-radius: 6px;
+    border: 1px solid var(--border-subtle);
+  }
+  .molecule-builder__mode-btn {
+    background: transparent;
+    border: none;
+    color: var(--text-secondary);
+    font-size: 0.72rem;
+    padding: 5px 10px;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: all var(--transition-fast);
+  }
+  .molecule-builder__mode-btn--active {
+    background: rgba(139, 92, 246, 0.2);
+    color: var(--text-primary);
+    font-weight: 600;
+  }
+
+  .molecule-canvas {
+    position: relative;
+    flex: 1;
+    min-height: 380px;
+    background: rgba(0,0,0,0.15);
+    border: 1px dashed var(--border-default);
+    border-radius: var(--radius-md);
+    overflow: hidden;
+  }
+  .molecule-canvas__bonds {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+  }
+  .molecule-canvas__bonds .bond-line {
+    stroke: #94a3b8;
+    stroke-linecap: round;
+  }
+  .molecule-canvas__bonds .molecule-canvas__temp-line {
+    stroke: var(--accent-primary);
+    stroke-width: 2;
+    stroke-dasharray: 5 4;
+  }
+  .molecule-canvas__hint {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--text-muted);
+    font-size: 0.8rem;
+    text-align: center;
+    padding: 20px;
+    pointer-events: none;
+  }
+
+  .atom-chip {
+    position: absolute;
+    width: 44px;
+    height: 44px;
+    margin-left: -22px;
+    margin-top: -22px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #050b18;
+    font-family: var(--font-mono);
+    font-weight: 700;
+    font-size: 0.8rem;
+    cursor: grab;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.4);
+    border: 2px solid rgba(255,255,255,0.6);
+    user-select: none;
+    touch-action: none;
+    z-index: 2;
+  }
+  .atom-chip:active { cursor: grabbing; }
+  .atom-chip__valence {
+    position: absolute;
+    bottom: -9px;
+    font-size: 0.55rem;
+    font-weight: 700;
+    font-family: var(--font-mono);
+    background: var(--bg-elevated);
+    color: var(--text-secondary);
+    border-radius: 6px;
+    padding: 1px 4px;
+    border: 1px solid var(--border-subtle);
+    white-space: nowrap;
+  }
+  .atom-chip__valence--full { color: var(--accent-success); border-color: var(--accent-success); }
+  .atom-chip__remove {
+    position: absolute;
+    top: -8px;
+    right: -8px;
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    background: var(--accent-danger);
+    color: #fff;
+    border: none;
+    font-size: 0.6rem;
+    line-height: 1;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+  }
+
+  .molecule-builder__status { font-size: 0.75rem; color: var(--text-secondary); }
+  .molecule-builder__status--ok { color: var(--accent-success); font-weight: 600; }
+  .molecule-builder__summary {
+    font-size: 0.7rem;
+    color: var(--text-muted);
+    max-height: 60px;
+    overflow-y: auto;
+  }
 </style>
 
-{% load static %}
-<script src="{% static 'core/vendor/plotly.min.js' %}"></script>
+{% load static vite %}
+
+<!-- Vendored libraries: three r128 (2021) and plotly.js-dist 2.33.0. Neither is
+     an npm dependency any more — nothing imports them, so shipping them twice
+     was pure weight. three in particular is NOT interchangeable with a current
+     npm build (0.166 is ~38 revisions ahead and changes light intensity units
+     in r155), and the page controllers were written against this one. They load
+     as classic scripts, executed during parsing and therefore before the
+     deferred module below, which reads THREE / Plotly off the globals they
+     install. -->
 <script src="{% static 'core/vendor/three.min.js' %}"></script>
 <script src="{% static 'core/vendor/OrbitControls.js' %}"></script>
 
+<!-- Page controller: bundled by Vite from frontend/src/pages/chemistry.js.
+     Three.js come from the npm packages in package.json rather than
+     the hand-maintained copies under apps/core/static/core/vendor/. -->
+{% vite_asset 'pages/chemistry.js' %}
+
 <script>
-// =================================================================
-// 1. CONFIGURAÇÕES E ESTADO
-// =================================================================
-const API = {
-  baseUrl: '/api/chemistry',
-  csrfToken: document.querySelector('meta[name="csrf-token"]')?.content,
-
-  async getElement(identifier) {
-    const response = await fetch(`${this.baseUrl}/element/${identifier}/`);
-    const json = await response.json();
-    if (!response.ok) throw json;
-    return json;
-  },
-
-  async getElements() {
-    const response = await fetch(`${this.baseUrl}/elements/`);
-    const json = await response.json();
-    if (!response.ok) throw json;
-    return json;
-  },
-
-  async simulate(data) {
-    const response = await fetch(`${this.baseUrl}/simulate/`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'X-CSRFToken': this.csrfToken,
-      },
-      body: JSON.stringify(data),
-    });
-    const json = await response.json();
-    if (!response.ok) throw json;
-    return json;
-  },
-
-  async stoichiometry(formula) {
-    const response = await fetch(`${this.baseUrl}/stoichiometry/`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'X-CSRFToken': this.csrfToken,
-      },
-      body: JSON.stringify({ formula }),
-    });
-    const json = await response.json();
-    if (!response.ok) throw json;
-    return json;
-  }
-};
-
-const categoryColors = {
-  "diatomic nonmetal": "rgba(16, 185, 129, 0.12)",
-  "polyatomic nonmetal": "rgba(16, 185, 129, 0.12)",
-  "noble gas": "rgba(6, 182, 212, 0.12)",
-  "alkali metal": "rgba(239, 68, 68, 0.12)",
-  "alkaline earth metal": "rgba(245, 158, 11, 0.12)",
-  "metalloid": "rgba(59, 130, 246, 0.12)",
-  "halogen": "rgba(139, 92, 246, 0.12)",
-  "transition metal": "rgba(51, 65, 85, 0.35)",
-  "lanthanide": "rgba(167, 139, 250, 0.12)",
-  "actinide": "rgba(244, 114, 182, 0.12)",
-  "post-transition metal": "rgba(100, 116, 139, 0.12)",
-  "unknown": "rgba(255, 255, 255, 0.02)"
-};
-
-const categoryBorders = {
-  "diatomic nonmetal": "rgba(16, 185, 129, 0.4)",
-  "polyatomic nonmetal": "rgba(16, 185, 129, 0.4)",
-  "noble gas": "rgba(6, 182, 212, 0.4)",
-  "alkali metal": "rgba(239, 68, 68, 0.4)",
-  "alkaline earth metal": "rgba(245, 158, 11, 0.4)",
-  "metalloid": "rgba(59, 130, 246, 0.4)",
-  "halogen": "rgba(139, 92, 246, 0.4)",
-  "transition metal": "rgba(51, 65, 85, 0.5)",
-  "lanthanide": "rgba(167, 139, 250, 0.4)",
-  "actinide": "rgba(244, 114, 182, 0.4)",
-  "post-transition metal": "rgba(100, 116, 139, 0.4)",
-  "unknown": "rgba(255, 255, 255, 0.1)"
-};
-
-// Presentational-only CPK-style colors for the custom molecule builder — not
-// scientific data, so a small curated palette + category fallback is fine
-// (unlike mass/electronegativity/radius, which now come from the real
-// backend dataset for any of the 118 elements, not just these 10).
-const elementColorPalette = {
-  "H": "#ffffff", "C": "#4b5563", "O": "#ef4444", "N": "#3b82f6",
-  "Na": "#a78bfa", "Cl": "#10b981", "Fe": "#f59e0b", "Li": "#ec4899",
-  "F": "#14b8a6", "Mg": "#047857",
-};
-const categorySolidColors = {
-  "diatomic nonmetal": "#10b981", "polyatomic nonmetal": "#10b981",
-  "noble gas": "#06b6d4", "alkali metal": "#ef4444",
-  "alkaline earth metal": "#f59e0b", "metalloid": "#3b82f6",
-  "halogen": "#8b5cf6", "transition metal": "#94a3b8",
-  "lanthanide": "#a78bfa", "actinide": "#f472b6",
-  "post-transition metal": "#64748b", "unknown": "#cbd5e1",
-};
-
-function getElementDisplayColor(symbol, category) {
-  return elementColorPalette[symbol] || categorySolidColors[category] || '#94a3b8';
-}
-
-function getElementDisplayRadius(atomicRadiusPm) {
-  // Map real covalent radius (typically ~30-230 pm) to a scene-friendly
-  // visual radius, clamped so very large/small atoms stay legible.
-  if (!atomicRadiusPm) return 0.22;
-  return Math.min(0.34, Math.max(0.14, 0.10 + (atomicRadiusPm / 230) * 0.24));
-}
-
-let customAtoms = [];
-let customBonds = [];
-
-// =================================================================
-// 2. DASHBOARD MANAGER
-// =================================================================
-const DashboardManager = {
-  currentTab: 'explorer',
-  elementsCache: [],
-  elementsBySymbol: {},
-  selectedSymbol: 'Fe',
-
-  async init() {
-    this.bindEvents();
-    
-    // Load elements catalog and render Periodic Table
-    await this.loadPeriodicTable();
-    
-    // Select default element (Iron)
-    this.selectElement('Fe');
-  },
-
-  bindEvents() {
-    // Top Tabs switcher
-    document.querySelectorAll('.chem-tab-btn').forEach(btn => {
-      btn.addEventListener('click', (e) => {
-        const tab = e.currentTarget.getAttribute('data-tab');
-        this.setTab(tab);
-      });
-    });
-
-    // Explorer Search
-    document.getElementById('search-btn').addEventListener('click', () => {
-      const q = document.getElementById('element-search').value.trim();
-      if (q) this.selectElement(q);
-    });
-
-    // Opens the wide periodic-table panel (full grid, no cramped scrolling)
-    document.getElementById('btn-open-periodic-table')?.addEventListener('click', () => {
-      window.FloatingPanel?.open('periodic');
-    });
-
-    document.getElementById('element-search').addEventListener('keypress', (e) => {
-      if (e.key === 'Enter') {
-        const q = document.getElementById('element-search').value.trim();
-        if (q) this.selectElement(q);
-      }
-    });
-
-    // Simulator Buttons
-    document.getElementById('synthesize-btn').addEventListener('click', () => {
-      const formula = document.getElementById('compound-select').value;
-      this.runSimulation('bond', formula, '');
-    });
-
-    document.getElementById('react-btn').addEventListener('click', () => {
-      const rxnId = document.getElementById('reaction-select').value;
-      this.runSimulation('reaction', '', rxnId);
-    });
-
-    // Stoichiometry engine
-    document.getElementById('stoich-btn').addEventListener('click', () => {
-      const formula = document.getElementById('stoich-formula').value.trim();
-      if (formula) this.runStoichiometry(formula);
-    });
-    document.getElementById('stoich-formula').addEventListener('keypress', (e) => {
-      if (e.key === 'Enter') {
-        const formula = e.target.value.trim();
-        if (formula) this.runStoichiometry(formula);
-      }
-    });
-
-    // Custom Molecule Builder toggles
-    const btnModePreset = document.getElementById('btn-mode-preset');
-    const btnModeCustom = document.getElementById('btn-mode-custom');
-    const viewPreset = document.getElementById('view-preset-molecule');
-    const viewCustom = document.getElementById('view-custom-molecule');
-
-    if (btnModePreset && btnModeCustom && viewPreset && viewCustom) {
-      btnModePreset.addEventListener('click', () => {
-        btnModePreset.classList.add('chem-mode-tab-btn--active');
-        btnModeCustom.classList.remove('chem-mode-tab-btn--active');
-        viewPreset.style.display = 'block';
-        viewCustom.style.display = 'none';
-      });
-
-      btnModeCustom.addEventListener('click', () => {
-        btnModeCustom.classList.add('chem-mode-tab-btn--active');
-        btnModePreset.classList.remove('chem-mode-tab-btn--active');
-        viewPreset.style.display = 'none';
-        viewCustom.style.display = 'block';
-        this.updateCustomLists();
-      });
-    }
-
-    // Add Atom button — pulls real mass/electronegativity/radius from the
-    // backend for any of the 118 elements (not a fixed 10-element list).
-    document.getElementById('btn-add-atom')?.addEventListener('click', async () => {
-      const symbol = document.getElementById('custom-atom-select').value;
-      const listEntry = this.elementsBySymbol[symbol];
-      if (!listEntry) return;
-
-      const btn = document.getElementById('btn-add-atom');
-      btn.disabled = true;
-      try {
-        const detail = await API.getElement(symbol);
-        const el = detail.data;
-        customAtoms.push({
-          id: customAtoms.length,
-          element: symbol,
-          name: listEntry.name,
-          mass: listEntry.mass,
-          color: getElementDisplayColor(symbol, listEntry.category),
-          radius: getElementDisplayRadius(el.atomic_radius_pm),
-          electronegativity: el.electronegativity,
-        });
-        this.updateCustomLists();
-      } catch (e) {
-        console.error(e);
-        showToast('Erro ao buscar propriedades do elemento.', 'error');
-      } finally {
-        btn.disabled = false;
-      }
-    });
-
-    // Add Bond button
-    document.getElementById('btn-add-bond')?.addEventListener('click', () => {
-      const idx1 = parseInt(document.getElementById('bond-atom1').value);
-      const idx2 = parseInt(document.getElementById('bond-atom2').value);
-      const order = parseInt(document.getElementById('bond-type-select').value) || 1;
-
-      if (isNaN(idx1) || isNaN(idx2)) {
-        showToast('Por favor, selecione dois átomos válidos para ligar.', 'error');
-        return;
-      }
-      if (idx1 === idx2) {
-        showToast('Não é possível criar uma ligação entre o mesmo átomo.', 'error');
-        return;
-      }
-
-      // Check if bond already exists
-      const exists = customBonds.some(b => 
-        (b.atom1Index === idx1 && b.atom2Index === idx2) || 
-        (b.atom1Index === idx2 && b.atom2Index === idx1)
-      );
-      if (exists) {
-        showToast('Uma ligação entre estes dois átomos já existe.', 'error');
-        return;
-      }
-
-      customBonds.push({
-        atom1Index: idx1,
-        atom2Index: idx2,
-        order: order
-      });
-      this.updateCustomLists();
-    });
-
-    // Clear Custom button
-    document.getElementById('btn-clear-custom')?.addEventListener('click', () => {
-      customAtoms = [];
-      customBonds = [];
-      this.updateCustomLists();
-      showToast('Molécula personalizada limpa.', 'info');
-    });
-
-    // Simulate Custom button
-    document.getElementById('btn-simulate-custom')?.addEventListener('click', () => {
-      if (customAtoms.length === 0) {
-        showToast('Adicione pelo menos um átomo para simular.', 'error');
-        return;
-      }
-      this.runCustomSimulation();
-    });
-  },
-
-  setTab(tab) {
-    if (this.currentTab === tab) return;
-    this.currentTab = tab;
-
-    document.querySelectorAll('.chem-tab-btn').forEach(b => b.classList.remove('chem-tab-btn--active'));
-    document.querySelector(`.chem-tab-btn[data-tab="${tab}"]`).classList.add('chem-tab-btn--active');
-
-    // Show/hide sections
-    const explorerPanels = document.getElementById('panel-explorer');
-    const simulatorPanels = document.getElementById('panel-simulator');
-    const tableCard = document.getElementById('periodic-table-card');
-    const tableFab = document.getElementById('fab-periodic-table');
-
-    const lang = localStorage.getItem('app-language') || 'pt';
-
-    if (tab === 'explorer') {
-      explorerPanels.style.display = 'block';
-      simulatorPanels.style.display = 'none';
-      tableCard.style.display = 'block';
-      if (tableFab) tableFab.style.display = 'flex';
-
-      const defaultTitle = 'Tabela Periódica Interativa';
-      const defaultDesc = 'Explore as características físicas e químicas de todos os 118 elementos com simulação atômica de Bohr.';
-      const defaultWbTitle = '🌀 3D Bohr Atom Workbench';
-      const defaultWbDesc = 'Simplified Bohr model — shells grouped by principal quantum number n, matching the electron configuration shown below (Three.js)';
-
-      document.getElementById('page-title').innerHTML = window.TRANSLATIONS[lang]?.['chem-title-explorer'] || defaultTitle;
-      document.getElementById('page-desc').innerHTML = window.TRANSLATIONS[lang]?.['chem-desc-explorer'] || defaultDesc;
-      document.getElementById('workbench-title').innerHTML = window.TRANSLATIONS[lang]?.['chem-wb-title-explorer'] || defaultWbTitle;
-      document.getElementById('workbench-desc').innerHTML = window.TRANSLATIONS[lang]?.['chem-wb-desc-explorer'] || defaultWbDesc;
-      
-      const proton = window.TRANSLATIONS[lang]?.['chem-legend-proton'] || '● Próton';
-      const neutron = window.TRANSLATIONS[lang]?.['chem-legend-neutron'] || '● Nêutron';
-      const electron = window.TRANSLATIONS[lang]?.['chem-legend-electron'] || '● Elétron';
-
-      document.getElementById('three-legend').innerHTML = `
-        <span style="color:#ef4444">${proton}</span>
-        <span style="color:#3b82f6">${neutron}</span>
-        <span style="color:#8b5cf6">${electron}</span>
-      `;
-
-      // Select selected elements back
-      this.selectElement(this.selectedSymbol);
-
-    } else if (tab === 'simulator') {
-      explorerPanels.style.display = 'none';
-      simulatorPanels.style.display = 'block';
-      tableCard.style.display = 'none';
-      if (tableFab) tableFab.style.display = 'none';
-      window.FloatingPanel?.close('periodic');
-
-      const defaultTitle = 'Simulador de Ligações & Reações Químicas';
-      const defaultDesc = 'Synthesize molecules or execute dynamic reactions. Analyze products, byproducts, mass conservation, electrovalency, and bonds.';
-      const defaultWbTitle = '🌀 Visualizador Molecular 3D';
-      const defaultWbDesc = 'Modelo molecular tridimensional (Ball-and-Stick)';
-
-      document.getElementById('page-title').innerHTML = window.TRANSLATIONS[lang]?.['chem-title-simulator'] || defaultTitle;
-      document.getElementById('page-desc').innerHTML = window.TRANSLATIONS[lang]?.['chem-desc-simulator'] || defaultDesc;
-      document.getElementById('workbench-title').innerHTML = window.TRANSLATIONS[lang]?.['chem-wb-title-simulator'] || defaultWbTitle;
-      document.getElementById('workbench-desc').innerHTML = window.TRANSLATIONS[lang]?.['chem-wb-desc-simulator'] || defaultWbDesc;
-      
-      const oxygen = window.TRANSLATIONS[lang]?.['chem-legend-oxygen'] || '● Oxigênio';
-      const carbon = window.TRANSLATIONS[lang]?.['chem-legend-carbon'] || '● Carbono / Outros';
-      const hydrogen = window.TRANSLATIONS[lang]?.['chem-legend-hydrogen'] || '● Hidrogênio';
-      const halogens = window.TRANSLATIONS[lang]?.['chem-legend-halogens'] || '● Halogênios';
-
-      document.getElementById('three-legend').innerHTML = `
-        <span style="color:#ef4444">${oxygen}</span>
-        <span style="color:#cbd5e1">${carbon}</span>
-        <span style="color:#ffffff">${hydrogen}</span>
-        <span style="color:#10b981">${halogens}</span>
-      `;
-
-      // Trigger default compound simulation
-      document.getElementById('synthesize-btn').click();
-    }
-  },
-
-  async loadPeriodicTable() {
-    try {
-      const response = await API.getElements();
-      this.elementsCache = response.data;
-      this.elementsBySymbol = {};
-      this.elementsCache.forEach(el => { this.elementsBySymbol[el.symbol] = el; });
-      this.renderPeriodicTable(this.elementsCache);
-      this.populateCustomAtomSelect();
-    } catch (e) {
-      console.error(e);
-      showToast('Erro ao carregar a tabela periódica.', 'error');
-    }
-  },
-
-  populateCustomAtomSelect() {
-    // Sourced from the real backend dataset instead of a 10-element
-    // hardcoded list — every one of the 118 elements is selectable here.
-    const select = document.getElementById('custom-atom-select');
-    if (!select) return;
-    const sorted = [...this.elementsCache].sort((a, b) => a.number - b.number);
-    select.innerHTML = sorted.map(el =>
-      `<option value="${el.symbol}">${el.symbol} (${el.name})</option>`
-    ).join('');
-    select.value = 'H';
-  },
-
-  renderPeriodicTable(elements) {
-    const grid = document.getElementById('periodic-table-grid');
-    grid.innerHTML = '';
-
-    // Create 118 element cells mapped by row & col
-    elements.forEach(el => {
-      const cell = document.createElement('div');
-      cell.className = 'periodic-element-cell';
-      cell.dataset.symbol = el.symbol;
-
-      const pos = this.getGridPosition(el);
-      cell.style.gridRow = pos.row;
-      cell.style.gridColumn = pos.col;
-
-      // Color coding based on category
-      const cat = el.category || 'unknown';
-      cell.style.backgroundColor = categoryColors[cat] || categoryColors['unknown'];
-      cell.style.borderColor = categoryBorders[cat] || categoryBorders['unknown'];
-
-      cell.innerHTML = `
-        <span class="periodic-element-cell__number">${el.number}</span>
-        <span class="periodic-element-cell__symbol">${el.symbol}</span>
-        <span class="periodic-element-cell__name">${el.name}</span>
-      `;
-
-      cell.addEventListener('click', () => this.selectElement(el.symbol));
-      grid.appendChild(cell);
-    });
-
-    // Draw spacer placeholders for Lanthanides/Actinides row references
-    const lanthSpacer = document.createElement('div');
-    lanthSpacer.className = 'periodic-table__spacer';
-    lanthSpacer.style.gridRow = 6;
-    lanthSpacer.style.gridColumn = 3;
-    lanthSpacer.textContent = '57-71';
-    grid.appendChild(lanthSpacer);
-
-    const actSpacer = document.createElement('div');
-    actSpacer.className = 'periodic-table__spacer';
-    actSpacer.style.gridRow = 7;
-    actSpacer.style.gridColumn = 3;
-    actSpacer.textContent = '89-103';
-    grid.appendChild(actSpacer);
-  },
-
-  getGridPosition(el) {
-    let row = el.period;
-    let col = el.group;
-
-    // Handle Lanthanides
-    if (el.number >= 57 && el.number <= 71) {
-      row = 9;
-      col = el.number - 57 + 3;
-    }
-    // Handle Actinides
-    else if (el.number >= 89 && el.number <= 103) {
-      row = 10;
-      col = el.number - 89 + 3;
-    }
-    return { row, col };
-  },
-
-  async selectElement(symbol) {
-    showLoading(`Carregando elemento ${symbol}…`);
-    try {
-      const response = await API.getElement(symbol);
-      const el = response.data;
-
-      this.selectedSymbol = el.symbol;
-
-      // Active state on Table cell
-      document.querySelectorAll('.periodic-element-cell').forEach(cell => {
-        cell.classList.toggle('periodic-element-cell--active', cell.dataset.symbol.toUpperCase() === el.symbol.toUpperCase());
-      });
-
-      this.updateExplorerUI(el);
-      ThreeAtom.buildAtom(el.atomic_number, el.electron_configuration);
-      window.FloatingPanel?.markUpdated('results');
-
-      // Picking an element from the wide periodic-table panel closes it,
-      // so the freshly-selected 3D atom is immediately visible.
-      if (document.getElementById('periodic-panel')?.classList.contains('is-open')) {
-        window.FloatingPanel?.close('periodic');
-      }
-    } catch (e) {
-      console.error(e);
-      showToast(`Elemento ${symbol} não encontrado.`, 'error');
-    } finally {
-      hideLoading();
-    }
-  },
-
-  updateExplorerUI(el) {
-    document.getElementById('element-value').textContent = `${el.name} (${el.symbol})`;
-    document.getElementById('number-value').textContent = el.atomic_number;
-    document.getElementById('workbench-status').textContent = `${el.symbol} (Z=${el.atomic_number})`;
-
-    // KPI Cards
-    document.getElementById('kpi-lbl-1').textContent = 'Símbolo';
-    document.getElementById('prop-symbol').textContent = el.symbol;
-    document.getElementById('prop-name').textContent = el.name;
-
-    document.getElementById('kpi-lbl-2').textContent = 'Número Atômico';
-    document.getElementById('prop-z').textContent = el.atomic_number;
-    document.getElementById('kpi-unit-2').textContent = 'prótons';
-
-    document.getElementById('kpi-lbl-3').textContent = 'Massa Atômica';
-    document.getElementById('prop-mass').textContent = el.atomic_mass.toFixed(4);
-    document.getElementById('kpi-unit-3').textContent = 'u (unidade de massa atômica)';
-
-    document.getElementById('table-title').textContent = '📋 Características do Elemento';
-
-    // Build standard properties rows
-    document.getElementById('results-table-body').innerHTML = `
-      <tr><td>Período</td><td>${el.period}</td></tr>
-      <tr><td>Grupo</td><td>${el.group || 'N/A'}</td></tr>
-      <tr><td>Conf. Eletrônica</td><td style="font-family:var(--font-mono); font-size:0.75rem;">${el.electron_configuration || 'Desconhecida'}</td></tr>
-      <tr><td>Eletronegatividade</td><td>${el.electronegativity ? el.electronegativity.toFixed(2) : 'N/A'}</td></tr>
-      <tr><td>Raio Covalente</td><td>${el.atomic_radius_pm ? el.atomic_radius_pm + ' pm' : 'N/A'}</td></tr>
-      <tr><td>Energia de Ionização</td><td>${el.ionisation_energy_ev ? el.ionisation_energy_ev.toFixed(3) + ' eV' : 'N/A'}</td></tr>
-      <tr><td>Densidade</td><td>${el.density_g_cm3 ? el.density_g_cm3.toExponential(3) + ' g/cm³' : 'N/A'}</td></tr>
-      <tr><td>Ponto de Fusão</td><td>${el.melting_point_k ? el.melting_point_k.toFixed(1) + ' K' : 'N/A'}</td></tr>
-      <tr><td>Ponto de Ebulição</td><td>${el.boiling_point_k ? el.boiling_point_k.toFixed(1) + ' K' : 'N/A'}</td></tr>
-      <tr class="results-table__highlight"><td>Estados de Oxidação</td><td>${el.oxidation_states?.length ? el.oxidation_states.join(', ') : 'Nenhum'}</td></tr>
-    `;
-  },
-
-  async runSimulation(mode, formula, rxnId) {
-    showLoading('Simulando ligação química e massas…');
-    try {
-      const response = await API.simulate({ mode, formula, reaction_id: rxnId });
-      const data = response.data;
-
-      this.updateSimulatorUI(data, mode);
-      ThreeAtom.buildMolecule(data.atoms || data.product_atoms);
-      window.FloatingPanel?.markUpdated('results');
-    } catch (e) {
-      console.error(e);
-      showToast(e.message || 'Erro ao simular ligação química.', 'error');
-    } finally {
-      hideLoading();
-    }
-  },
-
-  async runStoichiometry(formula) {
-    const resultEl = document.getElementById('stoich-result');
-    resultEl.innerHTML = '<span style="color:var(--text-muted)">Calculando…</span>';
-    try {
-      const response = await API.stoichiometry(formula);
-      const data = response.data;
-
-      const rows = data.composition.map(c => `
-        <tr>
-          <td>${c.element} × ${c.count}</td>
-          <td>${c.atomic_mass.toFixed(3)} u</td>
-          <td>${c.mass_percent.toFixed(2)}%</td>
-        </tr>
-      `).join('');
-
-      resultEl.innerHTML = `
-        <div style="font-weight:700; color:var(--accent-primary); margin-bottom:8px;">
-          M = ${data.molar_mass_g_mol.toFixed(3)} g/mol
-        </div>
-        <table class="results-table" aria-label="Composição elementar">
-          <thead><tr><th>Elemento</th><th>Massa Atômica</th><th>% Massa</th></tr></thead>
-          <tbody>${rows}</tbody>
-        </table>
-      `;
-    } catch (e) {
-      console.error(e);
-      const msg = e?.errors?.formula?.[0] || e?.message || 'Fórmula inválida.';
-      resultEl.innerHTML = `<span style="color:var(--accent-danger)">${msg}</span>`;
-    }
-  },
-
-  updateSimulatorUI(data, mode) {
-    if (mode === 'bond') {
-      document.getElementById('element-value').textContent = data.name;
-      document.getElementById('number-value').textContent = 'Fórm.';
-      document.getElementById('workbench-status').textContent = data.formula;
-
-      // KPIs
-      document.getElementById('kpi-lbl-1').textContent = 'Fórmula';
-      document.getElementById('prop-symbol').textContent = data.formula;
-      document.getElementById('prop-name').textContent = data.name;
-
-      document.getElementById('kpi-lbl-2').textContent = 'Tipo de Ligação';
-      document.getElementById('prop-z').textContent = data.bond_type;
-      document.getElementById('kpi-unit-2').textContent = 'interação atômica';
-
-      document.getElementById('kpi-lbl-3').textContent = 'Massa Molecular';
-      document.getElementById('prop-mass').textContent = data.mass.toFixed(3);
-      document.getElementById('kpi-unit-3').textContent = 'g/mol (u)';
-
-      document.getElementById('table-title').textContent = '📋 Relatório de Ligação Química';
-
-      document.getElementById('results-table-body').innerHTML = `
-        <tr><td>Nome do Composto</td><td>${data.name}</td></tr>
-        <tr><td>Fórmula Estequiométrica</td><td><strong>${data.formula}</strong></td></tr>
-        <tr><td>Massa Molar Média</td><td>${data.mass.toFixed(4)} u</td></tr>
-        <tr><td>Tipo de Ligação Forte</td><td style="color:var(--accent-primary); font-weight:600;">${data.bond_type}</td></tr>
-        <tr><td>Ligações Fortes (Intra)</td><td>${data.strong_bonds}</td></tr>
-        <tr><td>Ligações Fracas (Inter)</td><td>${data.weak_bonds}</td></tr>
-        <tr class="results-table__highlight"><td>Eletrovalência (Nox)</td><td>${data.electrovalency}</td></tr>
-      `;
-
-    } else if (mode === 'reaction') {
-      document.getElementById('element-value').textContent = data.title;
-      document.getElementById('number-value').textContent = 'Reac.';
-      document.getElementById('workbench-status').textContent = data.product_formula;
-
-      // KPIs
-      document.getElementById('kpi-lbl-1').textContent = 'Produto Molar';
-      document.getElementById('prop-symbol').textContent = data.product_formula;
-      document.getElementById('prop-name').textContent = data.product_name;
-
-      document.getElementById('kpi-lbl-2').textContent = 'Subproduto';
-      document.getElementById('prop-z').textContent = data.byproduct_formula;
-      document.getElementById('kpi-unit-2').textContent = data.byproduct_name;
-
-      document.getElementById('kpi-lbl-3').textContent = 'Massa do Produto Principal';
-      document.getElementById('prop-mass').textContent = data.product_mass.toFixed(3);
-      document.getElementById('kpi-unit-3').textContent = 'g/mol (u)';
-
-      document.getElementById('table-title').textContent = '📋 Relatório de Reação Estequiométrica';
-
-      document.getElementById('results-table-body').innerHTML = `
-        <tr><td>Equação Balanceada</td><td><code style="color:var(--accent-info);">${data.equation}</code></td></tr>
-        <tr><td>Reagentes Alimentados</td><td>${data.reactants}</td></tr>
-        <tr><td>Produto Principal</td><td><strong>${data.product_name}</strong> (${data.product_mass.toFixed(3)} u)</td></tr>
-        <tr><td>Subproduto Obtido</td><td><strong>${data.byproduct_name}</strong> (${data.byproduct_mass.toFixed(3)} u)</td></tr>
-        <tr><td>Ligações no Produto</td><td>${data.product_strong}</td></tr>
-        <tr><td>Ligações no Subproduto</td><td>${data.byproduct_strong}</td></tr>
-        <tr><td>Eletrovalência (Nox)</td><td>${data.product_electrovalency}</td></tr>
-      `;
-    }
-  },
-
-  updateCustomLists() {
-    const atomsContainer = document.getElementById('atoms-list-container');
-    const bondsContainer = document.getElementById('bonds-list-container');
-    const select1 = document.getElementById('bond-atom1');
-    const select2 = document.getElementById('bond-atom2');
-
-    if (!atomsContainer || !bondsContainer || !select1 || !select2) return;
-
-    // 1. Render Atoms list
-    if (customAtoms.length === 0) {
-      atomsContainer.innerHTML = '<span style="color:var(--text-muted); font-style:italic;">Nenhum átomo adicionado.</span>';
-    } else {
-      atomsContainer.innerHTML = customAtoms.map((atom, idx) => `
-        <div style="display:flex; justify-content:space-between; align-items:center; background:rgba(255,255,255,0.03); padding:3px 6px; border-radius:4px; border:1px solid rgba(255,255,255,0.05); width: 100%;">
-          <span><strong>#${idx}</strong> ${atom.name} (${atom.element})</span>
-          <button type="button" class="btn-remove-atom" data-idx="${idx}" style="background:none; border:none; color:#f87171; cursor:pointer; font-weight:bold; font-size:0.75rem; padding:0 4px; line-height:1;">✕</button>
-        </div>
-      `).join('');
-
-      document.querySelectorAll('.btn-remove-atom').forEach(btn => {
-        btn.onclick = (e) => {
-          const idx = parseInt(e.currentTarget.getAttribute('data-idx'));
-          this.removeCustomAtom(idx);
-        };
-      });
-    }
-
-    // 2. Render Bonds list
-    if (customBonds.length === 0) {
-      bondsContainer.innerHTML = '<span style="color:var(--text-muted); font-style:italic;">Nenhuma ligação criada.</span>';
-    } else {
-      const orderNames = { 1: 'Simples', 2: 'Dupla', 3: 'Tríplice' };
-      bondsContainer.innerHTML = customBonds.map((bond, idx) => {
-        const a1 = customAtoms[bond.atom1Index];
-        const a2 = customAtoms[bond.atom2Index];
-        if (!a1 || !a2) return '';
-        return `
-          <div style="display:flex; justify-content:space-between; align-items:center; background:rgba(255,255,255,0.03); padding:3px 6px; border-radius:4px; border:1px solid rgba(255,255,255,0.05); width: 100%;">
-            <span>#${bond.atom1Index} (${a1.element}) ⟷ #${bond.atom2Index} (${a2.element}) [${orderNames[bond.order]}]</span>
-            <button type="button" class="btn-remove-bond" data-idx="${idx}" style="background:none; border:none; color:#f87171; cursor:pointer; font-weight:bold; font-size:0.75rem; padding:0 4px; line-height:1;">✕</button>
-          </div>
-        `;
-      }).join('');
-
-      document.querySelectorAll('.btn-remove-bond').forEach(btn => {
-        btn.onclick = (e) => {
-          const idx = parseInt(e.currentTarget.getAttribute('data-idx'));
-          customBonds.splice(idx, 1);
-          this.updateCustomLists();
-        };
-      });
-    }
-
-    // 3. Update selectors options
-    const prevVal1 = select1.value;
-    const prevVal2 = select2.value;
-
-    select1.innerHTML = '<option value="">— Átomo A —</option>';
-    select2.innerHTML = '<option value="">— Átomo B —</option>';
-
-    customAtoms.forEach((atom, idx) => {
-      const optText = `#${idx} ${atom.element}`;
-      select1.innerHTML += `<option value="${idx}">${optText}</option>`;
-      select2.innerHTML += `<option value="${idx}">${optText}</option>`;
-    });
-
-    select1.value = prevVal1;
-    select2.value = prevVal2;
-  },
-
-  removeCustomAtom(idx) {
-    customAtoms.splice(idx, 1);
-    customBonds = customBonds.filter(b => b.atom1Index !== idx && b.atom2Index !== idx)
-      .map(b => {
-        return {
-          atom1Index: b.atom1Index > idx ? b.atom1Index - 1 : b.atom1Index,
-          atom2Index: b.atom2Index > idx ? b.atom2Index - 1 : b.atom2Index,
-          order: b.order
-        };
-      });
-    this.updateCustomLists();
-  },
-
-  runCustomSimulation() {
-    showLoading('Simulando forças atômicas tridimensionais…');
-    
-    // Initialize random positions
-    customAtoms.forEach(a => {
-      a.x = (Math.random() - 0.5) * 0.4;
-      a.y = (Math.random() - 0.5) * 0.4;
-      a.z = (Math.random() - 0.5) * 0.4;
-    });
-
-    const k = 0.18; // spring stiffness
-    const d0 = 0.85; // equilibrium distance
-    const repulsion = 0.06;
-    const damping = 0.82;
-    const iterations = 85;
-    const velocities = customAtoms.map(() => ({ x: 0, y: 0, z: 0 }));
-
-    for (let iter = 0; iter < iterations; iter++) {
-      // Repulsion force
-      for (let i = 0; i < customAtoms.length; i++) {
-        for (let j = i + 1; j < customAtoms.length; j++) {
-          const a1 = customAtoms[i];
-          const a2 = customAtoms[j];
-          const dx = a2.x - a1.x;
-          const dy = a2.y - a1.y;
-          const dz = a2.z - a1.z;
-          const dist = Math.sqrt(dx*dx + dy*dy + dz*dz) || 0.01;
-          const f = repulsion / (dist * dist);
-          const fx = (dx / dist) * f;
-          const fy = (dy / dist) * f;
-          const fz = (dz / dist) * f;
-
-          velocities[i].x -= fx;
-          velocities[i].y -= fy;
-          velocities[i].z -= fz;
-
-          velocities[j].x += fx;
-          velocities[j].y += fy;
-          velocities[j].z += fz;
-        }
-      }
-
-      // Spring attraction force
-      customBonds.forEach(bond => {
-        const a1 = customAtoms[bond.atom1Index];
-        const a2 = customAtoms[bond.atom2Index];
-        if (!a1 || !a2) return;
-        const dx = a2.x - a1.x;
-        const dy = a2.y - a1.y;
-        const dz = a2.z - a1.z;
-        const dist = Math.sqrt(dx*dx + dy*dy + dz*dz) || 0.01;
-        const f = k * (dist - d0);
-        const fx = (dx / dist) * f;
-        const fy = (dy / dist) * f;
-        const fz = (dz / dist) * f;
-
-        velocities[bond.atom1Index].x += fx;
-        velocities[bond.atom1Index].y += fy;
-        velocities[bond.atom1Index].z += fz;
-
-        velocities[bond.atom2Index].x -= fx;
-        velocities[bond.atom2Index].y -= fy;
-        velocities[bond.atom2Index].z -= fz;
-      });
-
-      // Update positions
-      for (let i = 0; i < customAtoms.length; i++) {
-        customAtoms[i].x += velocities[i].x;
-        customAtoms[i].y += velocities[i].y;
-        customAtoms[i].z += velocities[i].z;
-
-        velocities[i].x *= damping;
-        velocities[i].y *= damping;
-        velocities[i].z *= damping;
-      }
-    }
-
-    // Center coordinates
-    let cx = 0, cy = 0, cz = 0;
-    customAtoms.forEach(a => { cx += a.x; cy += a.y; cz += a.z; });
-    cx /= customAtoms.length; cy /= customAtoms.length; cz /= customAtoms.length;
-    customAtoms.forEach(a => { a.x -= cx; a.y -= cy; a.z -= cz; });
-
-    // 2. Trigger ThreeJS render
-    ThreeAtom.buildMolecule(customAtoms, customBonds);
-
-    // 3. Update Reports UI
-    const name = "Molécula Personalizada";
-    const formula = this.getHillFormula(customAtoms);
-    const totalMass = customAtoms.reduce((sum, a) => sum + a.mass, 0);
-
-    // Analyze bond characters
-    let ionicBonds = 0;
-    let polarBonds = 0;
-    let apolarBonds = 0;
-    let bondTypesText = "Nenhuma ligação";
-
-    customBonds.forEach(bond => {
-      const a1 = customAtoms[bond.atom1Index];
-      const a2 = customAtoms[bond.atom2Index];
-      const diff = Math.abs(a1.electronegativity - a2.electronegativity);
-      if (diff > 1.7) ionicBonds++;
-      else if (diff > 0.4) polarBonds++;
-      else apolarBonds++;
-    });
-
-    if (customBonds.length > 0) {
-      const types = [];
-      if (ionicBonds > 0) types.push(`${ionicBonds}x Iônica`);
-      if (polarBonds > 0) types.push(`${polarBonds}x Covalente Polar`);
-      if (apolarBonds > 0) types.push(`${apolarBonds}x Covalente Apolar`);
-      bondTypesText = types.join(', ');
-    }
-
-    const orderNames = { 1: 'Simples', 2: 'Dupla', 3: 'Tríplice' };
-    const bondsDescription = customBonds.map(b => {
-      const a1 = customAtoms[b.atom1Index];
-      const a2 = customAtoms[b.atom2Index];
-      return `${a1.element}-${a2.element} (${orderNames[b.order]})`;
-    }).join(', ') || 'Nenhuma';
-
-    // Valence octet capacity validation
-    const valenceLimits = { "H": 1, "C": 4, "O": 2, "N": 3, "Na": 1, "Cl": 1, "Fe": 3, "Li": 1, "F": 1, "Mg": 2 };
-    const warnings = [];
-    customAtoms.forEach((atom, idx) => {
-      let bondCount = 0;
-      customBonds.forEach(b => {
-        if (b.atom1Index === idx || b.atom2Index === idx) {
-          bondCount += b.order;
-        }
-      });
-      const limit = valenceLimits[atom.element] || 4;
-      if (bondCount > limit) {
-        warnings.push(`⚠️ Alerta: Átomo <strong>${atom.element}#${idx}</strong> possui ${bondCount} ligações (máx recomendado: ${limit})!`);
-      }
-    });
-
-    let warningHtml = "";
-    if (warnings.length > 0) {
-      warningHtml = `
-        <tr style="background: rgba(239, 68, 68, 0.08); border-top: 1px solid rgba(239, 68, 68, 0.25);">
-          <td colspan="2" style="color: #f87171; font-size: 0.72rem; line-height: 1.4; padding: 10px 14px; white-space: normal;">
-            ${warnings.join('<br>')}
-          </td>
-        </tr>
-      `;
-    }
-
-    // Update UI elements
-    document.getElementById('element-value').textContent = name;
-    document.getElementById('number-value').textContent = 'Cust.';
-    document.getElementById('workbench-status').textContent = formula;
-
-    // KPIs
-    document.getElementById('kpi-lbl-1').textContent = 'Fórmula Gerada';
-    document.getElementById('prop-symbol').textContent = formula;
-    document.getElementById('prop-name').textContent = name;
-
-    document.getElementById('kpi-lbl-2').textContent = 'Força de Ligações';
-    document.getElementById('prop-z').textContent = bondTypesText;
-    document.getElementById('kpi-unit-2').textContent = 'natureza dos orbitais';
-
-    document.getElementById('kpi-lbl-3').textContent = 'Massa Molar';
-    document.getElementById('prop-mass').textContent = totalMass.toFixed(3);
-    document.getElementById('kpi-unit-3').textContent = 'g/mol (u)';
-
-    document.getElementById('table-title').textContent = '📋 Relatório de Síntese Personalizada';
-
-    document.getElementById('results-table-body').innerHTML = `
-      <tr><td>Nome do Composto</td><td>${name}</td></tr>
-      <tr><td>Fórmula Estequiométrica (Hill)</td><td><strong>${formula}</strong></td></tr>
-      <tr><td>Massa Molar Calculada</td><td>${totalMass.toFixed(4)} u</td></tr>
-      <tr><td>Composição das Ligações</td><td style="color:var(--accent-primary); font-weight:600;">${bondTypesText}</td></tr>
-      <tr><td>Conexões Registradas (Intra)</td><td>${bondsDescription}</td></tr>
-      <tr><td>Interações Intermoleculares</td><td>Forças de London / Dipolo permanente (estimado)</td></tr>
-      <tr class="results-table__highlight"><td>Eletrovalência (Escala Pauling)</td><td>${customAtoms.map((a, i) => `${a.element}#${i} (EN=${a.electronegativity.toFixed(2)})`).join(', ')}</td></tr>
-      ${warningHtml}
-    `;
-
-    hideLoading();
-    showToast('Simulação molecular concluída!', 'success');
-  },
-
-  getHillFormula(atoms) {
-    const counts = {};
-    atoms.forEach(a => { counts[a.element] = (counts[a.element] || 0) + 1; });
-    let formula = "";
-    if (counts["C"]) {
-      formula += "C" + (counts["C"] > 1 ? counts["C"] : "");
-      delete counts["C"];
-      if (counts["H"]) {
-        formula += "H" + (counts["H"] > 1 ? counts["H"] : "");
-        delete counts["H"];
-      }
-    }
-    const keys = Object.keys(counts).sort();
-    keys.forEach(k => { formula += k + (counts[k] > 1 ? counts[k] : ""); });
-    return formula || "Molécula";
-  }
-};
-
-// =================================================================
-// 3. THREE.JS ATOM & MOLECULE RENDERER
-// =================================================================
-const ThreeAtom = {
-  scene: null,
-  camera: null,
-  renderer: null,
-  controls: null,
-  nucleus: null,
-  electronGroup: null,
-  moleculeGroup: null,
-  shells: [],
-  targetCameraPos: null,
-  targetLookAt: new THREE.Vector3(0, 0, 0),
-  transitioning: false,
-  autoOrbit: false,
-  currentMode: 'atom', // 'atom' or 'molecule'
-
-  init() {
-    const canvas = document.getElementById('three-canvas');
-    if (!canvas || typeof THREE === 'undefined') return;
-
-    this.scene = new THREE.Scene();
-    this.scene.background = new THREE.Color(0x050b18);
-
-    this.camera = new THREE.PerspectiveCamera(45, canvas.offsetWidth / canvas.offsetHeight, 0.1, 100);
-    this.camera.position.set(0, 3, 6);
-    this.camera.lookAt(0, 0, 0);
-
-    this.renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
-    this.renderer.setSize(canvas.offsetWidth, canvas.offsetHeight);
-    this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-
-    if (typeof THREE.OrbitControls !== 'undefined') {
-      this.controls = new THREE.OrbitControls(this.camera, this.renderer.domElement);
-      this.controls.enableDamping = true;
-      this.controls.dampingFactor = 0.05;
-      this.controls.minDistance = 1;
-      this.controls.maxDistance = 15;
-    }
-
-    // Lights
-    this.scene.add(new THREE.AmbientLight(0xffffff, 0.6));
-    const pointLight = new THREE.PointLight(0xffffff, 1.0);
-    pointLight.position.set(5, 5, 5);
-    this.scene.add(pointLight);
-
-    const orbitCheckbox = document.getElementById('auto-orbit');
-    orbitCheckbox?.addEventListener('change', (e) => {
-      this.autoOrbit = e.target.checked;
-      if (this.autoOrbit) {
-        this.transitioning = false;
-        this.targetCameraPos = null;
-      }
-    });
-
-    const triggerPreset = (x, y, z) => {
-      this.targetCameraPos = new THREE.Vector3(x, y, z);
-      this.transitioning = true;
-      this.autoOrbit = false;
-      if (orbitCheckbox) orbitCheckbox.checked = false;
-    };
-
-    document.getElementById('btn-view-iso')?.addEventListener('click', () => triggerPreset(3.5, 3.0, 4.0));
-    document.getElementById('btn-view-side')?.addEventListener('click', () => triggerPreset(0, 0, 6));
-    document.getElementById('btn-view-top')?.addEventListener('click', () => triggerPreset(0, 6.0, 0.01));
-    document.getElementById('btn-view-inlet')?.addEventListener('click', () => triggerPreset(-6.0, 0, 0));
-
-    // Hover tooltip: raycast against the molecule's atom spheres (only
-    // meaningful in molecule mode — a single Bohr atom has nothing discrete
-    // to label individually) and show element data already in memory, no
-    // extra API call needed.
-    this.raycaster = new THREE.Raycaster();
-    this.mouse = new THREE.Vector2();
-    canvas.addEventListener('pointermove', (e) => this.onPointerMove(e));
-    canvas.addEventListener('pointerleave', () => window.ThreeTooltip?.hide());
-
-    // Dynamic anim loop
-    this.animate();
-
-    window.addEventListener('resize', () => this.onResize());
-  },
-
-  onPointerMove(e) {
-    if (this.currentMode !== 'molecule' || !this.moleculeAtoms?.length) {
-      window.ThreeTooltip?.hide();
-      return;
-    }
-    const canvas = this.renderer.domElement;
-    const rect = canvas.getBoundingClientRect();
-    this.mouse.x = ((e.clientX - rect.left) / rect.width) * 2 - 1;
-    this.mouse.y = -((e.clientY - rect.top) / rect.height) * 2 + 1;
-
-    this.raycaster.setFromCamera(this.mouse, this.camera);
-    const meshes = this.moleculeAtoms.map(a => a.mesh);
-    const hits = this.raycaster.intersectObjects(meshes);
-
-    if (hits.length > 0) {
-      const atom = this.moleculeAtoms.find(a => a.mesh === hits[0].object);
-      if (atom) {
-        const el = DashboardManager.elementsBySymbol?.[atom.element];
-        const html = `<strong>${el?.name || atom.element}</strong> (${atom.element})<br>`
-          + (el ? `Z = ${el.number} &middot; ${el.mass?.toFixed(2)} u` : '');
-        window.ThreeTooltip?.show(html, e.clientX, e.clientY);
-        return;
-      }
-    }
-    window.ThreeTooltip?.hide();
-  },
-
-  clear() {
-    if (this.nucleus) this.scene.remove(this.nucleus);
-    if (this.electronGroup) this.scene.remove(this.electronGroup);
-    if (this.moleculeGroup) this.scene.remove(this.moleculeGroup);
-
-    this.nucleus = null;
-    this.electronGroup = null;
-    this.moleculeGroup = null;
-    this.shells = [];
-    this.moleculeAtoms = [];
-    this.moleculeBonds = [];
-  },
-
-  /**
-   * Converts an electron configuration string (e.g. "[Ar] 3d6 4s2") into
-   * electron counts per principal shell n: {1: 2, 2: 8, 3: 8, 4: 2, ...}.
-   * Expands noble-gas-core shorthand first. Returns null if unparseable.
-   */
-  parseShellCounts(configStr) {
-    if (!configStr) return null;
-    const NOBLE_GAS_CORES = {
-      He: '1s2',
-      Ne: '1s2 2s2 2p6',
-      Ar: '1s2 2s2 2p6 3s2 3p6',
-      Kr: '1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p6',
-      Xe: '1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p6 4d10 5s2 5p6',
-      Rn: '1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p6 4d10 5s2 5p6 4f14 5d10 6s2 6p6',
-    };
-    let expanded = configStr.trim();
-    const coreMatch = expanded.match(/^\[(\w+)\]\s*/);
-    let prefix = '';
-    if (coreMatch) {
-      prefix = (NOBLE_GAS_CORES[coreMatch[1]] || '') + ' ';
-      expanded = expanded.slice(coreMatch[0].length);
-    }
-    const shellCounts = {};
-    let matchedAny = false;
-    (prefix + expanded).trim().split(/\s+/).forEach(token => {
-      const m = token.match(/^(\d+)[spdfg](\d+)$/);
-      if (!m) return;
-      matchedAny = true;
-      const n = parseInt(m[1], 10);
-      shellCounts[n] = (shellCounts[n] || 0) + parseInt(m[2], 10);
-    });
-    return matchedAny ? shellCounts : null;
-  },
-
-  buildAtom(Z, electronConfig) {
-    this.clear();
-    this.currentMode = 'atom';
-
-    this.nucleus = new THREE.Group();
-    this.electronGroup = new THREE.Group();
-    this.scene.add(this.nucleus);
-    this.scene.add(this.electronGroup);
-
-    // 1. Nucleus Cluster (Protons & Neutrons)
-    const numParticles = Math.min(Z * 2, 45); 
-    const protonGeo = new THREE.SphereGeometry(0.08, 16, 16);
-    const protonMat = new THREE.MeshPhongMaterial({ color: 0xef4444, shininess: 85 });
-    const neutronGeo = new THREE.SphereGeometry(0.08, 16, 16);
-    const neutronMat = new THREE.MeshPhongMaterial({ color: 0x3b82f6, shininess: 85 });
-
-    for (let i = 0; i < numParticles; i++) {
-      const isProton = i % 2 === 0;
-      const sphere = new THREE.Mesh(isProton ? protonGeo : neutronGeo, isProton ? protonMat : neutronMat);
-      
-      const r = 0.18 * Math.pow(Math.random(), 1/3);
-      const theta = Math.random() * Math.PI * 2;
-      const phi = Math.acos(Math.random() * 2 - 1);
-      
-      sphere.position.set(
-        r * Math.sin(phi) * Math.cos(theta),
-        r * Math.sin(phi) * Math.sin(theta),
-        r * Math.cos(phi)
-      );
-      this.nucleus.add(sphere);
-    }
-
-    // 2. Electron Concentric Shells (Bohr Model — simplified: electrons are
-    // grouped by principal shell n only, not real s/p/d/f orbitals). The
-    // per-shell electron counts are derived from the real electron
-    // configuration returned by the API (summed by principal quantum number
-    // n), so this drawing always agrees with the configuration text shown
-    // alongside it — instead of a generic 2n² capacity table that can
-    // diverge for transition/lanthanide/actinide elements.
-    const parsedShells = this.parseShellCounts(electronConfig);
-    let shellSizes;
-    if (parsedShells) {
-      const maxN = Math.max(...Object.keys(parsedShells).map(Number));
-      shellSizes = [];
-      for (let n = 1; n <= maxN; n++) shellSizes.push(parsedShells[n] || 0);
-    } else {
-      // Fallback for elements with no usable configuration string: generic
-      // 2n² shell capacities (may not exactly match real fill order).
-      shellSizes = [2, 8, 18, 32, 18, 8, 2];
-    }
-    let remainingElectrons = Z;
-    const baseRadius = 0.6;
-    const radiusStep = 0.35;
-
-    const electronGeo = new THREE.SphereGeometry(0.045, 16, 16);
-    const electronMat = new THREE.MeshPhongMaterial({ color: 0x8b5cf6, emissive: 0x5a1a9f, shininess: 100 });
-
-    for (let s = 0; s < shellSizes.length; s++) {
-      if (remainingElectrons <= 0) break;
-      const electronsInShell = Math.min(remainingElectrons, shellSizes[s]);
-      remainingElectrons -= electronsInShell;
-
-      const radius = baseRadius + s * radiusStep;
-      const shellElectrons = [];
-      
-      for (let e = 0; e < electronsInShell; e++) {
-        // Unique inclinations per electron to form a 3D spherical cloud
-        const tiltX = (Math.random() - 0.5) * Math.PI * 0.7;
-        const tiltY = (Math.random() - 0.5) * Math.PI * 0.7;
-        const tiltZ = (Math.random() - 0.5) * Math.PI * 0.7;
-
-        // Draw individual orbit ring
-        const segments = 64;
-        const orbitGeo = new THREE.BufferGeometry();
-        const points = [];
-        for (let i = 0; i <= segments; i++) {
-          const theta = (i / segments) * Math.PI * 2;
-          points.push(radius * Math.cos(theta), 0, radius * Math.sin(theta));
-        }
-        orbitGeo.setAttribute('position', new THREE.Float32BufferAttribute(points, 3));
-        const orbitMat = new THREE.LineBasicMaterial({ 
-          color: 0x8b5cf6, 
-          transparent: true, 
-          opacity: 0.12 
-        });
-        const orbit = new THREE.Line(orbitGeo, orbitMat);
-        orbit.rotation.set(tiltX, tiltY, tiltZ);
-        this.electronGroup.add(orbit);
-
-        const electron = new THREE.Mesh(electronGeo, electronMat);
-        this.electronGroup.add(electron);
-        
-        shellElectrons.push({
-          mesh: electron,
-          angle: (e / electronsInShell) * Math.PI * 2,
-          radius: radius,
-          tiltX: tiltX,
-          tiltY: tiltY,
-          tiltZ: tiltZ,
-          speed: 2.0 / (s + 1)
-        });
-      }
-      this.shells.push(shellElectrons);
-    }
-  },
-
-  buildMolecule(atoms, bonds) {
-    this.clear();
-    this.currentMode = 'molecule';
-
-    this.moleculeGroup = new THREE.Group();
-    this.scene.add(this.moleculeGroup);
-
-    if (!atoms || atoms.length === 0) return;
-
-    this.moleculeAtoms = [];
-    this.moleculeBonds = [];
-
-    // 1. Draw atoms spheres
-    atoms.forEach(atom => {
-      const geo = new THREE.SphereGeometry(atom.radius * 1.5, 32, 32);
-      const mat = new THREE.MeshPhongMaterial({
-        color: new THREE.Color(atom.color),
-        emissive: new THREE.Color(atom.color).multiplyScalar(0.12),
-        shininess: 95
-      });
-      const mesh = new THREE.Mesh(geo, mat);
-      const bx = atom.x * 2.0;
-      const by = atom.y * 2.0;
-      const bz = atom.z * 2.0;
-      mesh.position.set(bx, by, bz);
-      this.moleculeGroup.add(mesh);
-      
-      this.moleculeAtoms.push({
-        mesh: mesh,
-        element: atom.element,
-        baseX: bx,
-        baseY: by,
-        baseZ: bz,
-        phase: Math.random() * Math.PI * 2
-      });
-    });
-
-    const drawStick = (idx1, idx2, offsetVec) => {
-      const a1 = this.moleculeAtoms[idx1];
-      const a2 = this.moleculeAtoms[idx2];
-      if (!a1 || !a2) return;
-      const p1 = a1.mesh.position;
-      const p2 = a2.mesh.position;
-
-      const start = p1.clone();
-      const end = p2.clone();
-      if (offsetVec) {
-        start.add(offsetVec);
-        end.add(offsetVec);
-      }
-      const direction = new THREE.Vector3().subVectors(end, start);
-      const length = direction.length();
-
-      const geom = new THREE.CylinderGeometry(0.04, 0.04, length, 16);
-      // CylinderGeometry is built along local +Y; translate so it spans
-      // from the origin to +Y*length, then align that +Y axis directly
-      // with the real bond direction via a quaternion (avoids the -Z
-      // convention of Object3D.lookAt, which previously left the stick
-      // pointing away from the target atom instead of towards it).
-      geom.translate(0, length / 2, 0);
-
-      const mat = new THREE.MeshPhongMaterial({ color: 0x94a3b8, shininess: 60 });
-      const cylinder = new THREE.Mesh(geom, mat);
-
-      cylinder.position.copy(start);
-      cylinder.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), direction.clone().normalize());
-
-      this.moleculeGroup.add(cylinder);
-
-      this.moleculeBonds.push({
-        mesh: cylinder,
-        atom1: a1,
-        atom2: a2,
-        initialLength: length,
-        offsetVec: offsetVec
-      });
-    };
-
-    // 2. Draw bonds (explicit connection maps or fallback proximity)
-    if (bonds && bonds.length > 0) {
-      bonds.forEach(bond => {
-        const a1 = this.moleculeAtoms[bond.atom1Index];
-        const a2 = this.moleculeAtoms[bond.atom2Index];
-        if (!a1 || !a2) return;
-        const p1 = a1.mesh.position;
-        const p2 = a2.mesh.position;
-        const order = parseInt(bond.order) || 1;
-
-        if (order === 1) {
-          drawStick(bond.atom1Index, bond.atom2Index, null);
-        } else if (order === 2) {
-          const dir = new THREE.Vector3().subVectors(p2, p1).normalize();
-          const ref = Math.abs(dir.y) > 0.9 ? new THREE.Vector3(1, 0, 0) : new THREE.Vector3(0, 1, 0);
-          const perp = new THREE.Vector3().crossVectors(dir, ref).normalize().multiplyScalar(0.08);
-
-          drawStick(bond.atom1Index, bond.atom2Index, perp);
-          drawStick(bond.atom1Index, bond.atom2Index, perp.clone().negate());
-        } else if (order === 3) {
-          const dir = new THREE.Vector3().subVectors(p2, p1).normalize();
-          const ref = Math.abs(dir.y) > 0.9 ? new THREE.Vector3(1, 0, 0) : new THREE.Vector3(0, 1, 0);
-          const perp = new THREE.Vector3().crossVectors(dir, ref).normalize().multiplyScalar(0.1);
-
-          drawStick(bond.atom1Index, bond.atom2Index, null);
-          drawStick(bond.atom1Index, bond.atom2Index, perp);
-          drawStick(bond.atom1Index, bond.atom2Index, perp.clone().negate());
-        }
-      });
-    } else {
-      const maxBondDist = 2.9;
-      for (let i = 0; i < this.moleculeAtoms.length; i++) {
-        for (let j = i + 1; j < this.moleculeAtoms.length; j++) {
-          const a1 = this.moleculeAtoms[i];
-          const a2 = this.moleculeAtoms[j];
-          const p1 = a1.mesh.position;
-          const p2 = a2.mesh.position;
-          const dist = p1.distanceTo(p2);
-
-          if (dist < maxBondDist) {
-            drawStick(i, j, null);
-          }
-        }
-      }
-    }
-  },
-
-  animate() {
-    requestAnimationFrame(() => this.animate());
-
-    if (this.autoOrbit) {
-      const time = Date.now() * 0.0004;
-      const radius = 6.0;
-      this.camera.position.x = radius * Math.cos(time);
-      this.camera.position.z = radius * Math.sin(time);
-      this.camera.position.y = 3.0 + 1.0 * Math.sin(time * 0.5);
-      this.camera.lookAt(0, 0, 0);
-    }
-
-    if (this.controls) this.controls.update();
-
-    // Orbit camera Preset lerping
-    if (this.transitioning && this.targetCameraPos) {
-      this.camera.position.lerp(this.targetCameraPos, 0.1);
-      this.camera.lookAt(this.targetLookAt);
-      if (this.controls) this.controls.target.copy(this.targetLookAt);
-      if (this.camera.position.distanceTo(this.targetCameraPos) < 0.01) {
-        this.camera.position.copy(this.targetCameraPos);
-        this.transitioning = false;
-        this.targetCameraPos = null;
-      }
-    }
-
-    // Animation specific to mode
-    if (this.currentMode === 'atom') {
-      const time = Date.now() * 0.001;
-
-      if (this.nucleus) {
-        this.nucleus.rotation.y += 0.005;
-        this.nucleus.rotation.x += 0.002;
-      }
-
-      this.shells.forEach(shell => {
-        shell.forEach(e => {
-          const currentAngle = e.angle + e.speed * time;
-          const localX = e.radius * Math.cos(currentAngle);
-          const localZ = e.radius * Math.sin(currentAngle);
-          
-          const pos = new THREE.Vector3(localX, 0, localZ);
-          pos.applyAxisAngle(new THREE.Vector3(1, 0, 0), e.tiltX);
-          pos.applyAxisAngle(new THREE.Vector3(0, 1, 0), e.tiltY);
-          pos.applyAxisAngle(new THREE.Vector3(0, 0, 1), e.tiltZ);
-          
-          e.mesh.position.copy(pos);
-        });
-      });
-    } else if (this.currentMode === 'molecule' && this.moleculeGroup) {
-      // Rotate the molecule slowly in space
-      this.moleculeGroup.rotation.y += 0.006;
-      this.moleculeGroup.rotation.x += 0.002;
-
-      // Micro-thermal vibrations
-      const t = Date.now() * 0.015;
-      if (this.moleculeAtoms) {
-        this.moleculeAtoms.forEach(atom => {
-          const amp = 0.02;
-          const dx = amp * Math.sin(t + atom.phase);
-          const dy = amp * Math.cos(t * 1.3 + atom.phase);
-          const dz = amp * Math.sin(t * 0.8 + atom.phase);
-          atom.mesh.position.set(atom.baseX + dx, atom.baseY + dy, atom.baseZ + dz);
-        });
-      }
-
-      // Update connection cylinders
-      if (this.moleculeBonds) {
-        this.moleculeBonds.forEach(bond => {
-          const p1 = bond.atom1.mesh.position;
-          const p2 = bond.atom2.mesh.position;
-
-          const start = p1.clone();
-          const end = p2.clone();
-          if (bond.offsetVec) {
-            start.add(bond.offsetVec);
-            end.add(bond.offsetVec);
-          }
-
-          const direction = new THREE.Vector3().subVectors(end, start);
-          const length = direction.length();
-
-          bond.mesh.position.copy(start);
-          // Same quaternion-based alignment as the initial drawStick() build
-          // (geometry's long axis is local +Y), and scale along Y to match.
-          bond.mesh.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), direction.clone().normalize());
-
-          const scaleY = length / bond.initialLength;
-          bond.mesh.scale.set(1, scaleY, 1);
-        });
-      }
-    }
-
-    const sliderX = document.getElementById('cam-slider-x');
-    const sliderY = document.getElementById('cam-slider-y');
-    const sliderZ = document.getElementById('cam-slider-z');
-    const valX = document.getElementById('cam-val-x');
-    const valY = document.getElementById('cam-val-y');
-    const valZ = document.getElementById('cam-val-z');
-
-    if (sliderX && sliderY && sliderZ) {
-      if (document.activeElement !== sliderX) {
-        sliderX.value = this.camera.position.x;
-        if (valX) valX.textContent = this.camera.position.x.toFixed(2);
-      }
-      if (document.activeElement !== sliderY) {
-        sliderY.value = this.camera.position.y;
-        if (valY) valY.textContent = this.camera.position.y.toFixed(2);
-      }
-      if (document.activeElement !== sliderZ) {
-        sliderZ.value = this.camera.position.z;
-        if (valZ) valZ.textContent = this.camera.position.z.toFixed(2);
-      }
-    }
-
-    if (this.renderer) {
-      this.renderer.render(this.scene, this.camera);
-    }
-  },
-
-  onResize() {
-    const canvas = document.getElementById('three-canvas');
-    if (!canvas || !this.renderer) return;
-    const w = canvas.offsetWidth;
-    const h = canvas.offsetHeight;
-    this.camera.aspect = w / h;
-    this.camera.updateProjectionMatrix();
-    this.renderer.setSize(w, h);
-  }
-};
-
-document.addEventListener('DOMContentLoaded', () => {
-  DashboardManager.init();
-  ThreeAtom.init();
-
+  // This block stays inline on purpose. base.html registers its own
+  // DOMContentLoaded listener (which calls translatePage) while the document is
+  // being parsed, and it renders the extra_scripts block *before* that point —
+  // so this listener registers first and therefore runs first, merging this
+  // page's strings into window.TRANSLATIONS before the initial translation
+  // pass. A deferred ES module cannot preserve that ordering.
+  document.addEventListener('DOMContentLoaded', () => {
   if (window.TRANSLATIONS) {
     Object.assign(window.TRANSLATIONS.pt, {
       "chem-title-explorer": "Tabela Periódica Interativa",
@@ -1941,7 +690,125 @@ document.addEventListener('DOMContentLoaded', () => {
       "chem-legend-oxygen": "● Oxigênio",
       "chem-legend-carbon": "● Carbono / Outros",
       "chem-legend-hydrogen": "● Hidrogênio",
-      "chem-legend-halogens": "● Halogênios"
+      "chem-legend-halogens": "● Halogênios",
+      "chem-tab-explorer": "Tabela Periódica & Átomo 3D",
+      "chem-tab-simulator": "Simulador de Ligações & Reações",
+      "chem-badge-selected": "Selecionado",
+      "chem-search-title": "Buscar Elemento",
+      "chem-search-sub": "Digite o nome, símbolo ou número atômico",
+      "chem-search-placeholder": "Ex: Fe, Carbono, 8",
+      "chem-search-btn": "Buscar",
+      "chem-pt-title": "Tabela Periódica",
+      "chem-pt-sub": "Veja todos os 118 elementos em tamanho completo",
+      "chem-pt-open": "🧪 Abrir Tabela Periódica Completa",
+      "chem-fam-title": "Famílias Químicas",
+      "chem-fam-sub": "Legenda de Cores da Tabela",
+      "chem-fam-alkali": "Metais Alcalinos",
+      "chem-fam-alkaline": "Alcalinoterrosos",
+      "chem-fam-transition": "Metais de Transição",
+      "chem-fam-metalloid": "Semimetais",
+      "chem-fam-nonmetal": "Não-Metais / H",
+      "chem-fam-halogen": "Halogênios",
+      "chem-fam-noble": "Gases Nobres",
+      "chem-fam-lanthanide": "Lantanídeos",
+      "chem-fam-actinide": "Actinídeos",
+      "chem-builder-title": "🧪 Montador de Moléculas",
+      "chem-builder-sub": "Sintetize compostos ou monte um personalizado",
+      "chem-mode-preset": "Predefinidos",
+      "chem-mode-custom": "Criador Dinâmico",
+      "chem-lbl-molecule": "Selecione uma Molécula",
+      "chem-opt-h2o": "Água (H2O)",
+      "chem-opt-nacl": "Sal de Cozinha (NaCl)",
+      "chem-opt-co2": "Dióxido de Carbono (CO2)",
+      "chem-opt-nh3": "Amônia (NH3)",
+      "chem-opt-ch4": "Metano (CH4)",
+      "chem-opt-hcl": "Ácido Clorídrico (HCl)",
+      "chem-opt-fe2o3": "Ferrugem (Fe2O3)",
+      "chem-opt-lif": "Fluoreto de Lítio (LiF)",
+      "chem-opt-mgo": "Óxido de Magnésio (MgO)",
+      "chem-btn-synthesize": "Sintetizar Molécula",
+      "chem-custom-desc": "Monte moléculas arrastando elementos da tabela periódica e conectando átomos para criar ligações — a bancada valida as regras de valência em tempo real.",
+      "chem-btn-open-builder": "🧪 Abrir Bancada de Montagem",
+      "chem-rxn-title": "Reações Químicas",
+      "chem-rxn-sub": "Gere produtos e subprodutos",
+      "chem-lbl-rxn": "Preset de Reação",
+      "chem-opt-rxn-sodium": "Metal Sódio + Água",
+      "chem-opt-rxn-haber": "Síntese de Amônia (Haber-Bosch)",
+      "chem-opt-rxn-combustion": "Combustão Completa de Metano",
+      "chem-opt-rxn-neutral": "Neutralização Ácido-Base (HCl + NaOH)",
+      "chem-btn-react": "Desencadear Reação",
+      "chem-stoich-title": "⚖️ Motor de Estequiometria",
+      "chem-stoich-sub": "Massa molar de qualquer fórmula (ex: C6H12O6, Fe2(SO4)3)",
+      "chem-lbl-formula": "Fórmula Química",
+      "chem-btn-stoich": "Calcular Massa Molar",
+      "chem-mode-move": "✋ Mover",
+      "chem-mode-bond": "🔗 Ligar",
+      "chem-opt-bond1": "Simples",
+      "chem-opt-bond2": "Dupla",
+      "chem-opt-bond3": "Tríplice",
+      "chem-canvas-hint": "Arraste um elemento da tabela até aqui para adicionar um átomo",
+      "chem-btn-clear": "Limpar Tudo",
+      "chem-btn-simulate": "Simular Átomos",
+      "chem-panel-periodic": "🧪 Tabela Periódica dos Elementos Químicos",
+      "chem-panel-builder": "🧪 Tabela Periódica — Bancada de Montagem",
+      "chem-kpi-symbol": "Símbolo",
+      "chem-kpi-z": "Número Atômico",
+      "chem-unit-protons": "prótons",
+      "chem-kpi-mass": "Massa Atômica",
+      "chem-unit-amu": "u (unidade de massa atômica)",
+      "chem-tbl-element": "📋 Características do Elemento",
+      "chem-row-period": "Período",
+      "chem-row-group": "Grupo",
+      "chem-row-config": "Conf. Eletrônica",
+      "chem-row-electroneg": "Eletronegatividade",
+      "chem-row-radius": "Raio Covalente",
+      "chem-row-ionization": "Energia de Ionização",
+      "chem-row-density": "Densidade",
+      "chem-row-melting": "Ponto de Fusão",
+      "chem-row-boiling": "Ponto de Ebulição",
+      "chem-row-oxidation": "Estados de Oxidação",
+      "chem-wb-stoich-title": "🧮 Nuvem de Composição:",
+      "chem-wb-stoich-desc": "Elementos na proporção da fórmula — sem topologia de ligação real (posições apenas ilustrativas)",
+      "chem-kpi-formula": "Fórmula",
+      "chem-word-atoms": "átomos",
+      "chem-kpi-distinct": "Elementos Distintos",
+      "chem-unit-species": "espécies",
+      "chem-kpi-molar": "Massa Molar",
+      "chem-tbl-stoich": "📋 Composição Elementar (Estequiometria)",
+      "chem-row-molar-total": "Massa Molar Total",
+      "chem-kpi-bondtype": "Tipo de Ligação",
+      "chem-unit-interaction": "interação atômica",
+      "chem-kpi-molmass": "Massa Molecular",
+      "chem-tbl-bond": "📋 Relatório de Ligação Química",
+      "chem-row-compound": "Nome do Composto",
+      "chem-row-formula": "Fórmula Estequiométrica",
+      "chem-row-avgmass": "Massa Molar Média",
+      "chem-row-bondtype-strong": "Tipo de Ligação Forte",
+      "chem-row-strong": "Ligações Fortes (Intra)",
+      "chem-row-weak": "Ligações Fracas (Inter)",
+      "chem-row-nox": "Eletrovalência (Nox)",
+      "chem-kpi-product": "Produto Molar",
+      "chem-kpi-byproduct": "Subproduto",
+      "chem-kpi-prodmass": "Massa do Produto Principal",
+      "chem-tbl-reaction": "📋 Relatório de Reação Estequiométrica",
+      "chem-row-equation": "Equação Balanceada",
+      "chem-row-reactants": "Reagentes Alimentados",
+      "chem-row-product": "Produto Principal",
+      "chem-row-byproduct": "Subproduto Obtido",
+      "chem-row-prod-bonds": "Ligações no Produto",
+      "chem-row-byprod-bonds": "Ligações no Subproduto",
+      "chem-custom-name": "Molécula Personalizada",
+      "chem-kpi-genformula": "Fórmula Gerada",
+      "chem-kpi-bondstrength": "Força de Ligações",
+      "chem-unit-orbitals": "natureza dos orbitais",
+      "chem-tbl-custom": "📋 Relatório de Síntese Personalizada",
+      "chem-row-hill": "Fórmula Estequiométrica (Hill)",
+      "chem-row-calcmass": "Massa Molar Calculada",
+      "chem-row-bondcomp": "Composição das Ligações",
+      "chem-row-connections": "Conexões Registradas (Intra)",
+      "chem-row-intermol": "Interações Intermoleculares",
+      "chem-val-london": "Forças de London / Dipolo permanente (estimado)",
+      "chem-row-pauling": "Eletrovalência (Escala Pauling)"
     });
 
     Object.assign(window.TRANSLATIONS.en, {
@@ -1959,7 +826,125 @@ document.addEventListener('DOMContentLoaded', () => {
       "chem-legend-oxygen": "● Oxygen",
       "chem-legend-carbon": "● Carbon / Others",
       "chem-legend-hydrogen": "● Hydrogen",
-      "chem-legend-halogens": "● Halogens"
+      "chem-legend-halogens": "● Halogens",
+      "chem-tab-explorer": "Periodic Table & 3D Atom",
+      "chem-tab-simulator": "Bonds & Reactions Simulator",
+      "chem-badge-selected": "Selected",
+      "chem-search-title": "Search Element",
+      "chem-search-sub": "Type the name, symbol or atomic number",
+      "chem-search-placeholder": "e.g. Fe, Carbon, 8",
+      "chem-search-btn": "Search",
+      "chem-pt-title": "Periodic Table",
+      "chem-pt-sub": "See all 118 elements at full size",
+      "chem-pt-open": "🧪 Open Full Periodic Table",
+      "chem-fam-title": "Chemical Families",
+      "chem-fam-sub": "Table Colour Legend",
+      "chem-fam-alkali": "Alkali Metals",
+      "chem-fam-alkaline": "Alkaline Earth Metals",
+      "chem-fam-transition": "Transition Metals",
+      "chem-fam-metalloid": "Metalloids",
+      "chem-fam-nonmetal": "Non-Metals / H",
+      "chem-fam-halogen": "Halogens",
+      "chem-fam-noble": "Noble Gases",
+      "chem-fam-lanthanide": "Lanthanides",
+      "chem-fam-actinide": "Actinides",
+      "chem-builder-title": "🧪 Molecule Builder",
+      "chem-builder-sub": "Synthesize compounds or build a custom one",
+      "chem-mode-preset": "Presets",
+      "chem-mode-custom": "Dynamic Creator",
+      "chem-lbl-molecule": "Select a Molecule",
+      "chem-opt-h2o": "Water (H2O)",
+      "chem-opt-nacl": "Table Salt (NaCl)",
+      "chem-opt-co2": "Carbon Dioxide (CO2)",
+      "chem-opt-nh3": "Ammonia (NH3)",
+      "chem-opt-ch4": "Methane (CH4)",
+      "chem-opt-hcl": "Hydrochloric Acid (HCl)",
+      "chem-opt-fe2o3": "Rust (Fe2O3)",
+      "chem-opt-lif": "Lithium Fluoride (LiF)",
+      "chem-opt-mgo": "Magnesium Oxide (MgO)",
+      "chem-btn-synthesize": "Synthesize Molecule",
+      "chem-custom-desc": "Build molecules by dragging elements from the periodic table and connecting atoms to create bonds — the bench validates valence rules in real time.",
+      "chem-btn-open-builder": "🧪 Open Assembly Bench",
+      "chem-rxn-title": "Chemical Reactions",
+      "chem-rxn-sub": "Generate products and byproducts",
+      "chem-lbl-rxn": "Reaction Preset",
+      "chem-opt-rxn-sodium": "Sodium Metal + Water",
+      "chem-opt-rxn-haber": "Ammonia Synthesis (Haber-Bosch)",
+      "chem-opt-rxn-combustion": "Complete Methane Combustion",
+      "chem-opt-rxn-neutral": "Acid-Base Neutralization (HCl + NaOH)",
+      "chem-btn-react": "Trigger Reaction",
+      "chem-stoich-title": "⚖️ Stoichiometry Engine",
+      "chem-stoich-sub": "Molar mass of any formula (e.g. C6H12O6, Fe2(SO4)3)",
+      "chem-lbl-formula": "Chemical Formula",
+      "chem-btn-stoich": "Compute Molar Mass",
+      "chem-mode-move": "✋ Move",
+      "chem-mode-bond": "🔗 Bond",
+      "chem-opt-bond1": "Single",
+      "chem-opt-bond2": "Double",
+      "chem-opt-bond3": "Triple",
+      "chem-canvas-hint": "Drag an element from the table here to add an atom",
+      "chem-btn-clear": "Clear All",
+      "chem-btn-simulate": "Simulate Atoms",
+      "chem-panel-periodic": "🧪 Periodic Table of the Elements",
+      "chem-panel-builder": "🧪 Periodic Table — Assembly Bench",
+      "chem-kpi-symbol": "Symbol",
+      "chem-kpi-z": "Atomic Number",
+      "chem-unit-protons": "protons",
+      "chem-kpi-mass": "Atomic Mass",
+      "chem-unit-amu": "u (atomic mass unit)",
+      "chem-tbl-element": "📋 Element Properties",
+      "chem-row-period": "Period",
+      "chem-row-group": "Group",
+      "chem-row-config": "Electron Config.",
+      "chem-row-electroneg": "Electronegativity",
+      "chem-row-radius": "Covalent Radius",
+      "chem-row-ionization": "Ionisation Energy",
+      "chem-row-density": "Density",
+      "chem-row-melting": "Melting Point",
+      "chem-row-boiling": "Boiling Point",
+      "chem-row-oxidation": "Oxidation States",
+      "chem-wb-stoich-title": "🧮 Composition Cloud:",
+      "chem-wb-stoich-desc": "Elements in formula proportion — no real bond topology (illustrative positions only)",
+      "chem-kpi-formula": "Formula",
+      "chem-word-atoms": "atoms",
+      "chem-kpi-distinct": "Distinct Elements",
+      "chem-unit-species": "species",
+      "chem-kpi-molar": "Molar Mass",
+      "chem-tbl-stoich": "📋 Elemental Composition (Stoichiometry)",
+      "chem-row-molar-total": "Total Molar Mass",
+      "chem-kpi-bondtype": "Bond Type",
+      "chem-unit-interaction": "atomic interaction",
+      "chem-kpi-molmass": "Molecular Mass",
+      "chem-tbl-bond": "📋 Chemical Bond Report",
+      "chem-row-compound": "Compound Name",
+      "chem-row-formula": "Stoichiometric Formula",
+      "chem-row-avgmass": "Average Molar Mass",
+      "chem-row-bondtype-strong": "Primary Bond Type",
+      "chem-row-strong": "Strong Bonds (Intra)",
+      "chem-row-weak": "Weak Bonds (Inter)",
+      "chem-row-nox": "Electrovalency (Ox. No.)",
+      "chem-kpi-product": "Main Product",
+      "chem-kpi-byproduct": "Byproduct",
+      "chem-kpi-prodmass": "Main Product Mass",
+      "chem-tbl-reaction": "📋 Stoichiometric Reaction Report",
+      "chem-row-equation": "Balanced Equation",
+      "chem-row-reactants": "Reactants Fed",
+      "chem-row-product": "Main Product",
+      "chem-row-byproduct": "Byproduct Obtained",
+      "chem-row-prod-bonds": "Bonds in Product",
+      "chem-row-byprod-bonds": "Bonds in Byproduct",
+      "chem-custom-name": "Custom Molecule",
+      "chem-kpi-genformula": "Generated Formula",
+      "chem-kpi-bondstrength": "Bond Strength",
+      "chem-unit-orbitals": "orbital nature",
+      "chem-tbl-custom": "📋 Custom Synthesis Report",
+      "chem-row-hill": "Stoichiometric Formula (Hill)",
+      "chem-row-calcmass": "Computed Molar Mass",
+      "chem-row-bondcomp": "Bond Composition",
+      "chem-row-connections": "Registered Connections (Intra)",
+      "chem-row-intermol": "Intermolecular Interactions",
+      "chem-val-london": "London forces / Permanent dipole (estimated)",
+      "chem-row-pauling": "Electrovalency (Pauling Scale)"
     });
 
     Object.assign(window.TRANSLATIONS.ja, {
@@ -1977,19 +962,147 @@ document.addEventListener('DOMContentLoaded', () => {
       "chem-legend-oxygen": "● 酸素 (さんそ)",
       "chem-legend-carbon": "● 炭素 (たんそ) / その他",
       "chem-legend-hydrogen": "● 水素 (すいそ)",
-      "chem-legend-halogens": "● ハロゲン"
+      "chem-legend-halogens": "● ハロゲン",
+      "chem-tab-explorer": "周期表と３Dげんし",
+      "chem-tab-simulator": "手つなぎ（結合）と変身（反応）",
+      "chem-badge-selected": "えらんだげんそ",
+      "chem-search-title": "げんそをさがす",
+      "chem-search-sub": "なまえ、きごう、げんし番号を入れてね",
+      "chem-search-placeholder": "れい: Fe, たんそ, 8",
+      "chem-search-btn": "さがす",
+      "chem-pt-title": "周期表",
+      "chem-pt-sub": "１１８こぜんぶのげんそを大きく見よう",
+      "chem-pt-open": "🧪 大きな周期表をひらく",
+      "chem-fam-title": "げんそのなかまたち",
+      "chem-fam-sub": "周期表の色のいみ",
+      "chem-fam-alkali": "アルカリ金属",
+      "chem-fam-alkaline": "アルカリ土類金属",
+      "chem-fam-transition": "せんい金属",
+      "chem-fam-metalloid": "半金属",
+      "chem-fam-nonmetal": "非金属 / H",
+      "chem-fam-halogen": "ハロゲン",
+      "chem-fam-noble": "貴ガス",
+      "chem-fam-lanthanide": "ランタノイド",
+      "chem-fam-actinide": "アクチノイド",
+      "chem-builder-title": "🧪 分子をつくるへや",
+      "chem-builder-sub": "できあいの分子か、自分だけの分子をつくろう",
+      "chem-mode-preset": "できあいの分子",
+      "chem-mode-custom": "自分でつくる",
+      "chem-lbl-molecule": "分子をえらんでね",
+      "chem-opt-h2o": "水 (H2O)",
+      "chem-opt-nacl": "しお (NaCl)",
+      "chem-opt-co2": "二酸化炭素 (CO2)",
+      "chem-opt-nh3": "アンモニア (NH3)",
+      "chem-opt-ch4": "メタン (CH4)",
+      "chem-opt-hcl": "塩酸 (HCl)",
+      "chem-opt-fe2o3": "さび (Fe2O3)",
+      "chem-opt-lif": "フッ化リチウム (LiF)",
+      "chem-opt-mgo": "酸化マグネシウム (MgO)",
+      "chem-btn-synthesize": "分子をつくる！",
+      "chem-custom-desc": "周期表からげんそをドラッグして、げんしどうしをつないで分子をつくろう — 手（結合）のかずはちゃんとチェックされるよ。",
+      "chem-btn-open-builder": "🧪 分子づくりのつくえをひらく",
+      "chem-rxn-title": "化学はんのう",
+      "chem-rxn-sub": "なにができるか見てみよう",
+      "chem-lbl-rxn": "はんのうをえらぶ",
+      "chem-opt-rxn-sodium": "ナトリウム + 水",
+      "chem-opt-rxn-haber": "アンモニアをつくる (ハーバー・ボッシュ法)",
+      "chem-opt-rxn-combustion": "メタンをもやす",
+      "chem-opt-rxn-neutral": "ちゅうわ (HCl + NaOH)",
+      "chem-btn-react": "はんのうスタート！",
+      "chem-stoich-title": "⚖️ 分子の重さけいさん機",
+      "chem-stoich-sub": "どんな化学しきでも重さがわかるよ (れい: C6H12O6)",
+      "chem-lbl-formula": "化学しき",
+      "chem-btn-stoich": "重さをけいさん！",
+      "chem-mode-move": "✋ うごかす",
+      "chem-mode-bond": "🔗 つなぐ",
+      "chem-opt-bond1": "１本の手",
+      "chem-opt-bond2": "２本の手",
+      "chem-opt-bond3": "３本の手",
+      "chem-canvas-hint": "周期表からげんそをここへドラッグしてね",
+      "chem-btn-clear": "ぜんぶけす",
+      "chem-btn-simulate": "シミュレーション！",
+      "chem-panel-periodic": "🧪 げんその周期表",
+      "chem-panel-builder": "🧪 周期表 — 分子づくりのつくえ",
+      "chem-kpi-symbol": "げんそきごう",
+      "chem-kpi-z": "げんし番号",
+      "chem-unit-protons": "陽子のかず",
+      "chem-kpi-mass": "げんしの重さ",
+      "chem-unit-amu": "u（げんしの重さのたんい）",
+      "chem-tbl-element": "📋 げんそのとくちょう",
+      "chem-row-period": "周期（だん）",
+      "chem-row-group": "族（れつ）",
+      "chem-row-config": "電子のならび方",
+      "chem-row-electroneg": "電子をひっぱる力",
+      "chem-row-radius": "げんしの大きさ",
+      "chem-row-ionization": "イオン化エネルギー",
+      "chem-row-density": "みつど",
+      "chem-row-melting": "とける温度",
+      "chem-row-boiling": "ふっとうする温度",
+      "chem-row-oxidation": "さんかすう",
+      "chem-wb-stoich-title": "🧮 げんそのくもモデル:",
+      "chem-wb-stoich-desc": "化学しきのわりあいでげんそをならべたよ（ばしょはイメージだよ）",
+      "chem-kpi-formula": "化学しき",
+      "chem-word-atoms": "このげんし",
+      "chem-kpi-distinct": "げんその種類",
+      "chem-unit-species": "しゅるい",
+      "chem-kpi-molar": "分子の重さ",
+      "chem-tbl-stoich": "📋 げんそのわりあい",
+      "chem-row-molar-total": "ぜんぶの重さ",
+      "chem-kpi-bondtype": "つながり方",
+      "chem-unit-interaction": "げんしのつながり",
+      "chem-kpi-molmass": "分子の重さ",
+      "chem-tbl-bond": "📋 手つなぎ（結合）レポート",
+      "chem-row-compound": "分子のなまえ",
+      "chem-row-formula": "化学しき",
+      "chem-row-avgmass": "平均の重さ",
+      "chem-row-bondtype-strong": "つよいつながりの種類",
+      "chem-row-strong": "つよいつながり",
+      "chem-row-weak": "よわいつながり",
+      "chem-row-nox": "電子のやりとり (Nox)",
+      "chem-kpi-product": "できたもの",
+      "chem-kpi-byproduct": "おまけにできたもの",
+      "chem-kpi-prodmass": "できたものの重さ",
+      "chem-tbl-reaction": "📋 化学はんのうレポート",
+      "chem-row-equation": "はんのうのしき",
+      "chem-row-reactants": "まぜたもの",
+      "chem-row-product": "できたもの",
+      "chem-row-byproduct": "おまけにできたもの",
+      "chem-row-prod-bonds": "できたもののつながり",
+      "chem-row-byprod-bonds": "おまけのつながり",
+      "chem-custom-name": "自分でつくった分子",
+      "chem-kpi-genformula": "できた化学しき",
+      "chem-kpi-bondstrength": "つながりのつよさ",
+      "chem-unit-orbitals": "つながりのせいしつ",
+      "chem-tbl-custom": "📋 自分でつくった分子のレポート",
+      "chem-row-hill": "化学しき (ヒルの順番)",
+      "chem-row-calcmass": "けいさんした重さ",
+      "chem-row-bondcomp": "つながりのくみあわせ",
+      "chem-row-connections": "つないだところ",
+      "chem-row-intermol": "分子どうしの力",
+      "chem-val-london": "ロンドン力 / そっと引きあう力（すいてい）",
+      "chem-row-pauling": "電子をひっぱる力くらべ (ポーリング)"
     });
 
     // Auto-apply current language
     const currentLang = localStorage.getItem('app-language') || 'pt';
     window.translatePage(currentLang);
+
+    // The page/workbench headers and 3D legend are JS-rendered (no data-i18n),
+    // and setTab skips its initial no-op call — render them explicitly so the
+    // first paint is already in the stored language.
+    // DashboardManager lives in the Vite page module (pages/chemistry.js) and
+    // is published on window precisely for these two hooks; qualify it so the
+    // cross-scope dependency is visible rather than looking like a global.
+    window.DashboardManager?.renderHeaders();
   }
 
-  window.addEventListener('language-changed', (e) => {
+  window.addEventListener('language-changed', () => {
     // Redraw text bindings on mode headers
-    const currentTab = DashboardManager.currentTab;
-    DashboardManager.currentTab = null; // force update
-    DashboardManager.setTab(currentTab);
+    const manager = window.DashboardManager;
+    if (!manager) return;
+    const currentTab = manager.currentTab;
+    manager.currentTab = null; // force update
+    manager.setTab(currentTab);
   });
 });
 </script>

@@ -31,6 +31,110 @@ class TestElementPropertyService:
         assert el.name == "Carbon"
         assert el.atomic_number == 6
 
+    def test_hydrogen_ionisation_energy_is_in_electronvolts(self):
+        """
+        13.598 eV is the textbook first ionisation energy of hydrogen. Pinning
+        it here catches a unit slip in either backend — the mendeleev path used
+        to apply a kJ/mol conversion to a value already in eV, reporting 0.141.
+        """
+        el = ElementPropertyService().get_element("H")
+        assert el.ionisation_energy_ev == pytest.approx(13.598, abs=0.01)
+
+    def test_electron_configuration_is_a_string(self):
+        """
+        This field is typed `str` and reaches the client through
+        dataclasses.asdict + JSONRenderer, which rejects non-string dict keys.
+        """
+        el = ElementPropertyService().get_element("Fe")
+        assert isinstance(el.electron_configuration, str)
+        assert el.electron_configuration
+
+
+class _FakeMendeleevElement:
+    """Minimal stand-in shaped like the attributes the service reads."""
+
+    symbol = "H"
+    name = "Hydrogen"
+    atomic_number = 1
+    atomic_weight = 1.008
+    period = 1
+    group_id = 1
+    # mendeleev reports these in eV, keyed by ionisation stage.
+    ionenergies = {1: 13.598434599702}
+    covalent_radius_pyykko = 32.0
+    melting_point = 13.99
+    boiling_point = 20.271
+    density = 8.988e-05
+    oxistates = [-1, 1]
+
+    class _EC:
+        # The real type is an OrderedDict keyed by (n, subshell) tuples — the
+        # shape that used to be assigned straight to a `str` field.
+        conf = {(1, 's'): 1}
+
+    ec = _EC()
+
+    def electronegativity(self, scale='pauling'):
+        return 2.20
+
+
+class TestMendeleevBackend:
+    """
+    mendeleev is optional (requirements-advanced.txt) and absent from the test
+    environment, so this whole branch of ElementPropertyService ran untested —
+    which is how a ~96x unit error and a guaranteed 500 both survived in it.
+    Injecting a fake module exercises it without adding the dependency.
+    """
+
+    @pytest.fixture
+    def fake_mendeleev(self, monkeypatch):
+        import sys
+        import types
+
+        module = types.ModuleType('mendeleev')
+        module.element = lambda identifier: _FakeMendeleevElement()
+        monkeypatch.setitem(sys.modules, 'mendeleev', module)
+        return module
+
+    def test_ionisation_energy_is_not_rescaled(self, fake_mendeleev):
+        el = ElementPropertyService().get_element("H")
+        assert el.ionisation_energy_ev == pytest.approx(13.598, abs=0.01)
+
+    def test_electron_configuration_is_flattened_to_a_string(self, fake_mendeleev):
+        el = ElementPropertyService().get_element("H")
+        assert el.electron_configuration == "1s1"
+
+    def test_result_is_json_serialisable(self, fake_mendeleev):
+        """dataclasses.asdict -> json.dumps is exactly what the view does."""
+        import dataclasses
+        import json
+
+        el = ElementPropertyService().get_element("H")
+        json.dumps(dataclasses.asdict(el))  # must not raise
+
+    def test_backend_failure_falls_back_instead_of_500ing(self, monkeypatch):
+        """
+        mendeleev raises SQLAlchemy's NoResultFound for an unknown element,
+        which is not a ValueError, so it escaped the view's 404 branch and
+        surfaced as a 500. Any backend failure now degrades to the local table.
+        """
+        import sys
+        import types
+
+        class Boom(Exception):
+            pass
+
+        def explode(identifier):
+            raise Boom("no such element")
+
+        module = types.ModuleType('mendeleev')
+        module.element = explode
+        monkeypatch.setitem(sys.modules, 'mendeleev', module)
+
+        el = ElementPropertyService().get_element("Fe")
+        assert el.symbol == "Fe"
+        assert el.atomic_number == 26
+
 
 class TestChemistrySimulationService:
     def test_simulate_bond_water(self):

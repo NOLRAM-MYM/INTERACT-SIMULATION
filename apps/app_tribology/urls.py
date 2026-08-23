@@ -15,4 +15,5 @@ urlpatterns = [
 
     # Calculation API Endpoint
     path('calculate/', views.TribologyCalculateView.as_view(), name='tribology-calculate'),
+    path('schema/', views.TribologySchemaView.as_view(), name='tribology-schema'),
 ]

@@ -23,10 +23,13 @@ All API responses follow this envelope structure:
 import logging
 from typing import Any
 
+from django.conf import settings
 from rest_framework import status
-from rest_framework.exceptions import APIException
+from rest_framework.exceptions import APIException, ValidationError
 from rest_framework.response import Response
 from rest_framework.views import exception_handler as drf_exception_handler
+
+from apps.core.exceptions import DomainError
 
 logger = logging.getLogger(__name__)
 
@@ -81,6 +84,79 @@ def error_response(
 
 
 # ---------------------------------------------------------------------------
+# Service-Layer Failure Classification
+# ---------------------------------------------------------------------------
+
+def computation_error_response(
+    exc: Exception,
+    *,
+    view_name: str,
+    code: str = "calculation_error",
+    message: str | None = None,
+    view_logger: logging.Logger | None = None,
+) -> Response:
+    """
+    Turn a service-layer exception into the right HTTP response.
+
+    Classification:
+        - ``DomainError``  → 400, message shown verbatim (author wrote it for the user)
+        - ``ValidationError`` (DRF) → 400, field detail forwarded
+        - ``ValueError``   → 400, message shown verbatim (idiomatic "bad argument")
+        - anything else    → 500, generic message, traceback logged server-side
+
+    The 500 branch never returns ``str(exc)`` to the client unless ``DEBUG`` is
+    on. In production that string could contain file paths, SQL fragments, or
+    library internals; a caller cannot act on it either way.
+
+    Args:
+        exc:         The exception raised by the service layer.
+        view_name:   Name used in the server-side log line (e.g. ``"PipeFlowCalculateView"``).
+        code:        Machine-readable code for the 400 branch.
+        message:     Override for the 400 branch message. Defaults to ``str(exc)``.
+        view_logger: Logger to use. Defaults to this module's logger.
+
+    Returns:
+        DRF ``Response`` with the standard error envelope.
+    """
+    log = view_logger or logger
+
+    if isinstance(exc, DomainError):
+        return error_response(
+            message=message or exc.message,
+            code=exc.code,
+            errors=exc.errors,
+            http_status=status.HTTP_400_BAD_REQUEST,
+        )
+
+    if isinstance(exc, ValidationError):
+        # A core validator fired inside the service layer rather than the
+        # serializer. Still the caller's problem — forward the field detail.
+        detail = exc.detail if isinstance(exc.detail, dict) else {"non_field_errors": exc.detail}
+        return error_response(
+            message=_extract_message(detail),
+            code="validation_error",
+            errors=detail,
+            http_status=status.HTTP_400_BAD_REQUEST,
+        )
+
+    if isinstance(exc, ValueError):
+        return error_response(
+            message=message or str(exc),
+            code=code,
+            http_status=status.HTTP_400_BAD_REQUEST,
+        )
+
+    # Unexpected — this is a bug on our side, not bad input.
+    log.exception("%s failed with an unhandled exception", view_name, exc_info=exc)
+    return error_response(
+        message="Computation failed due to an internal error. Please try again.",
+        code="server_error",
+        errors={"detail": f"{type(exc).__name__}: {exc}"} if settings.DEBUG else None,
+        http_status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+    )
+
+
+# ---------------------------------------------------------------------------
 # Custom DRF Exception Handler
 # ---------------------------------------------------------------------------
 
@@ -117,12 +193,18 @@ def custom_exception_handler(exc: Exception, context: dict) -> Response | None:
             message = str(original_data)
             errors = None
 
-        response.data = {
+        # Omit `errors` when there is nothing to put in it, matching
+        # error_response() above. Emitting `"errors": null` here meant a 404 or
+        # 405 raised by DRF came back in a different shape from an error raised
+        # by a view, so clients had to handle both.
+        payload = {
             "status": "error",
             "code": _status_to_code(response.status_code),
             "message": message,
-            "errors": errors,
         }
+        if errors:
+            payload["errors"] = errors
+        response.data = payload
 
     return response
 

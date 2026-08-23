@@ -57,3 +57,9 @@ htmlcov/
 # Build artifacts
 *.mo
 *.pot
+
+# Claude Code — machine-local permission allowlist (settings.json is shared)
+.claude/settings.local.json
+
+# graphify knowledge-graph output (generated, ~7 MB including its cache)
+graphify-out/

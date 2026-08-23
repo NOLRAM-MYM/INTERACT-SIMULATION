@@ -44,6 +44,40 @@ class PipeFlowInputSerializer(serializers.Serializer):
         flow_rate → L/min (converted to m³/s)
     """
 
+    # ---------------------------------------------------------------
+    # Form schema metadata (consumed by apps.core.schema.build_schema)
+    # ---------------------------------------------------------------
+    # Only presentation lives here. Type, default, min and max are read off
+    # the fields below, so there is exactly one place to change a constraint.
+
+    schema_title = "Pipe Flow Analysis"
+    schema_description = (
+        "Darcy-Weisbach analysis for incompressible Newtonian pipe flow. "
+        "Computes Reynolds number, friction factor, pressure drop, "
+        "and velocity profile."
+    )
+    schema_field_meta = {
+        'diameter_mm':          {'label': "Inner Diameter",        'step': 0.1},
+        'length_m':             {'label': "Pipe Length",           'step': 0.1},
+        'roughness_mm':         {'label': "Wall Roughness (ε)",    'step': 0.001},
+        'density_kg_m3':        {'label': "Fluid Density",         'step': 0.1},
+        'viscosity_mpa_s':      {'label': "Dynamic Viscosity (μ)", 'step': 0.001},
+        'flow_rate_lpm':        {'label': "Flow Rate",             'step': 0.1},
+        'num_elbows_90':        {'label': "90° Elbows",            'step': 1, 'unit': "count"},
+        'num_gate_valves_open': {'label': "Gate Valves (open)",    'step': 1, 'unit': "count"},
+        'num_check_valves':     {'label': "Check Valves",          'step': 1, 'unit': "count"},
+    }
+    schema_extra = {
+        "preset_fluids": [
+            {"name": "Water (20°C)",     "density": 998.2,   "viscosity": 1.002},
+            {"name": "Water (60°C)",     "density": 983.2,   "viscosity": 0.467},
+            {"name": "Engine Oil",       "density": 888.0,   "viscosity": 100.0},
+            {"name": "Air (20°C, 1atm)", "density": 1.204,   "viscosity": 0.0181},
+            {"name": "Mercury (20°C)",   "density": 13546.0, "viscosity": 1.526},
+            {"name": "Ethanol (20°C)",   "density": 789.0,   "viscosity": 1.2},
+        ],
+    }
+
     # --- Pipe geometry ---
     diameter_mm = serializers.FloatField(
         min_value=0.1,
@@ -181,9 +215,13 @@ class PipeFlowResultSerializer(serializers.Serializer):
     pressure_drop_minor_pa   = serializers.FloatField(read_only=True)
     pressure_drop_total_pa   = serializers.FloatField(read_only=True)
     pressure_drop_total_bar  = serializers.FloatField(read_only=True)
-    radial_positions         = serializers.ListField(child=serializers.FloatField())
-    velocity_profile         = serializers.ListField(child=serializers.FloatField())
-    sweep_flow_rates_m3_s    = serializers.ListField(child=serializers.FloatField())
-    sweep_pressure_drops_pa  = serializers.ListField(child=serializers.FloatField())
-    hagen_poiseuille_exact   = serializers.CharField(allow_null=True)
-    warnings                 = serializers.ListField(child=serializers.CharField())
+    # read_only on every field, not just the scalars. build_schema() skips
+    # read-only fields, so the six below — which were writable purely by
+    # oversight — would be emitted as if they were form *inputs* if this class
+    # were ever pointed at a schema view.
+    radial_positions         = serializers.ListField(child=serializers.FloatField(), read_only=True)
+    velocity_profile         = serializers.ListField(child=serializers.FloatField(), read_only=True)
+    sweep_flow_rates_m3_s    = serializers.ListField(child=serializers.FloatField(), read_only=True)
+    sweep_pressure_drops_pa  = serializers.ListField(child=serializers.FloatField(), read_only=True)
+    hagen_poiseuille_exact   = serializers.CharField(allow_null=True, read_only=True)
+    warnings                 = serializers.ListField(child=serializers.CharField(), read_only=True)

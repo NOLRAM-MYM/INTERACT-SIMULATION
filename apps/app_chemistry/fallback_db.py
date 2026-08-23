@@ -7,8 +7,11 @@ active when the `mendeleev` library is not installed (e.g. on Python 3.14).
 
 import os
 import json
-from dataclasses import dataclass
+import logging
+
 from .services import ElementData
+
+logger = logging.getLogger(__name__)
 
 # Covalent Radii in picometers (pm) based on Pekka Pyykkö and Michiko Atsumi (2009)
 COVALENT_RADII = {
@@ -97,14 +100,26 @@ def load_elements_data():
         
     json_path = os.path.join(os.path.dirname(__file__), "periodic_table.json")
     if not os.path.exists(json_path):
+        logger.error(
+            "Periodic table dataset missing at %s — the elements endpoint will "
+            "return an empty table.", json_path,
+        )
         _ELEMENTS_CACHE = []
         return _ELEMENTS_CACHE
-        
+
+    # A corrupt or unreadable file still degrades to an empty table rather than
+    # a 500, but it must not do so silently: the endpoint answers 200 with zero
+    # elements, which looks like a working periodic table with nothing in it.
     try:
         with open(json_path, "r", encoding="utf-8") as f:
             data = json.load(f)
         _ELEMENTS_CACHE = data.get("elements", [])
-    except Exception:
+    except (OSError, json.JSONDecodeError) as exc:
+        logger.error(
+            "Could not read periodic table dataset at %s (%s: %s) — the "
+            "elements endpoint will return an empty table.",
+            json_path, type(exc).__name__, exc,
+        )
         _ELEMENTS_CACHE = []
     return _ELEMENTS_CACHE
 
@@ -174,8 +189,15 @@ def load_element_from_json(identifier: str | int) -> ElementData | None:
                 oxidation_states       = OXIDATION_STATES.get(z, []),
             )
             
-    except Exception:
-        pass
+    except (KeyError, TypeError, ValueError) as exc:
+        # A malformed record for one element should not take out the whole
+        # lookup, but swallowing it silently made a data problem look like
+        # "element not found". Returning None hands control to the minimal
+        # hardcoded table in get_element_fallback().
+        logger.warning(
+            "Malformed periodic table record for %r (%s: %s); falling back to "
+            "the minimal built-in table.", identifier, type(exc).__name__, exc,
+        )
     return None
 
 

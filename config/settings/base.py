@@ -32,6 +32,13 @@ environ.Env.read_env(BASE_DIR / '.env')
 SECRET_KEY = env('SECRET_KEY', default='dev-insecure-key-replace-in-production')
 ALLOWED_HOSTS = env('ALLOWED_HOSTS')
 
+# The cast above declares a DEBUG default, but nothing used to read it — so
+# setting DEBUG in .env silently did nothing and any settings module importing
+# only this file fell through to Django's own default. Read it here; the
+# per-environment modules still override where the value must not be negotiable
+# (production pins it False regardless of what the environment says).
+DEBUG = env('DEBUG')
+
 # ---------------------------------------------------------------------------
 # Installed Applications
 # ---------------------------------------------------------------------------
@@ -137,6 +144,15 @@ STATICFILES_DIRS = [
     BASE_DIR / 'frontend' / 'dist',
 ]
 
+# ---------------------------------------------------------------------------
+# Vite integration (see apps/core/templatetags/vite.py)
+# ---------------------------------------------------------------------------
+# Set VITE_DEV_SERVER_URL (e.g. http://localhost:5173) and run `npm run dev` to
+# serve assets from Vite with hot reload. Left empty, templates read the built
+# manifest instead, so a plain `runserver` requires `npm run build` first.
+VITE_DEV_SERVER_URL = env('VITE_DEV_SERVER_URL', default='')
+VITE_MANIFEST_PATH = BASE_DIR / 'frontend' / 'dist' / '.vite' / 'manifest.json'
+
 MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR / 'media'
 
@@ -173,6 +189,22 @@ CORS_ALLOWED_ORIGINS = env.list(
     default=['http://localhost:5173', 'http://127.0.0.1:5173'],
 )
 CORS_ALLOW_CREDENTIALS = True
+
+# ---------------------------------------------------------------------------
+# Cache
+# ---------------------------------------------------------------------------
+# DRF's AnonRateThrottle (configured above at 60/min) counts requests in the
+# Django cache. Left implicit, Django falls back to a per-process LocMemCache,
+# which makes the limit per worker and resets it on every restart — i.e. no
+# real limit at all behind a multi-worker server. Declared explicitly here so
+# the choice is visible; production.py swaps in the shared Redis instance that
+# Celery already uses, which is what makes the throttle actually hold.
+CACHES = {
+    'default': {
+        'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
+        'LOCATION': 'scidash-default',
+    }
+}
 
 # ---------------------------------------------------------------------------
 # Celery (Async task queue for heavy computations)

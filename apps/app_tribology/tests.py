@@ -4,6 +4,8 @@ apps/app_tribology/tests.py
 Unit and integration tests for the Tribology and Gears module.
 """
 
+import math
+
 from django.test import TestCase
 from django.urls import reverse
 from rest_framework import status
@@ -59,6 +61,97 @@ class TribologyNumericalTests(TestCase):
         # Thicker oil film at higher speeds
         self.assertGreater(res_fast["h_min_um"], res_slow["h_min_um"])
         self.assertGreater(res_fast["lambda_parameter"], res_slow["lambda_parameter"])
+
+    def test_entrainment_velocity_is_projected_onto_the_line_of_action(self):
+        """
+        At the pitch point the teeth roll without sliding, so the entrainment
+        velocity is the pitch-circle speed projected onto the line of action:
+        u = omega1 * r1 * sin(phi), the same sin(phi) already applied to the
+        curvature radii.
+
+        This used to return the unprojected pitch speed, overstating u by
+        1/sin(phi) = 2.92 at the standard 20 deg pressure angle.
+        """
+        rpm, d1_mm, phi_deg = 1500.0, 60.0, 20.0
+        service = TribologyService(
+            module_mm=3.0, pinion_teeth=20, gear_teeth=40, pinion_rpm=rpm,
+            viscosity_pa_s=0.04, roughness_um=0.5, load_n=2000.0,
+        )
+        res = service.compute_ehl()
+
+        omega1 = 2.0 * math.pi * rpm / 60.0
+        expected_u = omega1 * (d1_mm / 2000.0) * math.sin(math.radians(phi_deg))
+        self.assertAlmostEqual(res["entrainment_velocity_m_s"], expected_u, places=9)
+
+        # The unprojected pitch speed is still reported, and is strictly larger.
+        self.assertAlmostEqual(
+            res["pitch_line_velocity_m_s"], omega1 * (d1_mm / 2000.0), places=9
+        )
+        self.assertAlmostEqual(
+            res["pitch_line_velocity_m_s"] / res["entrainment_velocity_m_s"],
+            1.0 / math.sin(math.radians(phi_deg)),
+            places=9,
+        )
+
+    def test_film_thickness_follows_dowson_higginson_from_the_projected_speed(self):
+        """
+        h_min/R' = 2.65 * U^0.7 * G^0.54 * W^-0.13, recomputed here from the
+        dimensionless groups the service reports. Pins the magnitude, not just
+        the trend: the sin(phi) bug inflated h_min by 2.92^0.7 = 2.1x, which is
+        enough to move a gear pair from 'boundary' into 'mixed'.
+        """
+        service = TribologyService(
+            module_mm=3.0, pinion_teeth=20, gear_teeth=40, pinion_rpm=1500.0,
+            viscosity_pa_s=0.04, roughness_um=0.5, load_n=2000.0,
+        )
+        res = service.compute_ehl()
+
+        expected_ratio = (
+            2.65
+            * res["u_dimensionless"] ** 0.7
+            * res["g_dimensionless"] ** 0.54
+            * res["w_dimensionless"] ** -0.13
+        )
+        expected_h_um = expected_ratio * res["equivalent_radius_m"] * 1e6
+        self.assertAlmostEqual(res["h_min_um"], expected_h_um, places=9)
+
+        # Lambda = h_min / composite roughness, so this pair is in boundary
+        # lubrication. Under the old (inflated) speed it reported mixed.
+        self.assertAlmostEqual(
+            res["lambda_parameter"], res["h_min_um"] / 0.5, places=9
+        )
+        self.assertEqual(res["regime_code"], "boundary")
+
+    def test_normal_load_is_derived_from_the_tangential_input(self):
+        """
+        `load_n` is the tangential force at the pitch circle; the tooth normal
+        force along the line of action is F_t / cos(phi). The schema label used
+        to say "Normal Load", which made users enter an already-normal force
+        that then got inflated a second time.
+        """
+        service = TribologyService(
+            module_mm=3.0, pinion_teeth=20, gear_teeth=40, pinion_rpm=1500.0,
+            viscosity_pa_s=0.04, roughness_um=0.5, load_n=2000.0,
+        )
+        res = service.compute_ehl()
+        self.assertAlmostEqual(
+            res["normal_load_n"], 2000.0 / math.cos(math.radians(20.0)), places=9
+        )
+
+    def test_sweep_brackets_the_operating_speed(self):
+        """
+        The chart marks the operating point on the swept curve, so the sweep has
+        to contain it. A fixed 100-5000 RPM window did not, for any of the
+        speeds up to 20000 RPM the serializer accepts.
+        """
+        for rpm in (50.0, 1500.0, 12000.0, 20000.0):
+            service = TribologyService(
+                module_mm=3.0, pinion_teeth=20, gear_teeth=40, pinion_rpm=rpm,
+                viscosity_pa_s=0.04, roughness_um=0.5, load_n=2000.0,
+            )
+            rpms = service.compute()["sweep"]["rpms"]
+            self.assertLessEqual(min(rpms), rpm, f"{rpm} RPM is left of the sweep")
+            self.assertGreaterEqual(max(rpms), rpm, f"{rpm} RPM is right of the sweep")
 
     def test_equal_materials_matches_legacy_single_material_result(self):
         """Explicit E1=E2=210GPa/nu=0.3 must reproduce the same result as

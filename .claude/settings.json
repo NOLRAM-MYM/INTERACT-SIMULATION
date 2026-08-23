@@ -1,0 +1,24 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(grep -n 'btn-add-atom\\\\|btn-add-bond\\\\|bond-atom1\\\\|bond-atom2\\\\|custom-atom-select' /tmp/chem_mol.html)",
+      "Read(//tmp/**)",
+      "Bash(DJANGO_SETTINGS_MODULE=config.settings.production ALLOWED_HOSTS=example.com ./.venv/Scripts/python.exe -c \"import django; django.setup\\(\\)\")",
+      "Bash(DJANGO_SETTINGS_MODULE=config.settings.production SECRET_KEY=real-key ALLOWED_HOSTS='*' ./.venv/Scripts/python.exe -c \"import django; django.setup\\(\\)\")",
+      "Bash(DJANGO_SETTINGS_MODULE=config.settings.production SECRET_KEY=real-key ALLOWED_HOSTS=example.com ./.venv/Scripts/python.exe -c \"import django; django.setup\\(\\); from django.conf import settings; print\\('OK, DEBUG =', settings.DEBUG\\)\")",
+      "Bash(SECRET_KEY=abcdefghijklmnopqrstuvwxyz0123456789abcdefghijklmn ALLOWED_HOSTS=testserver DJANGO_SETTINGS_MODULE=config.settings.production ./.venv/Scripts/python.exe -c ' *)",
+      "Bash(./.venv/Scripts/python.exe -m pytest -q --no-header -p no:cacheprovider)",
+      "Bash(./.venv/Scripts/python.exe -m pytest apps/core/tests.py -q --no-header -p no:cacheprovider --no-cov -k \"ProductionSettings or BaseSettings\")",
+      "Bash(./.venv/Scripts/python.exe -m pytest -q --no-header -p no:cacheprovider --no-cov)",
+      "Bash(DJANGO_SETTINGS_MODULE=config.settings.development ./.venv/Scripts/python.exe -c ' *)",
+      "Bash(./.venv/Scripts/python.exe -m pytest apps/app_tribology -q --no-header -p no:cacheprovider --no-cov)",
+      "Bash(./.venv/Scripts/python.exe -m pytest apps/app_fluids -q --no-header -p no:cacheprovider --no-cov)",
+      "Bash(./.venv/Scripts/python.exe -c ' *)",
+      "Bash(./.venv/Scripts/python.exe -m pytest apps/app_fluids apps/app_tribology -q --no-header -p no:cacheprovider --no-cov)",
+      "Bash(./.venv/Scripts/python.exe -m pytest apps/app_physics -q --no-header -p no:cacheprovider --no-cov)",
+      "Bash(./.venv/Scripts/python.exe -m pytest apps/app_chemistry -q --no-header -p no:cacheprovider --no-cov)",
+      "Bash(npx vite *)",
+      "Bash(python -)"
+    ]
+  }
+}

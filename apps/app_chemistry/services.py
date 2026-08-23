@@ -58,13 +58,21 @@ class ElementPropertyService:
         """
         try:
             from mendeleev import element as mendeleev_element
+        except ImportError:
+            # mendeleev lives in requirements-advanced.txt and is optional.
+            from .fallback_db import get_element_fallback
+            return get_element_fallback(identifier)
+
+        try:
             el = mendeleev_element(identifier)
-            
-            # Convert ionisation energy from kJ/mol to eV
+
+            # mendeleev stores ionisation energies in eV (NIST ASD), not kJ/mol.
+            # This used to apply a kJ/mol -> eV factor of 0.010364 on top,
+            # reporting hydrogen at 0.141 eV instead of 13.598 — a ~96x error,
+            # and one the project's own fallback table contradicted.
             ie_ev = None
             if el.ionenergies and 1 in el.ionenergies:
-                # 1 kJ/mol = 0.01036 eV/atom
-                ie_ev = el.ionenergies[1] * 0.010364
+                ie_ev = float(el.ionenergies[1])
 
             electronegativity_raw = el.electronegativity('pauling')
             radius_raw = el.covalent_radius_pyykko
@@ -76,7 +84,7 @@ class ElementPropertyService:
                 atomic_mass           = float(el.atomic_weight) if el.atomic_weight else 0.0,
                 period                = el.period,
                 group                 = el.group_id,
-                electron_configuration= el.ec.conf if hasattr(el, 'ec') else str(el.econf),
+                electron_configuration= self._format_electron_configuration(el),
                 electronegativity     = float(electronegativity_raw) if electronegativity_raw is not None else None,
                 atomic_radius_pm      = float(radius_raw) if radius_raw is not None else None,
                 ionisation_energy_ev  = ie_ev,
@@ -85,10 +93,40 @@ class ElementPropertyService:
                 density_g_cm3         = float(el.density) if el.density else None,
                 oxidation_states      = list(el.oxistates) if el.oxistates else [],
             )
-        except ImportError:
-            # Fall back to local periodic table database
+        except Exception as exc:
+            # mendeleev signals "no such element" with SQLAlchemy's NoResultFound,
+            # which is not a ValueError — so the view's 404 branch never caught
+            # it and an unknown symbol came back as a 500. Anything else here is
+            # a genuine fault in the optional backend; the bundled JSON table
+            # covers the same elements, so fall back rather than fail the request.
+            logger.warning(
+                "mendeleev lookup failed for %r (%s: %s); using local table.",
+                identifier, type(exc).__name__, exc,
+            )
             from .fallback_db import get_element_fallback
             return get_element_fallback(identifier)
+
+    @staticmethod
+    def _format_electron_configuration(el) -> str:
+        """
+        Render mendeleev's electron configuration as a string.
+
+        ``Element.ec.conf`` is an OrderedDict keyed by ``(n, subshell)`` tuples.
+        Assigning it straight to this dataclass's ``str`` field meant
+        ``dataclasses.asdict`` handed DRF's JSONRenderer a dict with tuple keys,
+        which raises ``TypeError: keys must be str, int, float, bool or None``
+        — a 500 on every element detail request once mendeleev is installed.
+        """
+        ec = getattr(el, 'ec', None)
+        conf = getattr(ec, 'conf', None)
+
+        if isinstance(conf, dict):
+            return ' '.join(
+                f"{shell[0]}{shell[1]}{count}" for shell, count in conf.items()
+            )
+        if conf is not None:
+            return str(conf)
+        return str(getattr(el, 'econf', ''))
 
 
 class ChemistrySimulationService:
