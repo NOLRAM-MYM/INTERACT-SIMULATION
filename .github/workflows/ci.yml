@@ -1,0 +1,155 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  PYTHON_VERSION: '3.12'
+  NODE_VERSION: '20'
+
+jobs:
+  frontend:
+    name: Frontend (lint + build)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+
+      - run: npm ci
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Build
+        run: npm run build
+
+      # The Django jobs below render templates that resolve bundles through the
+      # Vite manifest, so they need this output rather than a rebuild of it.
+      - uses: actions/upload-artifact@v4
+        with:
+          name: frontend-dist
+          path: frontend/dist
+          retention-days: 1
+
+  backend:
+    name: Backend (checks + tests)
+    runs-on: ubuntu-latest
+    needs: frontend
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: pip
+          cache-dependency-path: |
+            requirements.txt
+            requirements-dev.txt
+
+      - run: pip install -r requirements-dev.txt
+
+      - uses: actions/download-artifact@v4
+        with:
+          name: frontend-dist
+          path: frontend/dist
+
+      - name: Django system check
+        run: python manage.py check
+
+      - name: Tests
+        run: pytest
+
+  production-boot:
+    name: Production settings boot
+    runs-on: ubuntu-latest
+    needs: frontend
+    # `manage.py check` does not build the middleware chain, so it stayed green
+    # while production could not serve a single request: production.py named a
+    # package that was in no requirements file. Only an actual request through
+    # the production settings catches that class of defect, which is why this
+    # job exists separately from the one above.
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: pip
+          cache-dependency-path: requirements.txt
+
+      - run: pip install -r requirements.txt
+
+      - uses: actions/download-artifact@v4
+        with:
+          name: frontend-dist
+          path: frontend/dist
+
+      - name: Deploy checks
+        env:
+          SECRET_KEY: ${{ github.sha }}-ci-only-not-a-real-key-padding-to-50-chars
+          ALLOWED_HOSTS: testserver
+          DJANGO_SETTINGS_MODULE: config.settings.production
+        run: python manage.py check --deploy --fail-level WARNING
+
+      # Build then collectstatic, in that order. Reversed, the manifest misses
+      # the freshly hashed bundle names and every page 500s.
+      - name: Collect static
+        env:
+          SECRET_KEY: ${{ github.sha }}-ci-only-not-a-real-key-padding-to-50-chars
+          ALLOWED_HOSTS: testserver
+          DJANGO_SETTINGS_MODULE: config.settings.production
+        run: python manage.py collectstatic --noinput
+
+      - name: Serve a request under production settings
+        env:
+          SECRET_KEY: ${{ github.sha }}-ci-only-not-a-real-key-padding-to-50-chars
+          ALLOWED_HOSTS: testserver
+          DJANGO_SETTINGS_MODULE: config.settings.production
+        run: |
+          python - <<'PY'
+          import sys
+          import django
+
+          django.setup()
+          from django.conf import settings
+          from django.test import Client
+
+          # WhiteNoise belongs directly after SecurityMiddleware; ahead of it,
+          # static responses skip the HSTS and SSL-redirect headers.
+          mw = settings.MIDDLEWARE
+          security = mw.index('django.middleware.security.SecurityMiddleware')
+          assert mw[security + 1] == 'whitenoise.middleware.WhiteNoiseMiddleware', mw
+
+          # STATICFILES_STORAGE was removed in Django 5.1; only STORAGES
+          # actually activates compression and hashed filenames.
+          backend = settings.STORAGES['staticfiles']['BACKEND']
+          assert 'whitenoise' in backend, backend
+
+          client = Client()
+          failed = False
+          for url in [
+              '/',
+              '/api/fluids/',
+              '/api/materials/',
+              '/api/chemistry/',
+              '/api/physics/',
+              '/api/physics/magnetism/',
+              '/api/tribology/',
+          ]:
+              status = client.get(url, secure=True).status_code
+              print(f'{status}  {url}')
+              failed |= status != 200
+
+          sys.exit(1 if failed else 0)
+          PY
