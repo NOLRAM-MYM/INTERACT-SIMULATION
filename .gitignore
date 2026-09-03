@@ -63,3 +63,6 @@ htmlcov/
 
 # graphify knowledge-graph output (generated, ~7 MB including its cache)
 graphify-out/
+
+# Ad-hoc verification harnesses — throwaway, not part of the suite
+scratch/

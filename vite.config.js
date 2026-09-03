@@ -47,6 +47,7 @@ export default defineConfig({
         chemistry: path.resolve(__dirname, 'frontend/src/pages/chemistry.js'),
         tribology: path.resolve(__dirname, 'frontend/src/pages/tribology.js'),
         physics:   path.resolve(__dirname, 'frontend/src/pages/physics.js'),
+        biology:   path.resolve(__dirname, 'frontend/src/pages/biology.js'),
       },
       output: {
         // Clean, readable chunk names

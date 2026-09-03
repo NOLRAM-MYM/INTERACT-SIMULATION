@@ -121,6 +121,21 @@ export const tribologyAPI = {
   },
 };
 
+export const biologyAPI = {
+  analyzeDna(sequence) {
+    return apiClient.post('/biology/dna/analyze/', { sequence });
+  },
+  getPresets() {
+    return apiClient.get('/biology/dna/presets/');
+  },
+  getCellStructures() {
+    return apiClient.get('/biology/cells/structures/');
+  },
+  simulateInfection(params) {
+    return apiClient.post('/biology/infection/simulate/', params);
+  },
+};
+
 /**
  * Serialise a rapid-fire endpoint so only the newest response is delivered.
  *

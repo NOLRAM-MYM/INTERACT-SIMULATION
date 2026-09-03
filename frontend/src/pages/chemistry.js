@@ -439,6 +439,425 @@ const MoleculeBuilder = {
 };
 
 // =================================================================
+// 1c. IUPAC NOMENCLATURE & FORMULA ENGINE
+// =================================================================
+const IUPACNomenclature = {
+  knownMolecules: {
+    'H2O': { name: 'Água (Monóxido de Di-hidrogênio)', type: 'Óxido / Solvente Polar', iupac: 'Oxidano' },
+    'CO2': { name: 'Dióxido de Carbono', type: 'Óxido Ácido Linear', iupac: 'Dióxido de Carbono' },
+    'CH4': { name: 'Metano', type: 'Hidrocarboneto (Alcano)', iupac: 'Metano' },
+    'NH3': { name: 'Amônia (Azano)', type: 'Base de Lewis Piramidal', iupac: 'Azano' },
+    'HCl': { name: 'Ácido Clorídrico (Cloreto de Hidrogênio)', type: 'Hidrácido Forte', iupac: 'Clorano' },
+    'HF': { name: 'Fluoreto de Hidrogênio', type: 'Hidrácido com Pontes de H', iupac: 'Fluorano' },
+    'H2O2': { name: 'Peróxido de Hidrogênio (Água Oxigenada)', type: 'Peróxido Oxidante', iupac: 'Dioxidano' },
+    'H2SO4': { name: 'Ácido Sulfúrico', type: 'Oxiácido Forte Diprótico', iupac: 'Sulfato de Di-hidrogênio' },
+    'HNO3': { name: 'Ácido Nítrico', type: 'Oxiácido Forte Monoprótico', iupac: 'Nitrato de Hidrogênio' },
+    'H3PO4': { name: 'Ácido Fosfórico', type: 'Oxiácido Triprótico', iupac: 'Fosfato de Tri-hidrogênio' },
+    'H2CO3': { name: 'Ácido Carbônico', type: 'Oxiácido Instável', iupac: 'Carbonato de Di-hidrogênio' },
+    'HCN': { name: 'Cianeto de Hidrogênio', type: 'Nitrila / Hidrácido', iupac: 'Cianeto de Hidrogênio' },
+    'NaCl': { name: 'Cloreto de Sódio (Sal de Cozinha)', type: 'Sal Iônico Haleto', iupac: 'Cloreto de Sódio' },
+    'KCl': { name: 'Cloreto de Potássio', type: 'Sal Iônico Mineral', iupac: 'Cloreto de Potássio' },
+    'NaOH': { name: 'Hidróxido de Sódio (Soda Cáustica)', type: 'Base Forte Arrhenius', iupac: 'Hidróxido de Sódio' },
+    'KOH': { name: 'Hidróxido de Potássio', type: 'Base Forte', iupac: 'Hidróxido de Potássio' },
+    'Ca(OH)2': { name: 'Hidróxido de Cálcio (Cal Extinta)', type: 'Base Dibásica', iupac: 'Di-hidróxido de Cálcio' },
+    'CaCO3': { name: 'Carbonato de Cálcio (Calcário)', type: 'Sal Insolúvel Oxissal', iupac: 'Carbonato de Cálcio' },
+    'CaO': { name: 'Óxido de Cálcio (Cal Viva)', type: 'Óxido Básico', iupac: 'Monóxido de Cálcio' },
+    'MgO': { name: 'Óxido de Magnésio (Magnésia)', type: 'Óxido Refratário', iupac: 'Monóxido de Magnésio' },
+    'Fe2O3': { name: 'Óxido de Ferro(III) (Ferrugem / Hematita)', type: 'Óxido Metálico', iupac: 'Trióxido de Diferro' },
+    'FeO': { name: 'Óxido de Ferro(II)', type: 'Óxido Metálico', iupac: 'Monóxido de Ferro' },
+    'Fe3O4': { name: 'Magnetita (Óxido Duplo de Ferro)', type: 'Óxido Magnético', iupac: 'Tetraóxido de Triferro' },
+    'Al2O3': { name: 'Óxido de Alumínio (Alumina)', type: 'Óxido Anfótero', iupac: 'Trióxido de Dialumínio' },
+    'LiF': { name: 'Fluoreto de Lítio', type: 'Sal Iônico Cristalino', iupac: 'Fluoreto de Lítio' },
+    'C2H6': { name: 'Etano', type: 'Alcano Saturado', iupac: 'Etano' },
+    'C2H4': { name: 'Eteno (Etileno)', type: 'Alceno Insaturado (Ligação Dupla)', iupac: 'Eteno' },
+    'C2H2': { name: 'Etino (Acetileno)', type: 'Alcino Insaturado (Ligação Tripla)', iupac: 'Etino' },
+    'C3H8': { name: 'Propano', type: 'Gás GLP Alcano', iupac: 'Propano' },
+    'C4H10': { name: 'Butano', type: 'Gás GLP Alcano', iupac: 'Butano' },
+    'CH3OH': { name: 'Metanol (Álcool Metílico)', type: 'Álcool Primário Polar', iupac: 'Metanol' },
+    'C2H5OH': { name: 'Etanol (Álcool Etílico)', type: 'Álcool Primário', iupac: 'Etanol' },
+    'C2H6O': { name: 'Etanol / Éter Dimetílico', type: 'Composto Oxigenado', iupac: 'Etanol ou Metoximetano' },
+    'CH2O': { name: 'Formaldeído (Metanal)', type: 'Aldeído Simples', iupac: 'Metanal' },
+    'CH3COOH': { name: 'Ácido Acético (Vinagre)', type: 'Ácido Carboxílico', iupac: 'Ácido Etanoico' },
+    'C2H4O2': { name: 'Ácido Acético / Formiato de Metila', type: 'Composto Carboxílico', iupac: 'Ácido Etanoico' },
+    'C6H6': { name: 'Benzeno', type: 'Hidrocarboneto Aromático', iupac: 'Ciclo-hexa-1,3,5-trieno' },
+    'C6H12O6': { name: 'Glicose / Frutose (Monossacarídeo)', type: 'Carboidrato Energético', iupac: 'D-Glicose' },
+    'O2': { name: 'Gás Oxigênio (Dioxigênio)', type: 'Substância Simples Diatômica', iupac: 'Dioxigênio' },
+    'N2': { name: 'Gás Nitrogênio (Dinitrogênio)', type: 'Substância com Ligação Tripla N≡N', iupac: 'Dinitrogênio' },
+    'H2': { name: 'Gás Hidrogênio (Di-hidrogênio)', type: 'Molécula Covalente Leve', iupac: 'Di-hidrogênio' },
+    'Cl2': { name: 'Gás Cloro (Dicloro)', type: 'Halogênio Diatômico Oxidante', iupac: 'Dicloro' },
+    'F2': { name: 'Gás Flúor (Diflúor)', type: 'Halogênio Altamente Reativo', iupac: 'Diflúor' },
+    'Br2': { name: 'Bromo Líquido (Dibromo)', type: 'Halogênio Líquido', iupac: 'Dibromo' },
+    'I2': { name: 'Iodo Sólido (Di-iodo)', type: 'Halogênio Sublimável', iupac: 'Di-iodo' },
+    'O3': { name: 'Ozônio (Trioxigênio)', type: 'Alótropo Angular Oxidante', iupac: 'Trioxigênio' },
+    'SO2': { name: 'Dióxido de Enxofre', type: 'Óxido Ácido Angular', iupac: 'Dióxido de Enxofre' },
+    'SO3': { name: 'Trióxido de Enxofre', type: 'Anidrido Sulfúrico Trigonal', iupac: 'Trióxido de Enxofre' },
+    'NO': { name: 'Monóxido de Nitrogênio (Óxido Nítrico)', type: 'Radical Livre Neutro', iupac: 'Monóxido de Nitrogênio' },
+    'NO2': { name: 'Dióxido de Nitrogênio', type: 'Gás Castanho Radicalar', iupac: 'Dióxido de Nitrogênio' },
+    'N2O': { name: 'Óxido Nitroso (Gás Hilariante)', type: 'Óxido Linear Anestésico', iupac: 'Monóxido de Dinitrogênio' },
+    'CO': { name: 'Monóxido de Carbono', type: 'Óxido Neutro com Ligação Tripla', iupac: 'Monóxido de Carbono' },
+    'PCl3': { name: 'Tricloreto de Fósforo', type: 'Haleto Piramidal', iupac: 'Triclorofosfano' },
+    'PCl5': { name: 'Pentacloreto de Fósforo', type: 'Haleto com Octeto Expandido', iupac: 'Pentaclorofosforano' },
+    'SF6': { name: 'Hexafluoreto de Enxofre', type: 'Gás Dielétrico Octaédrico', iupac: 'Hexafluorossulfurano' },
+    'BF3': { name: 'Trifluoreto de Boro', type: 'Ácido de Lewis Trigonal Hipovalente', iupac: 'Trifluoroborano' },
+    'BeCl2': { name: 'Dicloreto de Berílio', type: 'Haleto Linear Hipovalente', iupac: 'Dicloroberílio' },
+    'CCl4': { name: 'Tetracloreto de Carbono', type: 'Solvente Apolar Tetraédrico', iupac: 'Tetraclorometano' }
+  },
+
+  getEmpiricalFormula(counts) {
+    const gcd = (a, b) => (b === 0 ? a : gcd(b, a % b));
+    const nums = Object.values(counts);
+    if (!nums.length) return '';
+    const divisor = nums.reduce((g, n) => gcd(g, n), nums[0]);
+    let emp = '';
+    const sorted = Object.keys(counts).sort((a, b) => {
+      if (a === 'C') return -1;
+      if (b === 'C') return 1;
+      if (a === 'H') return -1;
+      if (b === 'H') return 1;
+      return a.localeCompare(b);
+    });
+    sorted.forEach(k => {
+      const c = counts[k] / divisor;
+      emp += k + (c > 1 ? c : '');
+    });
+    return emp;
+  },
+
+  generateSystematicName(atoms, counts, bonds) {
+    const elements = Object.keys(counts);
+    if (elements.length === 1) {
+      const el = elements[0];
+      const count = counts[el];
+      const greek = { 1: 'Mono', 2: 'Di', 3: 'Tri', 4: 'Tetra', 5: 'Penta', 6: 'Hexa', 8: 'Octa' };
+      return `${greek[count] || count + '-'}${el} (Substância Simples)`;
+    }
+
+    if (elements.length === 2 && counts['C'] && counts['H']) {
+      const nC = counts['C'];
+      const nH = counts['H'];
+      const prefixes = { 1: 'Met', 2: 'Et', 3: 'Prop', 4: 'But', 5: 'Pent', 6: 'Hex', 7: 'Hept', 8: 'Oct', 9: 'Non', 10: 'Dec' };
+      const base = prefixes[nC] || `C${nC}`;
+      if (nH === 2 * nC + 2) return `${base}ano (Alcano Saturado)`;
+      if (nH === 2 * nC) return `${base}eno (Alceno Insaturado)`;
+      if (nH === 2 * nC - 2) return `${base}ino (Alcino com Ligação Tripla)`;
+      return `Hidrocarboneto ${base}-${nH}H`;
+    }
+
+    if (elements.length === 2) {
+      const greek = { 1: 'mono', 2: 'di', 3: 'tri', 4: 'tetra', 5: 'penta', 6: 'hexa', 7: 'hepta', 8: 'octa' };
+      const a = elements[0], b = elements[1];
+      const an = atoms.find(at => at.element === a);
+      const bn = atoms.find(at => at.element === b);
+      const elPos = (an?.electronegativity ?? 2.0) <= (bn?.electronegativity ?? 2.0) ? a : b;
+      const elNeg = elPos === a ? b : a;
+
+      const suffixMap = {
+        'O': 'óxido', 'Cl': 'cloreto', 'F': 'fluoreto', 'Br': 'brometo',
+        'I': 'iodeto', 'S': 'sulfeto', 'N': 'nitreto', 'P': 'fosfeto', 'H': 'hidreto', 'C': 'carbeto'
+      };
+
+      const negName = suffixMap[elNeg] || `${elNeg}eto`;
+      const pNeg = greek[counts[elNeg]] || `${counts[elNeg]}-`;
+      const pPos = counts[elPos] > 1 ? `de ${greek[counts[elPos]] || ''}${elPos}` : `de ${elPos}`;
+
+      const cap = (s) => s.charAt(0).toUpperCase() + s.slice(1);
+      return `${cap(pNeg)}${negName} ${pPos}`;
+    }
+
+    return `Composto Poliatômico (${Object.entries(counts).map(([k, v]) => `${k}${v > 1 ? v : ''}`).join('')})`;
+  }
+};
+
+// =================================================================
+// 1d. BOND FEASIBILITY & VSEPR MOLECULAR GEOMETRY ANALYZER
+// =================================================================
+const BondFeasibilityAnalyzer = {
+  analyze(atoms, bonds) {
+    if (!atoms.length) return null;
+
+    const bondAnalysis = bonds.map(b => {
+      const a1 = atoms[b.atom1Index];
+      const a2 = atoms[b.atom2Index];
+      const en1 = a1.electronegativity;
+      const en2 = a2.electronegativity;
+      let deltaEN = null;
+      let ionicPercent = null;
+      let classification = 'Indeterminada';
+      let isHydrogenBondDonor = false;
+
+      if (en1 != null && en2 != null) {
+        deltaEN = Math.abs(en1 - en2);
+        ionicPercent = (1 - Math.exp(-0.25 * deltaEN * deltaEN)) * 100;
+
+        if (deltaEN >= 1.7) {
+          classification = 'Iônica';
+        } else if (deltaEN >= 0.4) {
+          classification = 'Covalente Polar';
+        } else {
+          classification = 'Covalente Apolar';
+        }
+
+        if ((a1.element === 'H' && ['F', 'O', 'N'].includes(a2.element)) ||
+            (a2.element === 'H' && ['F', 'O', 'N'].includes(a1.element))) {
+          isHydrogenBondDonor = true;
+        }
+      }
+
+      return {
+        atom1: a1.element,
+        idx1: b.atom1Index,
+        atom2: a2.element,
+        idx2: b.atom2Index,
+        order: b.order,
+        deltaEN,
+        ionicPercent,
+        classification,
+        isHydrogenBondDonor
+      };
+    });
+
+    let centralIdx = 0;
+    let maxConnections = -1;
+    atoms.forEach((a, i) => {
+      const conn = bonds.filter(b => b.atom1Index === i || b.atom2Index === i).length;
+      if (conn > maxConnections && a.element !== 'H') {
+        maxConnections = conn;
+        centralIdx = i;
+      }
+    });
+
+    const centralAtom = atoms[centralIdx];
+    const centralBonds = bonds.filter(b => b.atom1Index === centralIdx || b.atom2Index === centralIdx);
+    const centralBondPairs = centralBonds.reduce((acc, b) => acc + b.order, 0);
+
+    const VALENCE_ELECTRONS = {
+      H: 1, He: 2, Li: 1, Be: 2, B: 3, C: 4, N: 5, O: 6, F: 7, Ne: 8,
+      Na: 1, Mg: 2, Al: 3, Si: 4, P: 5, S: 6, Cl: 7, Ar: 8,
+      K: 1, Ca: 2, Fe: 2, Cu: 2, Zn: 2, Br: 7, I: 7, Xe: 8
+    };
+    const centralValence = VALENCE_ELECTRONS[centralAtom?.element] ?? 4;
+    const centralLoneElectrons = Math.max(0, centralValence - centralBondPairs);
+    const centralLonePairs = Math.floor(centralLoneElectrons / 2);
+    const stericNumber = centralBonds.length + centralLonePairs;
+
+    let geometry = 'Linear';
+    let idealAngle = '180°';
+    let vseprCode = `AX${centralBonds.length}E${centralLonePairs}`;
+
+    if (centralBonds.length <= 1) {
+      geometry = 'Linear (Diatômica)';
+      idealAngle = '180°';
+    } else if (stericNumber === 2) {
+      geometry = 'Linear';
+      idealAngle = '180°';
+    } else if (stericNumber === 3) {
+      if (centralLonePairs === 0) { geometry = 'Trigonal Plana'; idealAngle = '120°'; }
+      else { geometry = 'Angular'; idealAngle = '≈ 117.5°'; }
+    } else if (stericNumber === 4) {
+      if (centralLonePairs === 0) { geometry = 'Tetraédrica'; idealAngle = '109.5°'; }
+      else if (centralLonePairs === 1) { geometry = 'Piramidal Trigonal'; idealAngle = '≈ 107°'; }
+      else { geometry = 'Angular'; idealAngle = '≈ 104.5°'; }
+    } else if (stericNumber === 5) {
+      if (centralLonePairs === 0) { geometry = 'Bipiramidal Trigonal'; idealAngle = '90° / 120°'; }
+      else if (centralLonePairs === 1) { geometry = 'Gangorra (See-saw)'; idealAngle = '≈ 90° / 117°'; }
+      else if (centralLonePairs === 2) { geometry = 'Forma de T'; idealAngle = '≈ 90°'; }
+      else { geometry = 'Linear'; idealAngle = '180°'; }
+    } else if (stericNumber === 6) {
+      if (centralLonePairs === 0) { geometry = 'Octaédrica'; idealAngle = '90°'; }
+      else if (centralLonePairs === 1) { geometry = 'Piramidal Quadrada'; idealAngle = '≈ 90°'; }
+      else { geometry = 'Quadrada Plana'; idealAngle = '90°'; }
+    } else {
+      geometry = 'Complexa / Hipervalente';
+      idealAngle = 'Variável';
+    }
+
+    const observations = [];
+    let hasRadical = false;
+    let hasExpandedOctet = false;
+    let hasNobleGas = false;
+
+    atoms.forEach((a, i) => {
+      const bCount = bonds.reduce((sum, b) => (b.atom1Index === i || b.atom2Index === i ? sum + b.order : sum), 0);
+      const val = VALENCE_ELECTRONS[a.element] ?? 4;
+      const unshared = Math.max(0, val - bCount);
+      if (unshared % 2 !== 0) hasRadical = true;
+      if (['He', 'Ne', 'Ar', 'Kr', 'Xe', 'Rn'].includes(a.element)) hasNobleGas = true;
+      if (['P', 'S', 'Cl', 'Br', 'I', 'Xe'].includes(a.element) && bCount > 4) hasExpandedOctet = true;
+    });
+
+    if (bondAnalysis.some(b => b.isHydrogenBondDonor)) {
+      observations.push('💧 <strong>Pontes de Hidrogênio:</strong> A presença de ligações H-F, H-O ou H-N confere alta atração intermolecular por pontes de hidrogênio (elevando o ponto de ebulição).');
+    }
+
+    if (hasNobleGas) {
+      observations.push('⚠️ <strong>Gás Nobre Detectado:</strong> Gases nobres possuem camada de valência completa ($ns^2 np^6$) e raramente formam ligações covalentes estáveis sem agentes oxidantes extremos.');
+    }
+
+    if (hasRadical) {
+      observations.push('⚡ <strong>Espécie Radicalar / Elétron Desemparelhado:</strong> A molécula possui elétrons desemparelhados na camada de valência, conferindo alto paramagnetismo e reatividade.');
+    }
+
+    if (hasExpandedOctet) {
+      observations.push('🔮 <strong>Octeto Expandido (Hipervalência):</strong> Elementos a partir do 3º período utilizam orbitais d vazios para acomodar mais de 8 elétrons na camada de valência.');
+    }
+
+    const ionicCount = bondAnalysis.filter(b => b.classification === 'Iônica').length;
+    const polarCount = bondAnalysis.filter(b => b.classification === 'Covalente Polar').length;
+    const apolarCount = bondAnalysis.filter(b => b.classification === 'Covalente Apolar').length;
+
+    if (ionicCount > 0 && (polarCount + apolarCount === 0)) {
+      observations.push('🧂 <strong>Caráter Reticular Iônico:</strong> Predomínio de ligações iônicas. Em condições ambiente, forma retículo cristalino sólido de alto ponto de fusão.');
+    } else if (polarCount > 0) {
+      observations.push('🧲 <strong>Polaridade de Ligações:</strong> Ligações covalentes polares geram vetores momento de dipolo (\\vec{\\mu}). A polaridade total dependerá da simetria espacial.');
+    } else if (apolarCount > 0 && bonds.length > 0) {
+      observations.push('🌐 <strong>Caráter Covalente Apolar:</strong> Compartilhamento equitativo de densidade eletrônica entre átomos com eletronegatividades próximas.');
+    }
+
+    return {
+      bondAnalysis,
+      centralAtom: centralAtom?.element,
+      centralIdx,
+      stericNumber,
+      centralLonePairs,
+      vseprCode,
+      geometry,
+      idealAngle,
+      observations
+    };
+  }
+};
+
+// =================================================================
+// 1e. ELEMENT & ISOTOPE BUILDER ENGINE
+// =================================================================
+const ElementBuilderEngine = {
+  getSystematicIupac(Z) {
+    const roots = {
+      0: 'nil', 1: 'un', 2: 'bi', 3: 'tri', 4: 'quad',
+      5: 'pent', 6: 'hex', 7: 'sept', 8: 'oct', 9: 'enn'
+    };
+    const digits = String(Z).split('').map(Number);
+    let name = digits.map(d => roots[d]).join('');
+    if (name.endsWith('i')) name = name.slice(0, -1);
+    name += 'ium';
+    const symbol = digits.map((d, i) => (i === 0 ? roots[d][0].toUpperCase() : roots[d][0])).join('');
+    const capName = name.charAt(0).toUpperCase() + name.slice(1);
+    return { name: capName, symbol };
+  },
+
+  getAufbauConfiguration(Z) {
+    const subshells = [
+      { name: '1s', n: 1, cap: 2 },
+      { name: '2s', n: 2, cap: 2 },
+      { name: '2p', n: 2, cap: 6 },
+      { name: '3s', n: 3, cap: 2 },
+      { name: '3p', n: 3, cap: 6 },
+      { name: '4s', n: 4, cap: 2 },
+      { name: '3d', n: 3, cap: 10 },
+      { name: '4p', n: 4, cap: 6 },
+      { name: '5s', n: 5, cap: 2 },
+      { name: '4d', n: 4, cap: 10 },
+      { name: '5p', n: 5, cap: 6 },
+      { name: '6s', n: 6, cap: 2 },
+      { name: '4f', n: 4, cap: 14 },
+      { name: '5d', n: 5, cap: 10 },
+      { name: '6p', n: 6, cap: 6 },
+      { name: '7s', n: 7, cap: 2 },
+      { name: '5f', n: 5, cap: 14 },
+      { name: '6d', n: 6, cap: 10 },
+      { name: '7p', n: 7, cap: 6 },
+      { name: '8s', n: 8, cap: 2 },
+      { name: '5g', n: 5, cap: 18 },
+      { name: '6f', n: 6, cap: 14 },
+      { name: '7d', n: 7, cap: 10 },
+      { name: '8p', n: 8, cap: 6 },
+    ];
+
+    let rem = Z;
+    const parts = [];
+    let maxN = 1;
+    let lastBlock = 's';
+
+    for (const sub of subshells) {
+      if (rem <= 0) break;
+      const count = Math.min(rem, sub.cap);
+      rem -= count;
+      parts.push(`${sub.name}${count}`);
+      if (sub.n > maxN) maxN = sub.n;
+      lastBlock = sub.name[1];
+    }
+
+    return {
+      full: parts.join(' '),
+      period: maxN,
+      block: lastBlock,
+      subshells: parts
+    };
+  },
+
+  analyzeNucleus(Z, N, E) {
+    const A = Z + N;
+    const nzRatio = Z > 0 ? N / Z : 0;
+    const netCharge = Z - E;
+    const magicZ = [2, 8, 20, 28, 50, 82, 114, 126];
+    const magicN = [2, 8, 20, 28, 50, 82, 126, 184];
+
+    const isMagicZ = magicZ.includes(Z);
+    const isMagicN = magicN.includes(N);
+    const isDoublyMagic = isMagicZ && isMagicN;
+
+    let stabilityClass = 'Estável';
+    let decayMode = 'Nenhum (Nuclídeo Estável)';
+    let halfLife = 'Estável (> 10²⁴ anos)';
+    let islandProximity = 'Fora da região superpesada';
+
+    if (Z > 110) {
+      const distZ = Math.abs(Z - 120);
+      const distN = Math.abs(N - 184);
+      const score = Math.max(0, 100 - (distZ * 8 + distN * 4));
+      islandProximity = `Proximidade da Ilha de Estabilidade: ${score}% (Centro previsto: Z=120/126, N=184)`;
+    }
+
+    const idealN = Z < 20 ? Z : Z * (1 + 0.006 * Z);
+    if (Z <= 82 && Math.abs(N - idealN) <= (Z < 20 ? 1 : 4) && !(Z === 43 || Z === 61)) {
+      stabilityClass = 'Estável (Cinturão de Estabilidade)';
+      decayMode = 'Nenhum';
+      halfLife = 'Estável';
+    } else if (Z > 82) {
+      stabilityClass = 'Radioativo (Instável - Superpesado/Actinídeo)';
+      if (Z >= 104) {
+        decayMode = (N / Z < 1.4) ? 'Emissão Alfa (α) / Fissão Espontânea' : 'Fissão Espontânea / Emissão Alfa';
+        halfLife = (Z > 118) ? 'Microsegundos a Milissegundos (Teórico)' : 'Milissegundos a Segundos';
+      } else {
+        decayMode = (N / Z > 1.55) ? 'Decaimento Beta Negativo (β⁻)' : 'Emissão Alfa (α)';
+        halfLife = 'Minutos a Bilhões de Anos';
+      }
+    } else {
+      stabilityClass = 'Radioativo (Isótopo Instável)';
+      if (N > idealN) {
+        decayMode = 'Decaimento Beta Negativo (β⁻): n → p + e⁻ + ν̄_e';
+      } else {
+        decayMode = 'Decaimento Beta Positivo (β⁺) ou Captura Eletrônica: p → n + e⁺ + ν_e';
+      }
+      halfLife = 'Segundos a Milhares de Anos';
+    }
+
+    return {
+      A,
+      nzRatio: nzRatio.toFixed(3),
+      netCharge,
+      stabilityClass,
+      decayMode,
+      halfLife,
+      isDoublyMagic,
+      isMagicZ,
+      isMagicN,
+      islandProximity
+    };
+  }
+};
+
+// =================================================================
 // 2. DASHBOARD MANAGER
 // =================================================================
 // Dictionary lookup for JS-generated text (reports, dynamic titles) — falls
@@ -577,6 +996,68 @@ const DashboardManager = {
       }
       this.runCustomSimulation();
     });
+
+    // Element Builder Controls
+    const pSlider = document.getElementById('slider-builder-protons');
+    const nSlider = document.getElementById('slider-builder-neutrons');
+    const eSlider = document.getElementById('slider-builder-electrons');
+
+    const updateSliderVals = () => {
+      if (pSlider) document.getElementById('val-builder-protons').textContent = pSlider.value;
+      if (nSlider) document.getElementById('val-builder-neutrons').textContent = nSlider.value;
+      if (eSlider) document.getElementById('val-builder-electrons').textContent = eSlider.value;
+    };
+
+    [pSlider, nSlider, eSlider].forEach(slider => {
+      slider?.addEventListener('input', () => {
+        updateSliderVals();
+        const presetSelect = document.getElementById('builder-preset-select');
+        if (presetSelect) presetSelect.value = 'custom';
+      });
+    });
+
+    // Neutralize button (e- = Z)
+    document.getElementById('btn-builder-neutral')?.addEventListener('click', () => {
+      if (pSlider && eSlider) {
+        eSlider.value = pSlider.value;
+        updateSliderVals();
+      }
+    });
+
+    // Preset selector
+    document.getElementById('builder-preset-select')?.addEventListener('change', (e) => {
+      const val = e.target.value;
+      const presets = {
+        'H-1': { Z: 1, N: 0, E: 1 },
+        'H-2': { Z: 1, N: 1, E: 1 },
+        'H-3': { Z: 1, N: 2, E: 1 },
+        'He-4': { Z: 2, N: 2, E: 2 },
+        'C-12': { Z: 6, N: 6, E: 6 },
+        'C-14': { Z: 6, N: 8, E: 6 },
+        'Fe-56': { Z: 26, N: 30, E: 26 },
+        'U-235': { Z: 92, N: 143, E: 92 },
+        'Og-294': { Z: 118, N: 176, E: 118 },
+        'Uue-315': { Z: 119, N: 196, E: 119 },
+        'Ubn-320': { Z: 120, N: 200, E: 120 },
+        'Island-126': { Z: 126, N: 184, E: 126 },
+      };
+      if (presets[val]) {
+        const p = presets[val];
+        if (pSlider) pSlider.value = p.Z;
+        if (nSlider) nSlider.value = p.N;
+        if (eSlider) eSlider.value = p.E;
+        updateSliderVals();
+        this.constructCustomElement(p.Z, p.N, p.E);
+      }
+    });
+
+    // Construct Element button
+    document.getElementById('btn-builder-construct')?.addEventListener('click', () => {
+      const Z = parseInt(pSlider?.value || '26', 10);
+      const N = parseInt(nSlider?.value || '30', 10);
+      const E = parseInt(eSlider?.value || '26', 10);
+      this.constructCustomElement(Z, N, E);
+    });
   },
 
   // Opens the wide periodic-table panel in either layout: plain table
@@ -619,12 +1100,17 @@ const DashboardManager = {
     // Show/hide sections
     const explorerPanels = document.getElementById('panel-explorer');
     const simulatorPanels = document.getElementById('panel-simulator');
+    const elBuilderPanels = document.getElementById('panel-element-builder');
     const tableCard = document.getElementById('periodic-table-card');
     const tableFab = document.getElementById('fab-periodic-table');
+    const extraCard = document.getElementById('extra-analysis-card');
+
+    if (extraCard) extraCard.style.display = 'none';
 
     if (tab === 'explorer') {
       explorerPanels.style.display = 'block';
       simulatorPanels.style.display = 'none';
+      if (elBuilderPanels) elBuilderPanels.style.display = 'none';
       tableCard.style.display = 'block';
       if (tableFab) tableFab.style.display = 'flex';
 
@@ -636,6 +1122,7 @@ const DashboardManager = {
     } else if (tab === 'simulator') {
       explorerPanels.style.display = 'none';
       simulatorPanels.style.display = 'block';
+      if (elBuilderPanels) elBuilderPanels.style.display = 'none';
       tableCard.style.display = 'none';
       if (tableFab) tableFab.style.display = 'none';
       window.FloatingPanel?.close('periodic');
@@ -644,13 +1131,29 @@ const DashboardManager = {
 
       // Trigger default compound simulation
       document.getElementById('synthesize-btn').click();
+
+    } else if (tab === 'element-builder') {
+      explorerPanels.style.display = 'none';
+      simulatorPanels.style.display = 'none';
+      if (elBuilderPanels) elBuilderPanels.style.display = 'block';
+      tableCard.style.display = 'none';
+      if (tableFab) tableFab.style.display = 'none';
+      window.FloatingPanel?.close('periodic');
+
+      this.renderHeaders();
+
+      const pSlider = document.getElementById('slider-builder-protons');
+      const nSlider = document.getElementById('slider-builder-neutrons');
+      const eSlider = document.getElementById('slider-builder-electrons');
+      const Z = parseInt(pSlider?.value || '26', 10);
+      const N = parseInt(nSlider?.value || '30', 10);
+      const E = parseInt(eSlider?.value || '26', 10);
+      this.constructCustomElement(Z, N, E);
     }
   },
 
   // Renders the page header, workbench header and 3D legend for the current
-  // tab in the active language. Called by setTab, on initial load (after the
-  // page dictionary is merged — the static HTML alone can't localize these)
-  // and on language switches.
+  // tab in the active language.
   renderHeaders() {
     if (this.currentTab === 'explorer') {
       document.getElementById('page-title').innerHTML = chemT('chem-title-explorer', 'Tabela Periódica Interativa');
@@ -663,7 +1166,7 @@ const DashboardManager = {
         <span style="color:#3b82f6">${chemT('chem-legend-neutron', '● Nêutron')}</span>
         <span style="color:#8b5cf6">${chemT('chem-legend-electron', '● Elétron')}</span>
       `;
-    } else {
+    } else if (this.currentTab === 'simulator') {
       document.getElementById('page-title').innerHTML = chemT('chem-title-simulator', 'Simulador de Ligações & Reações Químicas');
       document.getElementById('page-desc').innerHTML = chemT('chem-desc-simulator', 'Sintetize moléculas ou execute reações dinâmicas. Analise produtos, massas e ligações.');
       document.getElementById('workbench-title').innerHTML = chemT('chem-wb-title-simulator', '🧪 Visualizador Molecular 3D');
@@ -674,6 +1177,17 @@ const DashboardManager = {
         <span style="color:#cbd5e1">${chemT('chem-legend-carbon', '● Carbono / Outros')}</span>
         <span style="color:#ffffff">${chemT('chem-legend-hydrogen', '● Hidrogênio')}</span>
         <span style="color:#10b981">${chemT('chem-legend-halogens', '● Halogênios')}</span>
+      `;
+    } else if (this.currentTab === 'element-builder') {
+      document.getElementById('page-title').innerHTML = '🔬 Construtor de Novo Elemento &amp; Isótopos';
+      document.getElementById('page-desc').innerHTML = 'Crie nuclídeos e novos elementos hipotéticos (Z &gt; 118). Analise estabilidade nuclear e nomenclatura IUPAC sistemática.';
+      document.getElementById('workbench-title').innerHTML = '🌀 Modelo Atômico Quântico de Bohr';
+      document.getElementById('workbench-desc').innerHTML = 'Distribuição eletrônica de Aufbau e núcleo isotópico em tempo real';
+
+      document.getElementById('three-legend').innerHTML = `
+        <span style="color:#ef4444">● Próton (Z)</span>
+        <span style="color:#3b82f6">● Nêutron (N)</span>
+        <span style="color:#8b5cf6">● Elétron (e⁻)</span>
       `;
     }
   },
@@ -983,22 +1497,17 @@ const DashboardManager = {
 
   removeCustomAtom(idx) {
     customAtoms.splice(idx, 1);
-    customBonds = customBonds.filter(b => b.atom1Index !== idx && b.atom2Index !== idx)
-      .map(b => {
-        return {
-          atom1Index: b.atom1Index > idx ? b.atom1Index - 1 : b.atom1Index,
-          atom2Index: b.atom2Index > idx ? b.atom2Index - 1 : b.atom2Index,
-          order: b.order
-        };
-      });
+    customBonds = customBonds
+      .filter(b => b.atom1Index !== idx && b.atom2Index !== idx)
+      .map(b => ({
+        atom1Index: b.atom1Index > idx ? b.atom1Index - 1 : b.atom1Index,
+        atom2Index: b.atom2Index > idx ? b.atom2Index - 1 : b.atom2Index,
+        order: b.order
+      }));
   },
 
   runCustomSimulation() {
     showLoading('Simulando forças atômicas tridimensionais…');
-    // hideLoading() lives in a finally: the overlay covers the whole viewport,
-    // so anything that throws between here and the end of the method used to
-    // leave the page permanently greyed out and apparently frozen, with the
-    // real error visible only in the console.
     try {
       this._runCustomSimulation();
     } catch (e) {
@@ -1010,55 +1519,36 @@ const DashboardManager = {
   },
 
   _runCustomSimulation() {
-    // 1. Physics relaxation (shared helper — also used by the stoichiometry
-    // composition cloud) + 2. Trigger ThreeJS render
     relaxAtomPositions(customAtoms, customBonds);
     ThreeAtom.buildMolecule(customAtoms, customBonds);
 
-    // The molecule builder bench closes once simulated, so the freshly
-    // built 3D molecule is immediately visible.
     if (document.getElementById('periodic-panel')?.classList.contains('is-open')) {
       window.FloatingPanel?.close('periodic');
     }
     window.FloatingPanel?.markUpdated('results');
 
-    // 3. Update Reports UI
-    const name = chemT('chem-custom-name', 'Molécula Personalizada');
+    // Formula & Counts
+    const counts = {};
+    customAtoms.forEach(a => { counts[a.element] = (counts[a.element] || 0) + 1; });
     const formula = this.getHillFormula(customAtoms);
+    const empirical = IUPACNomenclature.getEmpiricalFormula(counts);
     const totalMass = customAtoms.reduce((sum, a) => sum + a.mass, 0);
 
-    // Analyze bond characters
-    let ionicBonds = 0;
-    let polarBonds = 0;
-    let apolarBonds = 0;
+    // Known Molecule lookup or generated systematic nomenclature
+    const known = IUPACNomenclature.knownMolecules[formula];
+    const compName = known ? known.name : IUPACNomenclature.generateSystematicName(customAtoms, counts, customBonds);
+    const iupacName = known ? known.iupac : IUPACNomenclature.generateSystematicName(customAtoms, counts, customBonds);
+
+    // Advanced Feasibility & Geometry Analysis
+    const analysis = BondFeasibilityAnalyzer.analyze(customAtoms, customBonds);
+
     let bondTypesText = "Nenhuma ligação";
-
-    // Electronegativity is genuinely undefined for the noble gases (the API
-    // returns null for He, Ne, Ar). Subtracting through null coerces it to 0,
-    // which silently classified every bond to a noble gas as ionic — a
-    // difference of 2.2 against carbon rather than "not defined".
-    let undefinedBonds = 0;
-
-    customBonds.forEach(bond => {
-      const a1 = customAtoms[bond.atom1Index];
-      const a2 = customAtoms[bond.atom2Index];
-      if (a1.electronegativity == null || a2.electronegativity == null) {
-        undefinedBonds++;
-        return;
-      }
-      const diff = Math.abs(a1.electronegativity - a2.electronegativity);
-      if (diff > 1.7) ionicBonds++;
-      else if (diff > 0.4) polarBonds++;
-      else apolarBonds++;
-    });
-
-    if (customBonds.length > 0) {
-      const types = [];
-      if (ionicBonds > 0) types.push(`${ionicBonds}x Iônica`);
-      if (polarBonds > 0) types.push(`${polarBonds}x Covalente Polar`);
-      if (apolarBonds > 0) types.push(`${apolarBonds}x Covalente Apolar`);
-      if (undefinedBonds > 0) types.push(`${undefinedBonds}x Indeterminada`);
-      bondTypesText = types.join(', ');
+    if (analysis && analysis.bondAnalysis.length > 0) {
+      const countsByType = {};
+      analysis.bondAnalysis.forEach(b => {
+        countsByType[b.classification] = (countsByType[b.classification] || 0) + 1;
+      });
+      bondTypesText = Object.entries(countsByType).map(([k, v]) => `${v}x ${k}`).join(', ');
     }
 
     const orderNames = { 1: 'Simples', 2: 'Dupla', 3: 'Tríplice' };
@@ -1068,9 +1558,7 @@ const DashboardManager = {
       return `${a1.element}-${a2.element} (${orderNames[b.order]})`;
     }).join(', ') || 'Nenhuma';
 
-    // Valence octet capacity validation (should never trigger in practice —
-    // the builder's real-time drag-to-bond validation already blocks
-    // over-limit bonds — kept as a defensive summary/fallback).
+    // Warnings on valence
     const warnings = [];
     customAtoms.forEach((atom, idx) => {
       const bondCount = bondCountFor(idx, customBonds);
@@ -1092,37 +1580,151 @@ const DashboardManager = {
     }
 
     // Update UI elements
-    document.getElementById('element-value').textContent = name;
+    document.getElementById('element-value').textContent = compName;
     document.getElementById('number-value').textContent = 'Cust.';
     document.getElementById('workbench-status').textContent = formula;
 
     // KPIs
     document.getElementById('kpi-lbl-1').textContent = chemT('chem-kpi-genformula', 'Fórmula Gerada');
     document.getElementById('prop-symbol').textContent = formula;
-    document.getElementById('prop-name').textContent = name;
+    document.getElementById('prop-name').textContent = compName;
 
-    document.getElementById('kpi-lbl-2').textContent = chemT('chem-kpi-bondstrength', 'Força de Ligações');
-    document.getElementById('prop-z').textContent = bondTypesText;
-    document.getElementById('kpi-unit-2').textContent = chemT('chem-unit-orbitals', 'natureza dos orbitais');
+    document.getElementById('kpi-lbl-2').textContent = chemT('chem-kpi-bondstrength', 'Geometria Molecular');
+    document.getElementById('prop-z').textContent = analysis ? analysis.geometry : 'Livre';
+    document.getElementById('kpi-unit-2').textContent = analysis ? `Ângulo: ${analysis.idealAngle}` : 'indefinida';
 
     document.getElementById('kpi-lbl-3').textContent = chemT('chem-kpi-molar', 'Massa Molar');
     document.getElementById('prop-mass').textContent = totalMass.toFixed(3);
     document.getElementById('kpi-unit-3').textContent = 'g/mol (u)';
 
-    document.getElementById('table-title').textContent = chemT('chem-tbl-custom', '📋 Relatório de Síntese Personalizada');
+    document.getElementById('table-title').textContent = chemT('chem-tbl-custom', '📋 Relatório de Síntese & Nomenclatura');
 
     document.getElementById('results-table-body').innerHTML = `
-      <tr><td>${chemT('chem-row-compound', 'Nome do Composto')}</td><td>${name}</td></tr>
-      <tr><td>${chemT('chem-row-hill', 'Fórmula Estequiométrica (Hill)')}</td><td><strong>${formula}</strong></td></tr>
+      <tr><td>${chemT('chem-row-compound', 'Nome Identificado')}</td><td><strong>${compName}</strong></td></tr>
+      <tr><td>Nomenclatura IUPAC</td><td style="color:var(--accent-primary); font-weight:600;">${iupacName}</td></tr>
+      <tr><td>${chemT('chem-row-hill', 'Fórmula Molecular (Hill)')}</td><td><strong>${formula}</strong></td></tr>
+      <tr><td>Fórmula Mínima (Empírica)</td><td>${empirical}</td></tr>
       <tr><td>${chemT('chem-row-calcmass', 'Massa Molar Calculada')}</td><td>${totalMass.toFixed(4)} u</td></tr>
-      <tr><td>${chemT('chem-row-bondcomp', 'Composição das Ligações')}</td><td style="color:var(--accent-primary); font-weight:600;">${bondTypesText}</td></tr>
-      <tr><td>${chemT('chem-row-connections', 'Conexões Registradas (Intra)')}</td><td>${bondsDescription}</td></tr>
-      <tr><td>${chemT('chem-row-intermol', 'Interações Intermoleculares')}</td><td>${chemT('chem-val-london', 'Forças de London / Dipolo permanente (estimado)')}</td></tr>
-      <tr class="results-table__highlight"><td>${chemT('chem-row-pauling', 'Eletrovalência (Escala Pauling)')}</td><td>${customAtoms.map((a, i) => `${a.element}#${i} (EN=${a.electronegativity != null ? a.electronegativity.toFixed(2) : '—'})`).join(', ')}</td></tr>
+      <tr><td>${chemT('chem-row-bondcomp', 'Tipos de Ligação')}</td><td>${bondTypesText}</td></tr>
+      <tr><td>Geometria VSEPR (Átomo Central: ${analysis?.centralAtom || '—'})</td><td><strong>${analysis?.geometry || '—'}</strong> (${analysis?.idealAngle || '—'}) [${analysis?.vseprCode || '—'}]</td></tr>
+      <tr><td>${chemT('chem-row-connections', 'Conexões Registradas')}</td><td>${bondsDescription}</td></tr>
+      <tr class="results-table__highlight"><td>${chemT('chem-row-pauling', 'Eletronegatividades (Pauling)')}</td><td>${customAtoms.map((a, i) => `${a.element}#${i} (EN=${a.electronegativity != null ? a.electronegativity.toFixed(2) : '—'})`).join(', ')}</td></tr>
       ${warningHtml}
     `;
 
-    showToast('Simulação molecular concluída!', 'success');
+    // Extra analysis card: Detailed Feasibility Observations
+    const extraCard = document.getElementById('extra-analysis-card');
+    const extraContent = document.getElementById('extra-analysis-content');
+    if (extraCard && extraContent && analysis) {
+      extraCard.style.display = 'block';
+      let bondDetailsHtml = '';
+      if (analysis.bondAnalysis.length) {
+        bondDetailsHtml = `
+          <div style="margin-bottom:10px;">
+            <div style="font-weight:600; color:var(--text-primary); margin-bottom:6px;">📊 Análise Físico-Química de Cada Ligação:</div>
+            <table class="results-table" style="font-size:0.7rem;">
+              <thead>
+                <tr><th>Ligação</th><th>ΔEN</th><th>% Iônico (Pauling)</th><th>Classificação</th></tr>
+              </thead>
+              <tbody>
+                ${analysis.bondAnalysis.map(b => `
+                  <tr>
+                    <td>${b.atom1}#${b.idx1} — ${b.atom2}#${b.idx2}</td>
+                    <td>${b.deltaEN != null ? b.deltaEN.toFixed(2) : 'N/A'}</td>
+                    <td>${b.ionicPercent != null ? b.ionicPercent.toFixed(1) + '%' : 'N/A'}</td>
+                    <td><span class="regime-tag" style="font-size:0.6rem;">${b.classification}</span></td>
+                  </tr>
+                `).join('')}
+              </tbody>
+            </table>
+          </div>
+        `;
+      }
+
+      let obsHtml = '';
+      if (analysis.observations.length) {
+        obsHtml = `
+          <div style="font-weight:600; color:var(--text-primary); margin-bottom:6px;">🔍 Observações Científicas e Diagnóstico de Estabilidade:</div>
+          <ul style="padding-left:16px; margin:0; display:flex; flex-direction:column; gap:6px;">
+            ${analysis.observations.map(obs => `<li>${obs}</li>`).join('')}
+          </ul>
+        `;
+      } else {
+        obsHtml = `<div>✅ <strong>Configuração Estável:</strong> Sem anomalias ou tensões eletrônicas detectadas para esta estrutura.</div>`;
+      }
+
+      extraContent.innerHTML = bondDetailsHtml + obsHtml;
+    }
+
+    showToast('Simulação molecular e análise IUPAC concluídas!', 'success');
+  },
+
+  constructCustomElement(Z, N, E) {
+    showLoading(`Sintetizando átomo Z=${Z}, N=${N}, E=${E}…`);
+    try {
+      const A = Z + N;
+      const systematic = ElementBuilderEngine.getSystematicIupac(Z);
+      const aufbau = ElementBuilderEngine.getAufbauConfiguration(E);
+      const nuc = ElementBuilderEngine.analyzeNucleus(Z, N, E);
+
+      const knownEl = (this.elementsCache || []).find(el => el.number === Z);
+      const displayName = knownEl ? `${knownEl.name} (Isótopo A=${A})` : `${systematic.name} (Superpesado Z=${Z})`;
+      const displaySymbol = knownEl ? `${knownEl.symbol}-${A}` : systematic.symbol;
+
+      document.getElementById('element-value').textContent = displayName;
+      document.getElementById('number-value').textContent = `Z=${Z}`;
+      document.getElementById('workbench-status').textContent = `${displaySymbol} (A=${A})`;
+
+      // KPI Cards
+      document.getElementById('kpi-lbl-1').textContent = 'Símbolo & Nuclídeo';
+      document.getElementById('prop-symbol').textContent = displaySymbol;
+      document.getElementById('prop-name').textContent = displayName;
+
+      document.getElementById('kpi-lbl-2').textContent = 'Número Atômico (Z)';
+      document.getElementById('prop-z').textContent = String(Z);
+      document.getElementById('kpi-unit-2').textContent = `${N} nêutrons | ${E} e⁻`;
+
+      document.getElementById('kpi-lbl-3').textContent = 'Número de Massa (A)';
+      document.getElementById('prop-mass').textContent = String(A);
+      document.getElementById('kpi-unit-3').textContent = `u (Carga líquida: ${nuc.netCharge >= 0 ? '+' : ''}${nuc.netCharge})`;
+
+      document.getElementById('table-title').textContent = '📋 Propriedades Quânticas e Nucleares';
+
+      document.getElementById('results-table-body').innerHTML = `
+        <tr><td>Nome Sistemático IUPAC</td><td><strong>${systematic.name}</strong> (${systematic.symbol})</td></tr>
+        <tr><td>Número Atômico (Prótons Z)</td><td>${Z}</td></tr>
+        <tr><td>Número de Nêutrons (N)</td><td>${N}</td></tr>
+        <tr><td>Número de Elétrons (E)</td><td>${E} (Íon: ${nuc.netCharge >= 0 ? '+' : ''}${nuc.netCharge})</td></tr>
+        <tr><td>Razão Nêutron/Próton (N/Z)</td><td><strong>${nuc.nzRatio}</strong></td></tr>
+        <tr><td>Distribuição Eletrônica (Aufbau)</td><td style="font-family:var(--font-mono); font-size:0.72rem;">${aufbau.full || 'Nenhum elétron (Núcleo desnudo)'}</td></tr>
+        <tr><td>Período / Bloco Quântico</td><td>Período ${aufbau.period} · Bloco [${aufbau.block.toUpperCase()}]</td></tr>
+        <tr><td>Classificação de Estabilidade</td><td style="color:${nuc.stabilityClass.includes('Estável') ? 'var(--accent-success)' : 'var(--accent-warning)'}; font-weight:600;">${nuc.stabilityClass}</td></tr>
+        <tr><td>Modo de Decaimento Provável</td><td>${nuc.decayMode}</td></tr>
+        <tr class="results-table__highlight"><td>Meia-Vida Estimada</td><td>${nuc.halfLife}</td></tr>
+      `;
+
+      const extraCard = document.getElementById('extra-analysis-card');
+      const extraContent = document.getElementById('extra-analysis-content');
+      if (extraCard && extraContent) {
+        extraCard.style.display = 'block';
+        extraContent.innerHTML = `
+          <div style="margin-bottom:8px; font-weight:600; color:var(--text-primary);">⚛️ Análise de Estrutura Nuclear &amp; Teoria:</div>
+          <p>• <strong>Núcleo Duplamente Mágico:</strong> ${nuc.isDoublyMagic ? '🌟 Sim! Tanto prótons quanto nêutrons completam camadas fechadas.' : (nuc.isMagicZ || nuc.isMagicN ? 'Camada fechada parcial (Z ou N mágico).' : 'Não possui número mágico fechado.')}</p>
+          <p style="margin-top:6px;">• <strong>${nuc.islandProximity}</strong></p>
+          <p style="margin-top:6px;">• <strong>Nomenclatura Sistemática IUPAC:</strong> Baseada nos dígitos numéricos latinos/gregos oficiais. Cada algarismo de Z (${String(Z).split('').join(', ')}) traduz-se no prefixo sistemático.</p>
+        `;
+      }
+
+      // Render 3D Bohr Atom
+      ThreeAtom.buildAtom(Z, aufbau.full, E, N);
+      window.FloatingPanel?.markUpdated('results');
+      showToast(`Átomo ${displayName} construído com sucesso!`, 'success');
+    } catch (e) {
+      console.error(e);
+      showToast('Erro ao sintetizar o elemento.', 'error');
+    } finally {
+      hideLoading();
+    }
   },
 
   getHillFormula(atoms) {
@@ -1357,7 +1959,7 @@ const ThreeAtom = {
     return matchedAny ? shellCounts : null;
   },
 
-  buildAtom(Z, electronConfig) {
+  buildAtom(Z, electronConfig, numElectrons = null, numNeutrons = null) {
     this.clear();
     this.currentMode = 'atom';
 
@@ -1367,17 +1969,22 @@ const ThreeAtom = {
     this.scene.add(this.electronGroup);
 
     // 1. Nucleus Cluster (Protons & Neutrons)
-    const numParticles = Math.min(Z * 2, 45); 
+    const nProtons = Math.max(1, Z || 1);
+    const nNeutrons = numNeutrons != null ? numNeutrons : Math.round(nProtons * 1.2);
+    const numPToDraw = Math.min(nProtons, 22);
+    const numNToDraw = Math.min(nNeutrons, 22);
+    const totalParticles = numPToDraw + numNToDraw;
+
     const protonGeo = new THREE.SphereGeometry(0.08, 16, 16);
     const protonMat = new THREE.MeshPhongMaterial({ color: 0xef4444, shininess: 85 });
     const neutronGeo = new THREE.SphereGeometry(0.08, 16, 16);
     const neutronMat = new THREE.MeshPhongMaterial({ color: 0x3b82f6, shininess: 85 });
 
-    for (let i = 0; i < numParticles; i++) {
-      const isProton = i % 2 === 0;
+    for (let i = 0; i < totalParticles; i++) {
+      const isProton = i < numPToDraw;
       const sphere = new THREE.Mesh(isProton ? protonGeo : neutronGeo, isProton ? protonMat : neutronMat);
       
-      const r = 0.18 * Math.pow(Math.random(), 1/3);
+      const r = 0.22 * Math.pow(Math.random(), 1/3);
       const theta = Math.random() * Math.PI * 2;
       const phi = Math.acos(Math.random() * 2 - 1);
       
@@ -1389,25 +1996,18 @@ const ThreeAtom = {
       this.nucleus.add(sphere);
     }
 
-    // 2. Electron Concentric Shells (Bohr Model — simplified: electrons are
-    // grouped by principal shell n only, not real s/p/d/f orbitals). The
-    // per-shell electron counts are derived from the real electron
-    // configuration returned by the API (summed by principal quantum number
-    // n), so this drawing always agrees with the configuration text shown
-    // alongside it — instead of a generic 2n² capacity table that can
-    // diverge for transition/lanthanide/actinide elements.
+    // 2. Electron Concentric Shells
     const parsedShells = this.parseShellCounts(electronConfig);
     let shellSizes;
     if (parsedShells) {
-      const maxN = Math.max(...Object.keys(parsedShells).map(Number));
+      const keys = Object.keys(parsedShells).map(Number);
+      const maxN = keys.length ? Math.max(...keys) : 0;
       shellSizes = [];
       for (let n = 1; n <= maxN; n++) shellSizes.push(parsedShells[n] || 0);
     } else {
-      // Fallback for elements with no usable configuration string: generic
-      // 2n² shell capacities (may not exactly match real fill order).
       shellSizes = [2, 8, 18, 32, 18, 8, 2];
     }
-    let remainingElectrons = Z;
+    let remainingElectrons = numElectrons != null ? numElectrons : Z;
     const baseRadius = 0.6;
     const radiusStep = 0.35;
 

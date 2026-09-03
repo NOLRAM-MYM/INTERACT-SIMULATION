@@ -21,6 +21,8 @@ urlpatterns = [
     path('api/chemistry/', include('apps.app_chemistry.urls', namespace='chemistry')),
     path('api/physics/', include('apps.app_physics.urls', namespace='physics')),
     path('api/tribology/', include('apps.app_tribology.urls', namespace='tribology')),
+    path('api/biology/', include('apps.app_biology.urls', namespace='biology')),
+    path('biology/', include('apps.app_biology.urls', namespace='biology-page')),
 ]
 
 # Serve media files in development

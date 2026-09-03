@@ -9,12 +9,15 @@
 <div class="chemistry-dashboard" id="chemistry-dashboard">
 
   <!-- Sub-navigation Tabs -->
-  <div class="chemistry-tabs" style="display: flex; gap: 12px; margin-bottom: 24px; border-bottom: 1px solid var(--border-subtle); padding-bottom: 12px;">
+  <div class="chemistry-tabs" style="display: flex; gap: 12px; margin-bottom: 24px; border-bottom: 1px solid var(--border-subtle); padding-bottom: 12px; flex-wrap: wrap;">
     <button type="button" class="btn btn--outline chem-tab-btn chem-tab-btn--active" data-tab="explorer" style="display: flex; align-items: center; gap: 8px;">
       <span>⚛️</span> <span data-i18n="chem-tab-explorer">Tabela Periódica &amp; Átomo 3D</span>
     </button>
     <button type="button" class="btn btn--outline chem-tab-btn" data-tab="simulator" style="display: flex; align-items: center; gap: 8px;">
       <span>🧲</span> <span data-i18n="chem-tab-simulator">Simulador de Ligações &amp; Reações</span>
+    </button>
+    <button type="button" class="btn btn--outline chem-tab-btn" data-tab="element-builder" style="display: flex; align-items: center; gap: 8px;">
+      <span>🔬</span> <span data-i18n="chem-tab-elbuilder">Construtor de Novo Elemento &amp; Isótopos</span>
     </button>
   </div>
 
@@ -258,6 +261,84 @@
         </div>
       </div>
 
+      <!-- ELEMENT BUILDER PANEL (Hidden initially) -->
+      <div class="panel-section" id="panel-element-builder" style="display:none;">
+        <div class="card" style="margin-bottom:16px;">
+          <div class="card__header">
+            <div>
+              <div class="card__title">🔬 Construtor de Elemento &amp; Isótopo</div>
+              <div class="card__subtitle">Configure prótons, nêutrons e elétrons livres</div>
+            </div>
+          </div>
+
+          <!-- Presets for interesting elements & isotopes -->
+          <div class="form-group" style="margin-bottom:12px;">
+            <label class="form-label" for="builder-preset-select">Modelos &amp; Isótopos Clássicos</label>
+            <select class="form-input" id="builder-preset-select" style="font-size:0.75rem;">
+              <option value="custom">-- Personalizado --</option>
+              <option value="H-1">Hidrogênio-1 (Prótio, Z=1, N=0)</option>
+              <option value="H-2">Deutério (Z=1, N=1)</option>
+              <option value="H-3">Trítio (Z=1, N=2, Radioativo)</option>
+              <option value="He-4">Hélio-4 (Partícula Alfa, Z=2, N=2)</option>
+              <option value="C-12">Carbono-12 (Z=6, N=6)</option>
+              <option value="C-14">Carbono-14 (Radiodatador, Z=6, N=8)</option>
+              <option value="Fe-56" selected>Ferro-56 (Mais Estável do Universo, Z=26, N=30)</option>
+              <option value="U-235">Urânio-235 (Físsil, Z=92, N=143)</option>
+              <option value="Og-294">Oganessônio (Z=118, N=176)</option>
+              <option value="Uue-315">Ununennium (Z=119, N=196 — Hipotético)</option>
+              <option value="Ubn-320">Unbinilium (Z=120, N=200 — Hipotético)</option>
+              <option value="Island-126">Ilha de Estabilidade (Z=126, N=184)</option>
+            </select>
+          </div>
+
+          <!-- Proton Slider (Z) -->
+          <div class="form-group" style="margin-bottom:12px;">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
+              <label class="form-label" style="color:#ef4444; font-weight:600;">🔴 Prótons (Z)</label>
+              <span id="val-builder-protons" style="font-family:var(--font-mono); font-weight:bold; color:#ef4444;">26</span>
+            </div>
+            <input type="range" id="slider-builder-protons" min="1" max="130" step="1" value="26" style="width:100%; accent-color:#ef4444;">
+          </div>
+
+          <!-- Neutron Slider (N) -->
+          <div class="form-group" style="margin-bottom:12px;">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
+              <label class="form-label" style="color:#3b82f6; font-weight:600;">🔵 Nêutrons (N)</label>
+              <span id="val-builder-neutrons" style="font-family:var(--font-mono); font-weight:bold; color:#3b82f6;">30</span>
+            </div>
+            <input type="range" id="slider-builder-neutrons" min="0" max="210" step="1" value="30" style="width:100%; accent-color:#3b82f6;">
+          </div>
+
+          <!-- Electron Slider (E) -->
+          <div class="form-group" style="margin-bottom:14px;">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
+              <label class="form-label" style="color:#a855f7; font-weight:600;">🟣 Elétrons (e⁻)</label>
+              <span id="val-builder-electrons" style="font-family:var(--font-mono); font-weight:bold; color:#a855f7;">26</span>
+            </div>
+            <input type="range" id="slider-builder-electrons" min="0" max="130" step="1" value="26" style="width:100%; accent-color:#a855f7;">
+          </div>
+
+          <div style="display:flex; gap:8px;">
+            <button type="button" class="btn btn--outline" id="btn-builder-neutral" style="flex:1; padding:6px; font-size:0.72rem;">Neutralizar (e⁻=Z)</button>
+            <button type="button" class="btn btn--primary" id="btn-builder-construct" style="flex:1; padding:6px; font-size:0.72rem; background:linear-gradient(135deg, #8b5cf6, #3b82f6);">⚛️ Sintetizar Átomo</button>
+          </div>
+        </div>
+
+        <!-- Quick Physics Helper -->
+        <div class="card">
+          <div class="card__header">
+            <div>
+              <div class="card__title">📐 Princípios Físicos Nucleares</div>
+              <div class="card__subtitle">Força nuclear forte e limites de estabilidade</div>
+            </div>
+          </div>
+          <div style="font-size:0.75rem; color:var(--text-secondary); line-height:1.5;">
+            <p>• <strong>Razão N/Z:</strong> Átomos leves são estáveis com $N/Z \approx 1.0$. Elementos pesados requerem $N/Z \approx 1.5$ para equilibrar a repulsão Coulombiana dos prótons.</p>
+            <p style="margin-top:6px;">• <strong>Ilha de Estabilidade:</strong> Núcleos superpesados em torno de $Z=114-126$ e $N=184$ possuem camadas nucleares fechadas (números mágicos) com estabilidade teórica prolongada.</p>
+          </div>
+        </div>
+      </div>
+
     </div>
   </aside>
 
@@ -308,6 +389,14 @@
             <tr class="results-table__highlight"><td>Estados de Oxidação</td><td id="prop-oxidation">—</td></tr>
           </tbody>
         </table>
+      </div>
+
+      <!-- Extra Analysis Card (Nomenclature, VSEPR Geometry, Feasibility Notes) -->
+      <div class="card" id="extra-analysis-card" style="margin-top:12px; display:none;">
+        <div class="card__title" id="extra-analysis-title">🔬 Análise Estrutural e Quântica</div>
+        <div id="extra-analysis-content" style="font-size:0.75rem; color:var(--text-secondary); line-height:1.5;">
+          <!-- Injected dynamically -->
+        </div>
       </div>
 
     </div>
