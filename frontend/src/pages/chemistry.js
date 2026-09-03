@@ -523,7 +523,11 @@ const IUPACNomenclature = {
     return emp;
   },
 
-  generateSystematicName(atoms, counts, bonds) {
+  // Takes composition and the atom list (for electronegativity ordering), not
+  // connectivity: systematic naming here is compositional, so a `bonds`
+  // argument was accepted and never read. Distinguishing isomers would need it
+  // back, along with an actual structural analysis.
+  generateSystematicName(atoms, counts) {
     const elements = Object.keys(counts);
     if (elements.length === 1) {
       const el = elements[0];
@@ -1536,8 +1540,8 @@ const DashboardManager = {
 
     // Known Molecule lookup or generated systematic nomenclature
     const known = IUPACNomenclature.knownMolecules[formula];
-    const compName = known ? known.name : IUPACNomenclature.generateSystematicName(customAtoms, counts, customBonds);
-    const iupacName = known ? known.iupac : IUPACNomenclature.generateSystematicName(customAtoms, counts, customBonds);
+    const compName = known ? known.name : IUPACNomenclature.generateSystematicName(customAtoms, counts);
+    const iupacName = known ? known.iupac : IUPACNomenclature.generateSystematicName(customAtoms, counts);
 
     // Advanced Feasibility & Geometry Analysis
     const analysis = BondFeasibilityAnalyzer.analyze(customAtoms, customBonds);

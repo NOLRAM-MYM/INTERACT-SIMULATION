@@ -486,18 +486,12 @@ const ProjectileThree = {
     this._lastFrameTime = null;
   },
 
+  // Called every frame; resizeRendererToCanvas memoizes, so it is a no-op
+  // until the canvas actually changes size.
   checkSize() {
-    const canvas = document.getElementById('three-canvas-projectile');
-    if (!canvas || !this.renderer) return;
-    const w = canvas.offsetWidth || canvas.parentElement?.offsetWidth || 0;
-    const h = canvas.offsetHeight || canvas.parentElement?.offsetHeight || 0;
-    if (w > 0 && h > 0 && (this.lastW !== w || this.lastH !== h)) {
-      this.lastW = w;
-      this.lastH = h;
-      this.camera.aspect = w / h;
-      this.camera.updateProjectionMatrix();
-      this.renderer.setSize(w, h, false);
-    }
+    resizeRendererToCanvas(
+      this.renderer, this.camera, document.getElementById('three-canvas-projectile'),
+    );
   },
 
   renderFrame() {
@@ -1121,8 +1115,6 @@ const MagnetismThree = {
   bCoords: [],
   fCoords: [],
   autoOrbit: false,
-  lastW: 0,
-  lastH: 0,
   loop: null,
   // Camera preset transition state, consumed by renderFrame().
   targetCameraPos: null,
@@ -1209,16 +1201,10 @@ const MagnetismThree = {
   },
 
   onResize() {
-    const canvas = document.getElementById('three-canvas-magnetism');
-    if (!canvas || !this.renderer) return;
-    const w = canvas.offsetWidth || canvas.parentElement?.offsetWidth || 0;
-    const h = canvas.offsetHeight || canvas.parentElement?.offsetHeight || 0;
-    if (w === 0 || h === 0) return;
-    this.lastW = w;
-    this.lastH = h;
-    this.camera.aspect = w / h;
-    this.camera.updateProjectionMatrix();
-    this.renderer.setSize(w, h, false);
+    resizeRendererToCanvas(
+      this.renderer, this.camera,
+      document.getElementById('three-canvas-magnetism'),
+    );
   },
 
   clear() {
@@ -1397,18 +1383,12 @@ const MagnetismThree = {
     return magnetGroup;
   },
 
+  // Called every frame; resizeRendererToCanvas memoizes, so it is a no-op
+  // until the canvas actually changes size.
   checkSize() {
-    const canvas = document.getElementById('three-canvas-magnetism');
-    if (!canvas || !this.renderer) return;
-    const w = canvas.offsetWidth || canvas.parentElement?.offsetWidth || 0;
-    const h = canvas.offsetHeight || canvas.parentElement?.offsetHeight || 0;
-    if (w > 0 && h > 0 && (this.lastW !== w || this.lastH !== h)) {
-      this.lastW = w;
-      this.lastH = h;
-      this.camera.aspect = w / h;
-      this.camera.updateProjectionMatrix();
-      this.renderer.setSize(w, h, false);
-    }
+    resizeRendererToCanvas(
+      this.renderer, this.camera, document.getElementById('three-canvas-magnetism'),
+    );
   },
 
   renderFrame() {

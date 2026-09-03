@@ -70,20 +70,41 @@ export function disposeAndRemove(parent, obj) {
  * responded to the window or to a floating panel opening. Passing `false` keeps
  * CSS in charge of layout and lets the drawing buffer follow it.
  *
+ * Memoized and null-tolerant, so it is safe both from a resize listener and
+ * from inside an animation loop.
+ *
  * @param {THREE.WebGLRenderer|null} renderer
  * @param {THREE.PerspectiveCamera|null} camera
  * @param {HTMLCanvasElement|null} canvas
+ * @returns {boolean} whether the size actually changed
  */
 export function resizeRendererToCanvas(renderer, camera, canvas) {
-  if (!renderer || !camera || !canvas) return;
+  if (!renderer || !camera || !canvas) return false;
 
-  const width = canvas.clientWidth;
-  const height = canvas.clientHeight;
-  if (width === 0 || height === 0) return;
+  // clientWidth, not offsetWidth: the stylesheet gives #three-canvas a 1px
+  // border, and sizing the drawing buffer to the border box would stretch the
+  // render by two pixels.
+  //
+  // Falling back to the parent covers the physics page, where switching tabs
+  // hides a canvas — a hidden element measures 0, and resizing to 0 would blow
+  // away the viewport's aspect before it is shown again.
+  const width = canvas.clientWidth || canvas.parentElement?.clientWidth || 0;
+  const height = canvas.clientHeight || canvas.parentElement?.clientHeight || 0;
+  if (width === 0 || height === 0) return false;
+
+  // Memoized, so this is cheap enough to call once per animation frame as well
+  // as from a resize listener. That is what lets the per-frame `checkSize()`
+  // copies the pages used to carry collapse into this one function.
+  if (renderer.__syncedWidth === width && renderer.__syncedHeight === height) {
+    return false;
+  }
+  renderer.__syncedWidth = width;
+  renderer.__syncedHeight = height;
 
   camera.aspect = width / height;
   camera.updateProjectionMatrix();
   renderer.setSize(width, height, false);
+  return true;
 }
 
 /**

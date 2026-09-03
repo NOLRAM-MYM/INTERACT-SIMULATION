@@ -13,7 +13,11 @@
 // =================================================================
 
 import { showToast, showLoading, hideLoading } from '../modules/shared/utils.js';
-import { createAnimationLoop, disposeObject3D } from '../modules/shared/three-utils.js';
+import {
+  createAnimationLoop,
+  disposeObject3D,
+  resizeRendererToCanvas,
+} from '../modules/shared/three-utils.js';
 import { biologyAPI, describeApiError } from '../modules/shared/api.js';
 
 
@@ -310,11 +314,9 @@ const ThreeBioViewer = {
   },
 
   onResize() {
-    const canvas = document.getElementById('three-canvas');
-    if (!canvas || !this.renderer || !this.camera) return;
-    this.camera.aspect = canvas.clientWidth / canvas.clientHeight;
-    this.camera.updateProjectionMatrix();
-    this.renderer.setSize(canvas.clientWidth, canvas.clientHeight, false);
+    resizeRendererToCanvas(
+      this.renderer, this.camera, document.getElementById('three-canvas'),
+    );
   },
 
   clearActiveGroup() {
@@ -1112,6 +1114,43 @@ const ThreeBioViewer = {
     this.camera.position.set(0, 0, 36);
   },
 
+  // Host/pathogen traits per scenario. The form offers three
+  // (see #bio-infect-scenario) and the service models each one differently --
+  // treatment efficacy is scenario-specific -- but this scene used to accept
+  // `scenario` and ignore it, so all three rendered as the animal-virus case.
+  INFECTION_PROFILES: {
+    virus_animal: {
+      hostTitle: 'Membrana da Célula Animal',
+      hostDesc: 'Bicamada lipídica sob invasão viral ativa.',
+      hostColor: 0x1e3a8a,
+      lysedColor: 0x7f1d1d,
+      receptorTitle: 'Receptor de Ancoragem (ACE2 / CD4)',
+      receptorColor: 0x22c55e,
+      pathogenTitle: 'Virion',
+      pathogenColor: 0xef4444,
+    },
+    bacteriophage_bacteria: {
+      hostTitle: 'Parede Celular Bacteriana (E. coli)',
+      hostDesc: 'Envelope de peptidoglicano sob ataque de bacteriófago T4.',
+      hostColor: 0x155e75,
+      lysedColor: 0x713f12,
+      receptorTitle: 'Receptor de Ancoragem (OmpC / LPS)',
+      receptorColor: 0xfacc15,
+      pathogenTitle: 'Bacteriófago T4',
+      pathogenColor: 0xa855f7,
+    },
+    pathogen_plant: {
+      hostTitle: 'Parede Celular Vegetal (celulose)',
+      hostDesc: 'Parede rígida de celulose; a entrada depende de lesão ou vetor.',
+      hostColor: 0x14532d,
+      lysedColor: 0x78350f,
+      receptorTitle: 'Sítio de Reconhecimento (PRR / plasmodesmo)',
+      receptorColor: 0x84cc16,
+      pathogenTitle: 'Fitopatógeno',
+      pathogenColor: 0xf97316,
+    },
+  },
+
   // ---------------------------------------------------------------
   // 3D MODEL 4: CELLULAR INFECTION SCENE (4 DYNAMIC PHASES)
   // ---------------------------------------------------------------
@@ -1119,20 +1158,23 @@ const ThreeBioViewer = {
     this.clearActiveGroup();
     this.currentMode = 'infection';
 
+    const profile = this.INFECTION_PROFILES[scenario]
+      || this.INFECTION_PROFILES.virus_animal;
+
     const membraneGeo = new THREE.CylinderGeometry(20, 20, 4, 36);
-    const membraneMat = new THREE.MeshStandardMaterial({ color: 0x1e3a8a, transparent: true, opacity: 0.65, roughness: 0.4 });
+    const membraneMat = new THREE.MeshStandardMaterial({ color: profile.hostColor, transparent: true, opacity: 0.65, roughness: 0.4 });
     const membrane = new THREE.Mesh(membraneGeo, membraneMat);
     membrane.position.set(0, -10, 0);
     this.activeGroup.add(membrane);
     this.registerInteractive(membrane, {
-      title: 'Membrana da Célula Hospedeira',
+      title: profile.hostTitle,
       category: 'Alvo Celular',
-      desc: 'Superfície celular sob invasão patogênica ativa.',
+      desc: profile.hostDesc,
       extra: `Integridade atual: ${phase === 4 ? '10% (Lise celular)' : '95%'}`
     });
 
     // Host Receptors
-    const recMat = new THREE.MeshStandardMaterial({ color: 0x22c55e, roughness: 0.3 });
+    const recMat = new THREE.MeshStandardMaterial({ color: profile.receptorColor, roughness: 0.3 });
     for (let r = 0; r < 14; r++) {
       const rx = (Math.random() - 0.5) * 26;
       const rz = (Math.random() - 0.5) * 26;
@@ -1140,14 +1182,14 @@ const ThreeBioViewer = {
       rec.position.set(rx, -7.5, rz);
       this.activeGroup.add(rec);
       this.registerInteractive(rec, {
-        title: 'Receptor de Ancoragem (ACE2 / OmpC)',
+        title: profile.receptorTitle,
         category: 'Porta de Entrada',
         desc: 'Receptor fisiológico sequestrado pelo patógeno para entrada.',
         extra: 'Sítio de acoplamento molecular'
       });
     }
 
-    const virionMat = new THREE.MeshStandardMaterial({ color: 0xef4444, roughness: 0.35 });
+    const virionMat = new THREE.MeshStandardMaterial({ color: profile.pathogenColor, roughness: 0.35 });
 
     if (phase === 1) {
       for (let v = 0; v < 12; v++) {
@@ -1155,7 +1197,7 @@ const ThreeBioViewer = {
         virion.position.set((Math.random() - 0.5) * 24, -4 + Math.random() * 14, (Math.random() - 0.5) * 24);
         this.activeGroup.add(virion);
         this.registerInteractive(virion, {
-          title: `Víron Invasor #${v + 1} (Fase de Adsorção)`,
+          title: `${profile.pathogenTitle} #${v + 1} (Fase de Adsorção)`,
           category: 'Partícula Patogênica',
           desc: 'Navega por difusão browniana buscando receptores celulares.',
           extra: 'Fase 1: Ligação de Alta Afinidade'
@@ -1166,7 +1208,7 @@ const ThreeBioViewer = {
       dockedPhage.position.set(0, -5.5, 0);
       this.activeGroup.add(dockedPhage);
       this.registerInteractive(dockedPhage, {
-        title: 'Víron Acoplado & Ativado',
+        title: `${profile.pathogenTitle} Acoplado & Ativado`,
         category: 'Injeção de Material Genético',
         desc: 'Bainha contraída translocando o genoma para o citoplasma.',
         extra: 'Fase 2: Penetração'
@@ -1199,7 +1241,7 @@ const ThreeBioViewer = {
         });
       }
     } else if (phase === 4) {
-      membrane.material.color.setHex(0x7f1d1d);
+      membrane.material.color.setHex(profile.lysedColor);
       membrane.material.opacity = 0.3;
 
       for (let b = 0; b < 28; b++) {
@@ -1350,10 +1392,24 @@ const BiologyDashboard = {
       document.getElementById('bio-val-immune').textContent = `${e.target.value}%`;
     });
 
-    document.getElementById('btn-infect-phase-1')?.addEventListener('click', () => ThreeBioViewer.buildInfectionScene('virus_animal', 1));
-    document.getElementById('btn-infect-phase-2')?.addEventListener('click', () => ThreeBioViewer.buildInfectionScene('virus_animal', 2));
-    document.getElementById('btn-infect-phase-3')?.addEventListener('click', () => ThreeBioViewer.buildInfectionScene('virus_animal', 3));
-    document.getElementById('btn-infect-phase-4')?.addEventListener('click', () => ThreeBioViewer.buildInfectionScene('virus_animal', 4));
+    // Read the selected scenario rather than hardcoding the animal-virus case:
+    // the form offers three, and the scene now renders each one differently.
+    const currentScenario = () =>
+      document.getElementById('bio-infect-scenario')?.value || 'virus_animal';
+
+    for (const phase of [1, 2, 3, 4]) {
+      document.getElementById(`btn-infect-phase-${phase}`)?.addEventListener(
+        'click', () => ThreeBioViewer.buildInfectionScene(currentScenario(), phase),
+      );
+    }
+
+    // Re-render the scene when the scenario changes, so the viewport does not
+    // keep showing the previous host/pathogen pair.
+    document.getElementById('bio-infect-scenario')?.addEventListener('change', () => {
+      if (ThreeBioViewer.currentMode === 'infection') {
+        ThreeBioViewer.buildInfectionScene(currentScenario(), 1);
+      }
+    });
 
     document.getElementById('btn-bio-run-infection')?.addEventListener('click', () => this.runInfectionSimulation());
     document.getElementById('btn-bio-reset-infection')?.addEventListener('click', () => {
