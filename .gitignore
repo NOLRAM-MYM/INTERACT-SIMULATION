@@ -66,3 +66,7 @@ graphify-out/
 
 # Ad-hoc verification harnesses — throwaway, not part of the suite
 scratch/
+
+# Playwright (npm run test:e2e)
+test-results/
+playwright-report/

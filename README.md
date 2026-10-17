@@ -15,10 +15,31 @@ Autor: **Marlon Yoshihiro Murakami** · Licença: [MIT](LICENSE)
 | Módulo | Rota | O que resolve |
 |---|---|---|
 | **Fluidos** | `/api/fluids/` | Escoamento em tubo: Reynolds, fator de atrito (Churchill 1977, verificado contra Colebrook em alta precisão), perda de carga Darcy-Weisbach, perfil radial de velocidade |
-| **Materiais** | `/api/materials/` | Deflexão de vigas Euler-Bernoulli — quatro casos de carga (pontual/uniforme, biapoiada/engastada) em forma fechada |
+| **Materiais** | `/api/materials/` | Vigas Euler-Bernoulli — quatro casos de carga (pontual/uniforme, biapoiada/engastada) em forma fechada: deflexão, diagramas de momento e cortante, reações, tensão σ = M·c/I, fator de segurança e verificação de flecha (L/250, L/180 em balanço); seções retangular, circular ou I manual |
 | **Química** | `/api/chemistry/` | Tabela periódica dos 118 elementos, átomo de Bohr 3D, simulador de ligações e estequiometria |
-| **Física** | `/api/physics/` | Lançamento de projéteis com arrasto quadrático (Runge-Kutta 4) e eletromagnetismo: força de Lorentz, polos magnéticos e transiente de motor CC |
+| **Física** | `/api/physics/` | Lançamento de projéteis com arrasto quadrático (DOP853 adaptativo com evento de impacto), altura de lançamento, gravidade e densidade do ar configuráveis (Terra, Lua, Marte…), velocidade terminal; eletromagnetismo: força de Lorentz (passo ajustado ao período ciclotrônico), polos magnéticos e transiente de motor CC (LSODA, carga passiva com travamento, balanço de potência) |
 | **Tribologia** | `/api/tribology/` | Geometria de engrenagens retas (AGMA/ISO) e lubrificação elastohidrodinâmica de Dowson-Higginson |
+
+### Painéis flutuantes
+
+Em cada módulo, **Configuração** (⚙️), **Resultados** (📊) e **Vista 3D** (🎥)
+são janelas flutuantes não-modais: ficam abertas junto com a simulação, que
+continua visível e interativa enquanto os parâmetros mudam.
+
+- Na posição padrão, o painel abre espaço para si e a simulação se ajusta ao
+  lado. Se não houver largura para manter a simulação com pelo menos 600 px,
+  o painel flutua por cima.
+- Arraste pelo título para soltá-lo em qualquer ponto; um duplo clique no
+  título o devolve à posição padrão. O canto inferior direito redimensiona e
+  o botão **–** minimiza. **↺** (barra superior) restaura o layout inteiro.
+- **Modo foco** (**⛶** ou **F**): esconde a barra lateral e o cabeçalho e
+  estica a simulação; os indicadores do cabeçalho passam a aparecer sobre o
+  canvas (também quando o cabeçalho sai da tela ao rolar).
+- Atalhos: **C**, **R** e **V** abrem e fecham os painéis; **Esc** fecha o
+  painel em foco.
+- Estado aberto/fechado, posição e tamanho ficam salvos por página. Abaixo de
+  768 px os painéis viram uma folha inferior, um de cada vez; arraste o título
+  para 30 / 62 / 90 % da altura, ou para baixo para fechar.
 
 > As páginas HTML ficam sob o prefixo `/api/` por herança do roteamento atual
 > (`config/urls.py` monta cada app em `api/<módulo>/`, e cada `urls.py` serve a
@@ -107,10 +128,16 @@ DJANGO_SETTINGS_MODULE=config.settings.production gunicorn config.wsgi:applicati
 
 ```bash
 python manage.py check          # checagem do sistema Django
-pytest                          # 239 testes, cobertura ~95%
+pytest                          # 272 testes, cobertura ~95%
 npm run lint                    # eslint
 npm run build                   # o build precisa passar
+npm run test:e2e                # testes no navegador (Playwright + Chrome instalado)
 ```
+
+Os testes de navegador (`e2e/`) sobem o `runserver` sozinhos e usam o Google
+Chrome da máquina (`channel: 'chrome'`), sem baixar navegadores. Com um
+servidor já rodando na porta 8000 eles o reutilizam; no Windows com venv,
+defina `E2E_SERVER_CMD=".venv/Scripts/python.exe manage.py runserver 127.0.0.1:8000 --noreload"`.
 
 Para exercitar as settings de produção — que `manage.py check` **não** cobre,
 porque ele nunca monta a cadeia de middleware:
@@ -138,10 +165,14 @@ apps/
   app_tribology/   /
 config/settings/   base · development · production
 frontend/src/
+  main.js          entry carregado em toda página: styles/app.css + o "shell"
+  styles/app.css   folha de estilos da aplicação (tokens, layout, painéis)
   pages/           um bundle por página (entry points do Vite)
-  modules/shared/  cliente de API, helpers de UI, ciclo de vida do Three.js
+  modules/shared/  painéis flutuantes, shell (foco, HUD, exportar), API, Three.js
   modules/fluids/  gráficos Plotly e cena 3D dos fluidos
 templates/         base.html + um template por módulo
+  partials/        camera_panel.html — controles da vista 3D (incluído por página)
+e2e/               testes de navegador (Playwright)
 ```
 
 **Contrato da API.** Toda resposta usa o mesmo envelope

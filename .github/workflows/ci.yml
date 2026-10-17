@@ -70,6 +70,43 @@ jobs:
       - name: Tests
         run: pytest
 
+  e2e:
+    name: Browser smoke tests (Playwright)
+    runs-on: ubuntu-latest
+    needs: frontend
+    # Drives the real pages in Chrome against the dev server: the floating
+    # panels, the motor canvas, the beam view and the phone layout are all
+    # browser behaviour that neither pytest nor the build can see.
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: pip
+          cache-dependency-path: |
+            requirements.txt
+            requirements-dev.txt
+
+      - run: pip install -r requirements-dev.txt
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+
+      - run: npm ci
+
+      - uses: actions/download-artifact@v4
+        with:
+          name: frontend-dist
+          path: frontend/dist
+
+      # Uses the runner's Google Chrome (channel: 'chrome' in
+      # playwright.config.js), so no browser download step is needed.
+      - name: Playwright
+        run: npm run test:e2e
+
   production-boot:
     name: Production settings boot
     runs-on: ubuntu-latest

@@ -8,12 +8,14 @@
     "build": "vite build",
     "preview": "vite preview",
     "lint": "eslint frontend/src",
-    "format": "prettier --write frontend/src"
+    "format": "prettier --write frontend/src",
+    "test:e2e": "playwright test"
   },
   "dependencies": {
     "axios": "^1.7.2"
   },
   "devDependencies": {
+    "@playwright/test": "^1.56.1",
     "autoprefixer": "^10.4.19",
     "eslint": "^9.6.0",
     "postcss": "^8.4.39",
