@@ -36,21 +36,37 @@ class ProjectileInputSerializer(serializers.Serializer):
     schema_title = "Projectile Motion"
     schema_description = (
         "Numerical integration of a sphere launched under gravity with "
-        "quadratic air drag."
+        "quadratic air drag, optionally from a height above the ground."
     )
     schema_field_meta = {
-        'velocity_m_s':     {'label': "Launch Speed",      'step': 0.1},
-        'angle_deg':        {'label': "Launch Angle",      'step': 0.1},
-        'mass_kg':          {'label': "Projectile Mass",   'step': 0.001},
-        'diameter_m':       {'label': "Projectile Diameter", 'step': 0.001},
-        'drag_coefficient': {'label': "Drag Coefficient (Cd)", 'step': 0.01, 'unit': None},
+        'velocity_m_s':      {'label': "Launch Speed",      'step': 0.1},
+        'angle_deg':         {'label': "Launch Angle",      'step': 0.1},
+        'mass_kg':           {'label': "Projectile Mass",   'step': 0.001},
+        'diameter_m':        {'label': "Projectile Diameter", 'step': 0.001},
+        'drag_coefficient':  {'label': "Drag Coefficient (Cd)", 'step': 0.01, 'unit': None},
+        'launch_height_m':   {'label': "Launch Height",     'step': 0.1},
+        'gravity_m_s2':      {'label': "Gravity (g)",       'step': 0.01},
+        'air_density_kg_m3': {'label': "Air Density (ρ)",   'step': 0.001},
     }
 
     velocity_m_s = serializers.FloatField(default=20.0, min_value=0.1, max_value=1000.0)
-    angle_deg = serializers.FloatField(default=45.0, min_value=0.1, max_value=89.9)
+    # Down to −89.9°: thrown downwards or level from a height. A launch from
+    # the ground must point upwards — validate() enforces that.
+    angle_deg = serializers.FloatField(default=45.0, min_value=-89.9, max_value=89.9)
     mass_kg = serializers.FloatField(default=1.0, min_value=0.001, max_value=10000.0)
     diameter_m = serializers.FloatField(default=0.1, min_value=0.001, max_value=10.0)
     drag_coefficient = serializers.FloatField(default=0.47, min_value=0.0, max_value=5.0)
+    launch_height_m = serializers.FloatField(default=0.0, min_value=0.0, max_value=100_000.0)
+    gravity_m_s2 = serializers.FloatField(default=9.80665, min_value=0.1, max_value=300.0)
+    air_density_kg_m3 = serializers.FloatField(default=1.225, min_value=0.0, max_value=100.0)
+
+    def validate(self, data):
+        if data.get('launch_height_m', 0.0) <= 0.0 and data.get('angle_deg', 45.0) < 0.1:
+            raise serializers.ValidationError({
+                'angle_deg': "From ground level the launch angle must be at least 0.1°; "
+                             "set a launch height to throw level or downwards.",
+            })
+        return data
 
 
 class ProjectileCalculateView(APIView):
@@ -76,7 +92,10 @@ class ProjectileCalculateView(APIView):
                 angle_deg=data['angle_deg'],
                 mass_kg=data['mass_kg'],
                 diameter_m=data['diameter_m'],
-                drag_coefficient=data['drag_coefficient']
+                drag_coefficient=data['drag_coefficient'],
+                gravity_m_s2=data['gravity_m_s2'],
+                air_density_kg_m3=data['air_density_kg_m3'],
+                launch_height_m=data['launch_height_m'],
             )
             result = service.compute()
             return success_response(result)
@@ -186,6 +205,10 @@ class MagnetismInputSerializer(serializers.Serializer):
             for field in ['R', 'L', 'J', 'b', 'Kt', 'Ke']:
                 if data.get(field, 0) <= 0:
                     raise serializers.ValidationError({field: f"{field} must be positive and non-zero."})
+            # The load is passive (it opposes rotation), so its size is all
+            # that matters; a negative value would mean a load that drives.
+            if data.get('tl', 0) < 0:
+                raise serializers.ValidationError({'tl': "Load torque must be zero or positive."})
         return data
 
 

@@ -33,6 +33,8 @@ class BeamDeflectionInputSerializer(serializers.Serializer):
         'second_moment_m4':   {'label': "Second Moment of Area (I)",  'step': 1e-9},
         'load_kn':            {'label': "Applied Load (total)",       'step': 0.1},
         'load_type':          {'label': "Load Case", 'unit': None},
+        'extreme_fibre_m':    {'label': "Extreme Fibre Distance (c)", 'step': 0.001},
+        'yield_strength_mpa': {'label': "Yield Strength (σy)",        'step': 1.0},
     }
 
     length_m = serializers.FloatField(
@@ -70,6 +72,16 @@ class BeamDeflectionInputSerializer(serializers.Serializer):
         ),
     )
 
+    extreme_fibre_m = serializers.FloatField(
+        required=False, allow_null=True, min_value=1e-5, max_value=10.0,
+        help_text="Distance from the neutral axis to the outermost fibre [m] "
+                  "(h/2 for a rectangle). Needed for the bending stress.",
+    )
+    yield_strength_mpa = serializers.FloatField(
+        required=False, allow_null=True, min_value=0.1, max_value=10_000.0,
+        help_text="Yield strength [MPa], for the safety factor σy / σmax.",
+    )
+
     # ---------------------------------------------------------------
     # Field-level validation (physical constraints)
     # ---------------------------------------------------------------
@@ -103,4 +115,6 @@ class BeamDeflectionInputSerializer(serializers.Serializer):
             second_moment_m4=d['second_moment_m4'],
             load_kn=d['load_kn'],
             load_type=d['load_type'],
+            extreme_fibre_m=d.get('extreme_fibre_m'),
+            yield_strength_mpa=d.get('yield_strength_mpa'),
         )
