@@ -63,12 +63,10 @@
           </div>
           <div class="card__subtitle" id="workbench-desc" data-i18n="physics-proj-wb-sub">3D animated projectile simulation (Three.js)</div>
         </div>
-        <button class="btn btn--outline" id="toggle-animation" style="padding:6px 12px; font-size:0.75rem; cursor: pointer;">
-          ⏸ Pause
-        </button>
+        <button class="btn btn--outline" id="toggle-animation" aria-pressed="false" style="padding:6px 12px; font-size:0.75rem; cursor: pointer;" data-i18n="physics-btn-pause">⏸ Pausar</button>
       </div>
 
-      <div class="sim-canvas-wrap" style="position: relative; height: 500px; min-height: 400px; width: 100%;">
+      <div class="sim-canvas-wrap sim-canvas-wrap--stacked">
         <!-- Projectile 3D Canvas -->
         <canvas id="three-canvas-projectile" aria-label="3D animated projectile flight simulation"
                 style="width: 100%; height: 100%; display: block; border-radius:8px; background:#050b18; position: absolute; top:0; left:0;">
@@ -83,43 +81,6 @@
         <canvas id="motor-canvas" aria-label="Animação do Motor"
                 style="width: 100%; height: 100%; display: none; border-radius:8px; background:#050b18; position: absolute; top:0; left:0;">
         </canvas>
-
-        <!-- 3D Camera Controls overlay -->
-        <div class="camera-controls camera-controls--overlay" id="camera-ctrls">
-          <div style="font-size:0.75rem; font-weight:600; color:var(--text-secondary); margin-bottom:8px; display:flex; justify-content:space-between; align-items:center;">
-            <span data-i18n="cam-title">🎥 Camera Viewpoint (XYZ)</span>
-            <label style="display:flex; align-items:center; gap:6px; cursor:pointer; font-size:0.72rem; color:var(--text-muted);">
-              <input type="checkbox" id="auto-orbit" style="cursor:pointer; accent-color:var(--accent-primary);"> <span data-i18n="cam-lbl-orbit">Auto-Orbit</span>
-            </label>
-          </div>
-
-          <!-- View Presets -->
-          <div style="display:grid; grid-template-columns:repeat(4, 1fr); gap:6px; margin-bottom:10px;">
-            <button type="button" class="btn btn--outline" id="btn-view-iso" style="padding:4px 6px; font-size:0.68rem; justify-content:center; min-height:auto; cursor: pointer;" data-i18n="cam-btn-iso">Iso</button>
-            <button type="button" class="btn btn--outline" id="btn-view-side" style="padding:4px 6px; font-size:0.68rem; justify-content:center; min-height:auto; cursor: pointer;" data-i18n="cam-btn-side">Side (Z)</button>
-            <button type="button" class="btn btn--outline" id="btn-view-top" style="padding:4px 6px; font-size:0.68rem; justify-content:center; min-height:auto; cursor: pointer;" data-i18n="cam-btn-top">Top (Y)</button>
-            <button type="button" class="btn btn--outline" id="btn-view-inlet" style="padding:4px 6px; font-size:0.68rem; justify-content:center; min-height:auto; cursor: pointer;" data-i18n="cam-btn-inlet">Inlet (X)</button>
-          </div>
-
-          <!-- XYZ Sliders -->
-          <div style="display:flex; flex-direction:column; gap:6px;">
-            <div style="display:flex; align-items:center; gap:8px; font-size:0.7rem; font-family:var(--font-mono);">
-              <span style="width:50px; color:#ef4444; font-weight:bold;" data-i18n="cam-pos-x">X</span>
-              <input type="range" id="cam-slider-x" min="-6" max="6" step="0.05" value="0" style="flex:1; height:4px; background:var(--bg-input); border-radius:2px; accent-color:#ef4444;">
-              <span id="cam-val-x" style="width:28px; text-align:right;">0.00</span>
-            </div>
-            <div style="display:flex; align-items:center; gap:8px; font-size:0.7rem; font-family:var(--font-mono);">
-              <span style="width:50px; color:#10b981; font-weight:bold;" data-i18n="cam-pos-y">Y</span>
-              <input type="range" id="cam-slider-y" min="-6" max="6" step="0.05" value="1.5" style="flex:1; height:4px; background:var(--bg-input); border-radius:2px; accent-color:#10b981;">
-              <span id="cam-val-y" style="width:28px; text-align:right;">1.50</span>
-            </div>
-            <div style="display:flex; align-items:center; gap:8px; font-size:0.7rem; font-family:var(--font-mono);">
-              <span style="width:50px; color:#3b82f6; font-weight:bold;" data-i18n="cam-pos-z">Z</span>
-              <input type="range" id="cam-slider-z" min="-6" max="6" step="0.05" value="4" style="flex:1; height:4px; background:var(--bg-input); border-radius:2px; accent-color:#3b82f6;">
-              <span id="cam-val-z" style="width:28px; text-align:right;">4.00</span>
-            </div>
-          </div>
-        </div>
       </div>
 
       <!-- Projectile Legend -->
@@ -133,9 +94,7 @@
         <!-- Managed dynamically in JS -->
       </div>
 
-      <p style="font-size:0.7rem; color:var(--text-muted); margin-top:8px; text-align:center;" data-i18n="physics-proj-note-scale">
-        * Trajectory scaled down to fit standard viewport bounds.
-      </p>
+      <p id="sim-scale-note" style="font-size:0.7rem; color:var(--text-muted); margin-top:8px; text-align:center; min-height:1em;"></p>
     </div>
 
     <!-- Plotly Chart Card -->
@@ -157,16 +116,16 @@
   </section>
 
   <!-- ============ FLOATING PANELS: Config (left) / Results (right) ============ -->
-  <button class="fab fab--config" id="fab-config" data-panel="config" aria-label="Open configuration" aria-expanded="false" aria-controls="config-panel">⚙️</button>
-  <button class="fab fab--results" id="fab-results" data-panel="results" aria-label="Open results" aria-expanded="false" aria-controls="results-panel">📊</button>
+  <button class="fab fab--config" id="fab-config" data-panel="config" data-i18n-title="fab-config" aria-label="Open configuration" aria-expanded="false" aria-controls="config-panel">⚙️</button>
+  <button class="fab fab--results" id="fab-results" data-panel="results" data-i18n-title="fab-results" aria-label="Open results" aria-expanded="false" aria-controls="results-panel">📊</button>
+  {% include "partials/camera_panel.html" with x="0" y="1.5" z="4" %}
 
   <!-- Left config drawer -->
   <aside class="floating-panel floating-panel--left" id="config-panel" role="dialog" aria-label="Configuration panel" aria-hidden="true">
     <div class="floating-panel__header">
       <span class="floating-panel__title" data-i18n="panel-config-title">⚙️ Configuration</span>
       <div class="floating-panel__actions">
-        <button class="floating-panel__pin" id="pin-config" aria-label="Pin panel" aria-pressed="false">📌</button>
-        <button class="floating-panel__close" aria-label="Close">✕</button>
+        <button class="floating-panel__close" data-i18n-title="panel-close" aria-label="Close">✕</button>
       </div>
     </div>
     <div class="floating-panel__body">
@@ -216,7 +175,49 @@
               <span data-i18n="physics-proj-lbl-ang">Launch Angle</span> <span class="unit-tag">°</span>
             </label>
             <input class="form-input" type="number" id="angle_deg" name="angle_deg"
-                   value="45.0" min="0.1" max="89.9" step="0.5">
+                   value="45.0" min="-89.9" max="89.9" step="0.5">
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="launch_height_m">
+              <span data-i18n="physics-proj-lbl-height">Altura de Lançamento</span> <span class="unit-tag">m</span>
+            </label>
+            <input class="form-input" type="number" id="launch_height_m" name="launch_height_m"
+                   value="0" min="0" max="100000" step="1">
+            <span class="form-help" data-i18n="physics-proj-help-height">Acima do solo. Com altura, o ângulo pode ser 0° ou negativo.</span>
+          </div>
+
+          <!-- ENVIRONMENT -->
+          <div class="form-section-label" data-i18n="physics-proj-sec-env">🌍 Ambiente (gravidade e ar)</div>
+
+          <div class="form-group">
+            <label class="form-label" for="projectile-env" data-i18n="physics-proj-lbl-env">Local</label>
+            <select class="form-input" id="projectile-env" aria-label="Environment preset">
+              <option value="earth" data-i18n="physics-proj-env-earth">Terra — nível do mar</option>
+              <option value="earth1000" data-i18n="physics-proj-env-earth1000">Terra — 1 000 m de altitude</option>
+              <option value="earth3000" data-i18n="physics-proj-env-earth3000">Terra — 3 000 m de altitude</option>
+              <option value="moon" data-i18n="physics-proj-env-moon">Lua (sem atmosfera)</option>
+              <option value="mars" data-i18n="physics-proj-env-mars">Marte</option>
+              <option value="jupiter" data-i18n="physics-proj-env-jupiter">Júpiter (nível de 1 bar)</option>
+              <option value="custom" data-i18n="physics-proj-env-custom">Personalizado</option>
+            </select>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label" for="gravity_m_s2">
+                <span data-i18n="physics-proj-lbl-gravity">Gravidade (g)</span> <span class="unit-tag">m/s²</span>
+              </label>
+              <input class="form-input" type="number" id="gravity_m_s2" name="gravity_m_s2"
+                     value="9.80665" min="0.1" max="300" step="0.01">
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="air_density_kg_m3">
+                <span data-i18n="physics-proj-lbl-rho">Densidade do ar (ρ)</span> <span class="unit-tag">kg/m³</span>
+              </label>
+              <input class="form-input" type="number" id="air_density_kg_m3" name="air_density_kg_m3"
+                     value="1.225" min="0" max="100" step="0.001">
+            </div>
           </div>
 
           <!-- OBJECT PROPERTIES -->
@@ -619,9 +620,8 @@
     <div class="floating-panel__header">
       <span class="floating-panel__title" data-i18n="panel-results-title">📊 Results</span>
       <div class="floating-panel__actions">
-        <button class="floating-panel__pin" id="pin-results" aria-label="Pin panel" aria-pressed="false">📌</button>
         <button class="floating-panel__export" id="export-results" data-i18n="panel-export">⬇ Export</button>
-        <button class="floating-panel__close" aria-label="Close">✕</button>
+        <button class="floating-panel__close" data-i18n-title="panel-close" aria-label="Close">✕</button>
       </div>
     </div>
     <div class="floating-panel__body">
@@ -666,6 +666,11 @@
               <tr><td data-i18n="physics-proj-row-time-vac">Vacuum Flight Time</td><td id="tbl-time-vac">—</td></tr>
               <tr><td data-i18n="physics-proj-row-time-drag">Drag Flight Time</td><td id="tbl-time-drag">—</td></tr>
               <tr class="results-table__highlight"><td data-i18n="physics-proj-row-speed-final">Final Speed (Drag)</td><td id="tbl-speed-final">—</td></tr>
+              <tr><td data-i18n="physics-proj-row-impact-angle">Ângulo de Impacto</td><td id="tbl-impact-angle">—</td></tr>
+              <tr><td data-i18n="physics-proj-row-terminal">Velocidade Terminal</td><td id="tbl-terminal">—</td></tr>
+              <tr><td data-i18n="physics-proj-row-drag-energy">Energia Dissipada pelo Arrasto</td><td id="tbl-drag-energy">—</td></tr>
+              <tr><td data-i18n="physics-proj-row-launch-height">Altura de Lançamento</td><td id="tbl-launch-height">—</td></tr>
+              <tr><td data-i18n="physics-proj-row-env">Gravidade · Densidade do ar</td><td id="tbl-env">—</td></tr>
             </tbody>
           </table>
         </div>
@@ -932,6 +937,33 @@
   document.addEventListener('DOMContentLoaded', () => {
   if (window.TRANSLATIONS) {
     Object.assign(window.TRANSLATIONS.pt, {
+      "physics-btn-pause": "⏸ Pausar",
+      "physics-btn-resume": "▶ Retomar",
+      "physics-proj-lbl-height": "Altura de Lançamento",
+      "physics-proj-help-height": "Acima do solo. Com altura, o ângulo pode ser 0° ou negativo.",
+      "physics-proj-sec-env": "🌍 Ambiente (gravidade e ar)",
+      "physics-proj-lbl-env": "Local",
+      "physics-proj-env-earth": "Terra — nível do mar",
+      "physics-proj-env-earth1000": "Terra — 1 000 m de altitude",
+      "physics-proj-env-earth3000": "Terra — 3 000 m de altitude",
+      "physics-proj-env-moon": "Lua (sem atmosfera)",
+      "physics-proj-env-mars": "Marte",
+      "physics-proj-env-jupiter": "Júpiter (nível de 1 bar)",
+      "physics-proj-env-custom": "Personalizado",
+      "physics-proj-lbl-gravity": "Gravidade (g)",
+      "physics-proj-lbl-rho": "Densidade do ar (ρ)",
+      "physics-proj-row-impact-angle": "Ângulo de Impacto",
+      "physics-proj-row-terminal": "Velocidade Terminal",
+      "physics-proj-row-drag-energy": "Energia Dissipada pelo Arrasto",
+      "physics-proj-row-launch-height": "Altura de Lançamento",
+      "physics-proj-row-env": "Gravidade · Densidade do ar",
+      "physics-scale-grid": "Grade: 1 quadrado = {v}",
+      "physics-scale-speed": "reprodução ×{v}",
+      "physics-scale-poles": "Distância e setas em escala logarítmica (seta ∝ log |F|)",
+      "physics-scale-lorentz": "Órbita ampliada: raio de Larmor = {v}",
+      "physics-motor-slowmo": "câmera lenta ×1/{v}",
+      "physics-motor-stalled": "MOTOR TRAVADO",
+      "physics-none": "— (sem ar)",
       "physics-proj-title": "Lançamento de Projéteis",
       "physics-proj-desc": "Estude a cinemática de projéteis com arrasto de ar clássico e gravidade usando integração Runge-Kutta de 4ª ordem.",
       "physics-proj-preset-title": "Predefinidos de Projéteis",
@@ -952,7 +984,6 @@
       "physics-proj-wb-sub": "Simulação 3D animada do projétil (Three.js)",
       "physics-proj-legend-ideal": "● Trajetória ideal (vácuo)",
       "physics-proj-legend-drag": "● Trajetória com arrasto",
-      "physics-proj-note-scale": "* Trajetória reduzida para caber nos limites da tela.",
       "physics-proj-chart-title": "📉 Comparação de Perfis de Trajetória",
       "physics-proj-chart-sub": "Trajetória no vácuo vs. voo real com arrasto do ar",
       "physics-mag-chart-title-lorentz": "📉 Projeção de Trajetória Bidimensional",
@@ -1033,7 +1064,7 @@
       "physics-mag-val-repulsion": "Repulsão",
       "physics-mag-lbl-resultant": "Força Resultante",
       "physics-mag-lbl-rpm": "Rpm Estacionário",
-      "physics-mag-lbl-efficiency": "Rendimento Máx",
+      "physics-mag-lbl-efficiency": "Rendimento em Regime",
       "physics-mag-lbl-final-speed": "Velocidade Final",
       "physics-mag-lbl-starting-current": "Corrente de Partida",
       "physics-mag-lbl-settling-time": "Tempo de Acomodação (5%)",
@@ -1045,6 +1076,33 @@
     });
 
     Object.assign(window.TRANSLATIONS.en, {
+      "physics-btn-pause": "⏸ Pause",
+      "physics-btn-resume": "▶ Resume",
+      "physics-proj-lbl-height": "Launch Height",
+      "physics-proj-help-height": "Above the ground. From a height the angle may be 0° or negative.",
+      "physics-proj-sec-env": "🌍 Environment (gravity & air)",
+      "physics-proj-lbl-env": "Location",
+      "physics-proj-env-earth": "Earth — sea level",
+      "physics-proj-env-earth1000": "Earth — 1,000 m altitude",
+      "physics-proj-env-earth3000": "Earth — 3,000 m altitude",
+      "physics-proj-env-moon": "Moon (no atmosphere)",
+      "physics-proj-env-mars": "Mars",
+      "physics-proj-env-jupiter": "Jupiter (1 bar level)",
+      "physics-proj-env-custom": "Custom",
+      "physics-proj-lbl-gravity": "Gravity (g)",
+      "physics-proj-lbl-rho": "Air density (ρ)",
+      "physics-proj-row-impact-angle": "Impact Angle",
+      "physics-proj-row-terminal": "Terminal Velocity",
+      "physics-proj-row-drag-energy": "Energy Lost to Drag",
+      "physics-proj-row-launch-height": "Launch Height",
+      "physics-proj-row-env": "Gravity · Air density",
+      "physics-scale-grid": "Grid: 1 square = {v}",
+      "physics-scale-speed": "playback ×{v}",
+      "physics-scale-poles": "Distance and arrows on a log scale (arrow ∝ log |F|)",
+      "physics-scale-lorentz": "Orbit enlarged: Larmor radius = {v}",
+      "physics-motor-slowmo": "slow motion ×1/{v}",
+      "physics-motor-stalled": "MOTOR STALLED",
+      "physics-none": "— (no air)",
       "physics-proj-title": "Projectile Motion Simulator",
       "physics-proj-desc": "Study projectile kinematics with classical air drag and gravity using 4th-order Runge-Kutta integration.",
       "physics-proj-preset-title": "Projectile Presets",
@@ -1065,7 +1123,6 @@
       "physics-proj-wb-sub": "3D animated projectile simulation (Three.js)",
       "physics-proj-legend-ideal": "● Ideal path",
       "physics-proj-legend-drag": "● Drag path",
-      "physics-proj-note-scale": "* Trajectory scaled down to fit standard viewport bounds.",
       "physics-proj-chart-title": "📉 Trajectory Profiles Comparison",
       "physics-proj-chart-sub": "Comparison of vacuum trajectory vs. real flight path with air drag",
       "physics-mag-chart-title-lorentz": "📉 Two-Dimensional Trajectory Projection",
@@ -1146,7 +1203,7 @@
       "physics-mag-val-repulsion": "Repulsion",
       "physics-mag-lbl-resultant": "Resultant Force",
       "physics-mag-lbl-rpm": "Steady State Speed",
-      "physics-mag-lbl-efficiency": "Max Efficiency",
+      "physics-mag-lbl-efficiency": "Steady-State Efficiency",
       "physics-mag-lbl-final-speed": "Final Speed",
       "physics-mag-lbl-starting-current": "Starting Current",
       "physics-mag-lbl-settling-time": "Settling Time (5%)",
@@ -1158,6 +1215,33 @@
     });
 
     Object.assign(window.TRANSLATIONS.ja, {
+      "physics-btn-pause": "⏸ とめる",
+      "physics-btn-resume": "▶ うごかす",
+      "physics-proj-lbl-height": "なげる高さ",
+      "physics-proj-help-height": "じめんからの高さだよ。高いところからなら、よこや下にもなげられるよ。",
+      "physics-proj-sec-env": "🌍 ほしと空気",
+      "physics-proj-lbl-env": "ばしょ",
+      "physics-proj-env-earth": "ちきゅう（うみのたかさ）",
+      "physics-proj-env-earth1000": "ちきゅう（1000mの山）",
+      "physics-proj-env-earth3000": "ちきゅう（3000mの山）",
+      "physics-proj-env-moon": "つき（空気がない）",
+      "physics-proj-env-mars": "かせい",
+      "physics-proj-env-jupiter": "もくせい",
+      "physics-proj-env-custom": "じぶんできめる",
+      "physics-proj-lbl-gravity": "ひっぱる力 (g)",
+      "physics-proj-lbl-rho": "空気のこさ (ρ)",
+      "physics-proj-row-impact-angle": "おちるときのかくど",
+      "physics-proj-row-terminal": "いちばんはやいおちるスピード",
+      "physics-proj-row-drag-energy": "空気にとられたエネルギー",
+      "physics-proj-row-launch-height": "なげる高さ",
+      "physics-proj-row-env": "ひっぱる力 · 空気のこさ",
+      "physics-scale-grid": "マス1つ = {v}",
+      "physics-scale-speed": "{v}ばいはやく見せているよ",
+      "physics-scale-poles": "きょりと矢じるしは見やすくしてあるよ",
+      "physics-scale-lorentz": "まわる大きさ = {v}",
+      "physics-motor-slowmo": "スローモーション 1/{v}",
+      "physics-motor-stalled": "モーターがとまっているよ",
+      "physics-none": "— (空気なし)",
       "physics-proj-title": "大砲とびだせ！シミュレーター",
       "physics-proj-desc": "空気のじゃま（抵抗）や重力があるなかで、大砲からうちだした弾がどう飛ぶか、スーパーコンピュータ（ルンgeクッタ法）で計算して軌道を見よう！",
       "physics-proj-preset-title": "うちだすモノを選ぶ",
@@ -1178,7 +1262,6 @@
       "physics-proj-wb-sub": "とんでいくようすを３Dで見よう (Three.js)",
       "physics-proj-legend-ideal": "● 空気なしのコース",
       "physics-proj-legend-drag": "● 空気ありのコース",
-      "physics-proj-note-scale": "* コースはがめんに入るように小さくしてあるよ。",
       "physics-proj-chart-title": "📉 とび方くらべのグラフ",
       "physics-proj-chart-sub": "空気がある時とない時のとび方をくらべよう",
       "physics-mag-chart-title-lorentz": "📉 へいめんのきどうグラフ",
@@ -1259,7 +1342,7 @@
       "physics-mag-val-repulsion": "しりぞけあう",
       "physics-mag-lbl-resultant": "合わさった力",
       "physics-mag-lbl-rpm": "回転スピード",
-      "physics-mag-lbl-efficiency": "最高効率",
+      "physics-mag-lbl-efficiency": "まわりつづけるときの効率",
       "physics-mag-lbl-final-speed": "さいごのスピード",
       "physics-mag-lbl-starting-current": "さいしょの電流",
       "physics-mag-lbl-settling-time": "おちつく時間",

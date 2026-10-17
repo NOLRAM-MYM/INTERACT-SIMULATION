@@ -80,41 +80,6 @@
           </div>
           <div style="width:0; height:0; border-left:6px solid transparent; border-right:6px solid transparent; border-top:6px solid rgba(56, 189, 248, 0.6); margin:0 auto;"></div>
         </div>
-
-        <!-- 3D Camera Controls (floating overlay on the canvas corner) -->
-        <div class="camera-controls camera-controls--overlay">
-          <div style="font-size:0.75rem; font-weight:600; color:var(--text-secondary); margin-bottom:8px; display:flex; justify-content:space-between; align-items:center;">
-            <span data-i18n="cam-title">🎥 Controle de Visualização 3D</span>
-            <label style="display:flex; align-items:center; gap:6px; cursor:pointer; font-size:0.72rem; color:var(--text-muted);">
-              <input type="checkbox" id="auto-orbit" checked style="cursor:pointer; accent-color:var(--accent-primary);"> <span data-i18n="cam-lbl-orbit">Auto-Orbital</span>
-            </label>
-          </div>
-          <div style="display:grid; grid-template-columns:repeat(4, 1fr); gap:6px; margin-bottom:10px;">
-            <button type="button" class="btn btn--outline" id="btn-view-iso" style="padding:4px 6px; font-size:0.68rem; justify-content:center; min-height:auto;" data-i18n="cam-btn-iso">Perspectiva</button>
-            <button type="button" class="btn btn--outline" id="btn-view-side" style="padding:4px 6px; font-size:0.68rem; justify-content:center; min-height:auto;" data-i18n="cam-btn-side">Lateral</button>
-            <button type="button" class="btn btn--outline" id="btn-view-top" style="padding:4px 6px; font-size:0.68rem; justify-content:center; min-height:auto;" data-i18n="cam-btn-top">Superior</button>
-            <button type="button" class="btn btn--outline" id="btn-view-inlet" style="padding:4px 6px; font-size:0.68rem; justify-content:center; min-height:auto;" data-i18n="cam-btn-inlet">Frontal</button>
-          </div>
-
-          <!-- XYZ Sliders -->
-          <div style="display:flex; flex-direction:column; gap:6px;">
-            <div style="display:flex; align-items:center; gap:8px; font-size:0.7rem; font-family:var(--font-mono);">
-              <span style="width:12px; color:#ef4444; font-weight:bold;">X</span>
-              <input type="range" id="cam-slider-x" min="-50" max="50" step="0.5" value="0" style="flex:1; height:4px; background:var(--bg-input); border-radius:2px; accent-color:#ef4444;" aria-label="Camera X">
-              <span id="cam-val-x" style="width:28px; text-align:right;">0.00</span>
-            </div>
-            <div style="display:flex; align-items:center; gap:8px; font-size:0.7rem; font-family:var(--font-mono);">
-              <span style="width:12px; color:#10b981; font-weight:bold;">Y</span>
-              <input type="range" id="cam-slider-y" min="-50" max="50" step="0.5" value="0" style="flex:1; height:4px; background:var(--bg-input); border-radius:2px; accent-color:#10b981;" aria-label="Camera Y">
-              <span id="cam-val-y" style="width:28px; text-align:right;">0.00</span>
-            </div>
-            <div style="display:flex; align-items:center; gap:8px; font-size:0.7rem; font-family:var(--font-mono);">
-              <span style="width:12px; color:#3b82f6; font-weight:bold;">Z</span>
-              <input type="range" id="cam-slider-z" min="5" max="90" step="0.5" value="45" style="flex:1; height:4px; background:var(--bg-input); border-radius:2px; accent-color:#3b82f6;" aria-label="Camera Z">
-              <span id="cam-val-z" style="width:28px; text-align:right;">45.00</span>
-            </div>
-          </div>
-        </div>
       </div>
 
       <div class="velocity-legend" id="three-legend" aria-label="Legenda cromática" style="justify-content:center; gap:16px; font-size:0.75rem; margin-top:8px;">
@@ -129,16 +94,16 @@
   </section>
 
   <!-- ============ FLOATING PANELS: Config (left) / Results (right) ============ -->
-  <button class="fab fab--config" id="fab-config" data-panel="config" aria-label="Abrir configuração" aria-expanded="false" aria-controls="config-panel">⚙️</button>
-  <button class="fab fab--results" id="fab-results" data-panel="results" aria-label="Abrir resultados" aria-expanded="false" aria-controls="results-panel">📊</button>
+  <button class="fab fab--config" id="fab-config" data-panel="config" data-i18n-title="fab-config" aria-label="Abrir configuração" aria-expanded="false" aria-controls="config-panel">⚙️</button>
+  <button class="fab fab--results" id="fab-results" data-panel="results" data-i18n-title="fab-results" aria-label="Abrir resultados" aria-expanded="false" aria-controls="results-panel">📊</button>
+  {% include "partials/camera_panel.html" with lim="50" step="0.5" zmin="5" zmax="90" x="0" y="0" z="45" %}
 
   <!-- 1. LEFT CONFIG PANEL -->
   <aside class="floating-panel floating-panel--left" id="config-panel" role="dialog" aria-label="Controles Biológicos" aria-hidden="true">
     <div class="floating-panel__header">
       <span class="floating-panel__title" id="config-panel-title">⚙️ Configuração Biológica</span>
       <div class="floating-panel__actions">
-        <button class="floating-panel__pin" id="pin-config" aria-label="Fixar painel" aria-pressed="false">📌</button>
-        <button class="floating-panel__close" aria-label="Fechar">✕</button>
+        <button class="floating-panel__close" data-i18n-title="panel-close" aria-label="Fechar">✕</button>
       </div>
     </div>
     <div class="floating-panel__body">
@@ -374,8 +339,7 @@
     <div class="floating-panel__header">
       <span class="floating-panel__title" id="results-panel-title">📋 Relatório &amp; Síntese</span>
       <div class="floating-panel__actions">
-        <button class="floating-panel__pin" id="pin-results" aria-label="Fixar painel" aria-pressed="false">📌</button>
-        <button class="floating-panel__close" aria-label="Fechar">✕</button>
+        <button class="floating-panel__close" data-i18n-title="panel-close" aria-label="Fechar">✕</button>
       </div>
     </div>
     <div class="floating-panel__body">

@@ -58,45 +58,6 @@
         <canvas id="three-canvas" aria-label="Simulação Eletromagnética de Átomos e Ligações"
                 style="border-radius:8px; display:block; background:#050b18;">
         </canvas>
-
-        <!-- 3D Camera Controls (floating overlay on the canvas corner) -->
-        <div class="camera-controls camera-controls--overlay">
-          <div style="font-size:0.75rem; font-weight:600; color:var(--text-secondary); margin-bottom:8px; display:flex; justify-content:space-between; align-items:center;">
-            <span data-i18n="cam-title">🎥 Controle de Visualização 3D</span>
-            <label style="display:flex; align-items:center; gap:6px; cursor:pointer; font-size:0.72rem; color:var(--text-muted);">
-              <input type="checkbox" id="auto-orbit" style="cursor:pointer; accent-color:var(--accent-primary);"> <span data-i18n="cam-lbl-orbit">Auto-Orbital</span>
-            </label>
-          </div>
-          <div style="display:grid; grid-template-columns:repeat(4, 1fr); gap:6px; margin-bottom:10px;">
-            <button type="button" class="btn btn--outline" id="btn-view-iso" style="padding:4px 6px; font-size:0.68rem; justify-content:center; min-height:auto;" data-i18n="cam-btn-iso">Perspectiva</button>
-            <button type="button" class="btn btn--outline" id="btn-view-side" style="padding:4px 6px; font-size:0.68rem; justify-content:center; min-height:auto;" data-i18n="cam-btn-side">Lateral</button>
-            <button type="button" class="btn btn--outline" id="btn-view-top" style="padding:4px 6px; font-size:0.68rem; justify-content:center; min-height:auto;" data-i18n="cam-btn-top">Superior</button>
-            <button type="button" class="btn btn--outline" id="btn-view-inlet" style="padding:4px 6px; font-size:0.68rem; justify-content:center; min-height:auto;" data-i18n="cam-btn-inlet">Frontal</button>
-          </div>
-
-          <!-- XYZ Sliders. chemistry.js has always driven these (it syncs them
-               from the camera each frame and moves the camera on input), but
-               the markup was missing here — chemistry was the only 3D page
-               without fine camera control, and the per-frame sync ran against
-               elements that never existed. -->
-          <div style="display:flex; flex-direction:column; gap:6px;">
-            <div style="display:flex; align-items:center; gap:8px; font-size:0.7rem; font-family:var(--font-mono);">
-              <span style="width:12px; color:#ef4444; font-weight:bold;">X</span>
-              <input type="range" id="cam-slider-x" min="-8" max="8" step="0.05" value="0" style="flex:1; height:4px; background:var(--bg-input); border-radius:2px; accent-color:#ef4444;" aria-label="Camera X">
-              <span id="cam-val-x" style="width:28px; text-align:right;">0.00</span>
-            </div>
-            <div style="display:flex; align-items:center; gap:8px; font-size:0.7rem; font-family:var(--font-mono);">
-              <span style="width:12px; color:#10b981; font-weight:bold;">Y</span>
-              <input type="range" id="cam-slider-y" min="-8" max="8" step="0.05" value="3" style="flex:1; height:4px; background:var(--bg-input); border-radius:2px; accent-color:#10b981;" aria-label="Camera Y">
-              <span id="cam-val-y" style="width:28px; text-align:right;">3.00</span>
-            </div>
-            <div style="display:flex; align-items:center; gap:8px; font-size:0.7rem; font-family:var(--font-mono);">
-              <span style="width:12px; color:#3b82f6; font-weight:bold;">Z</span>
-              <input type="range" id="cam-slider-z" min="-8" max="8" step="0.05" value="6" style="flex:1; height:4px; background:var(--bg-input); border-radius:2px; accent-color:#3b82f6;" aria-label="Camera Z">
-              <span id="cam-val-z" style="width:28px; text-align:right;">6.00</span>
-            </div>
-          </div>
-        </div>
       </div>
 
       <div class="velocity-legend" id="three-legend" aria-label="Legenda cromática" style="justify-content:center; gap:16px; font-size:0.75rem; margin-top:8px;">
@@ -109,16 +70,16 @@
   </section>
 
   <!-- ============ FLOATING PANELS: Config (left) / Results (right) / Periodic Table (wide) ============ -->
-  <button class="fab fab--config" id="fab-config" data-panel="config" aria-label="Abrir configuração" aria-expanded="false" aria-controls="config-panel">⚙️</button>
-  <button class="fab fab--results" id="fab-results" data-panel="results" aria-label="Abrir resultados" aria-expanded="false" aria-controls="results-panel">📊</button>
+  <button class="fab fab--config" id="fab-config" data-panel="config" data-i18n-title="fab-config" aria-label="Abrir configuração" aria-expanded="false" aria-controls="config-panel">⚙️</button>
+  <button class="fab fab--results" id="fab-results" data-panel="results" data-i18n-title="fab-results" aria-label="Abrir resultados" aria-expanded="false" aria-controls="results-panel">📊</button>
+  {% include "partials/camera_panel.html" with lim="8" x="0" y="3" z="6" %}
   <button class="fab fab--table" id="fab-periodic-table" data-panel="periodic" aria-label="Abrir tabela periódica" aria-expanded="false" aria-controls="periodic-panel">🧪</button>
 
   <aside class="floating-panel floating-panel--left" id="config-panel" role="dialog" aria-label="Controles Químicos" aria-hidden="true">
     <div class="floating-panel__header">
       <span class="floating-panel__title" data-i18n="panel-config-title">⚙️ Configuração</span>
       <div class="floating-panel__actions">
-        <button class="floating-panel__pin" id="pin-config" aria-label="Fixar painel" aria-pressed="false">📌</button>
-        <button class="floating-panel__close" aria-label="Fechar">✕</button>
+        <button class="floating-panel__close" data-i18n-title="panel-close" aria-label="Fechar">✕</button>
       </div>
     </div>
     <div class="floating-panel__body">
@@ -346,9 +307,8 @@
     <div class="floating-panel__header">
       <span class="floating-panel__title" data-i18n="panel-results-title">📊 Resultados</span>
       <div class="floating-panel__actions">
-        <button class="floating-panel__pin" id="pin-results" aria-label="Fixar painel" aria-pressed="false">📌</button>
         <button class="floating-panel__export" id="export-results" data-i18n="panel-export">⬇ Exportar</button>
-        <button class="floating-panel__close" aria-label="Fechar">✕</button>
+        <button class="floating-panel__close" data-i18n-title="panel-close" aria-label="Fechar">✕</button>
       </div>
     </div>
     <div class="floating-panel__body">
@@ -407,7 +367,7 @@
     <div class="floating-panel__header">
       <span class="floating-panel__title" id="periodic-panel-title">🧪 Tabela Periódica dos Elementos Químicos</span>
       <div class="floating-panel__actions">
-        <button class="floating-panel__close" aria-label="Fechar">✕</button>
+        <button class="floating-panel__close" data-i18n-title="panel-close" aria-label="Fechar">✕</button>
       </div>
     </div>
     <div class="floating-panel__body">

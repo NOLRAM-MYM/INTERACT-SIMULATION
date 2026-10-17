@@ -46,43 +46,6 @@
         <canvas id="three-canvas" aria-label="3D animated beam simulation"
                 style="border-radius:8px; background:#050b18;">
         </canvas>
-
-        <!-- 3D Camera Controls (floating overlay on the canvas corner) -->
-        <div class="camera-controls camera-controls--overlay">
-          <div style="font-size:0.75rem; font-weight:600; color:var(--text-secondary); margin-bottom:8px; display:flex; justify-content:space-between; align-items:center;">
-            <span data-i18n="cam-title">🎥 Camera Viewpoint (XYZ)</span>
-            <label style="display:flex; align-items:center; gap:6px; cursor:pointer; font-size:0.72rem; color:var(--text-muted);">
-              <input type="checkbox" id="auto-orbit" style="cursor:pointer; accent-color:var(--accent-primary);"> <span data-i18n="cam-lbl-orbit">Auto-Orbit</span>
-            </label>
-          </div>
-
-          <!-- View Presets -->
-          <div style="display:grid; grid-template-columns:repeat(4, 1fr); gap:6px; margin-bottom:10px;">
-            <button type="button" class="btn btn--outline" id="btn-view-iso" style="padding:4px 6px; font-size:0.68rem; justify-content:center; min-height:auto;" data-i18n="cam-btn-iso">Iso</button>
-            <button type="button" class="btn btn--outline" id="btn-view-side" style="padding:4px 6px; font-size:0.68rem; justify-content:center; min-height:auto;" data-i18n="cam-btn-side">Side (Z)</button>
-            <button type="button" class="btn btn--outline" id="btn-view-top" style="padding:4px 6px; font-size:0.68rem; justify-content:center; min-height:auto;" data-i18n="cam-btn-top">Top (Y)</button>
-            <button type="button" class="btn btn--outline" id="btn-view-inlet" style="padding:4px 6px; font-size:0.68rem; justify-content:center; min-height:auto;" data-i18n="cam-btn-inlet">Inlet (X)</button>
-          </div>
-
-          <!-- XYZ Sliders -->
-          <div style="display:flex; flex-direction:column; gap:6px;">
-            <div style="display:flex; align-items:center; gap:8px; font-size:0.7rem; font-family:var(--font-mono);">
-              <span style="width:12px; color:#ef4444; font-weight:bold;">X</span>
-              <input type="range" id="cam-slider-x" min="-6" max="6" step="0.05" value="0" style="flex:1; height:4px; background:var(--bg-input); border-radius:2px; accent-color:#ef4444;">
-              <span id="cam-val-x" style="width:28px; text-align:right;">0.00</span>
-            </div>
-            <div style="display:flex; align-items:center; gap:8px; font-size:0.7rem; font-family:var(--font-mono);">
-              <span style="width:12px; color:#10b981; font-weight:bold;">Y</span>
-              <input type="range" id="cam-slider-y" min="-6" max="6" step="0.05" value="1.5" style="flex:1; height:4px; background:var(--bg-input); border-radius:2px; accent-color:#10b981;">
-              <span id="cam-val-y" style="width:28px; text-align:right;">1.50</span>
-            </div>
-            <div style="display:flex; align-items:center; gap:8px; font-size:0.7rem; font-family:var(--font-mono);">
-              <span style="width:12px; color:#3b82f6; font-weight:bold;">Z</span>
-              <input type="range" id="cam-slider-z" min="-6" max="6" step="0.05" value="4" style="flex:1; height:4px; background:var(--bg-input); border-radius:2px; accent-color:#3b82f6;">
-              <span id="cam-val-z" style="width:28px; text-align:right;">4.00</span>
-            </div>
-          </div>
-        </div>
       </div>
 
       <div class="velocity-legend" aria-label="Bending strain scale">
@@ -90,9 +53,7 @@
         <div class="legend-gradient"></div>
         <span style="color:#ef4444" data-i18n="materials-legend-high">● Max deflection</span>
       </div>
-      <p style="font-size:0.7rem; color:var(--text-muted); margin-top:8px; text-align:center;" data-i18n="materials-note-scale">
-        * Deflection profile scaled up by 40x for visual clarity. Drag to rotate/zoom (XYZ).
-      </p>
+      <p id="sim-scale-note" style="font-size:0.7rem; color:var(--text-muted); margin-top:8px; text-align:center; min-height:1em;"></p>
     </div>
 
     <!-- Plotly Chart — Deflection Profile -->
@@ -101,6 +62,12 @@
         <div>
           <div class="card__title" data-i18n="materials-chart-title">📉 Deflection Profile Curve</div>
           <div class="card__subtitle" data-i18n="materials-chart-sub">Deflection y(x) along beam span</div>
+        </div>
+        <div class="diagram-switch" role="group" aria-label="Diagram">
+          <button type="button" class="diagram-switch__btn diagram-switch__btn--active" data-diagram="deflection" data-i18n="materials-diag-deflection">Deflexão</button>
+          <button type="button" class="diagram-switch__btn" data-diagram="moment" data-i18n="materials-diag-moment">Momento</button>
+          <button type="button" class="diagram-switch__btn" data-diagram="shear" data-i18n="materials-diag-shear">Cortante</button>
+          <button type="button" class="diagram-switch__btn" data-diagram="stress" data-i18n="materials-diag-stress">Tensão</button>
         </div>
       </div>
       <div id="plotly-chart" style="height:240px; border-radius:8px; overflow:hidden;">
@@ -114,15 +81,15 @@
   </section>
 
   <!-- ============ FLOATING PANELS: Config (left) / Results (right) ============ -->
-  <button class="fab fab--config" id="fab-config" data-panel="config" aria-label="Open configuration" aria-expanded="false" aria-controls="config-panel">⚙️</button>
-  <button class="fab fab--results" id="fab-results" data-panel="results" aria-label="Open results" aria-expanded="false" aria-controls="results-panel">📊</button>
+  <button class="fab fab--config" id="fab-config" data-panel="config" data-i18n-title="fab-config" aria-label="Open configuration" aria-expanded="false" aria-controls="config-panel">⚙️</button>
+  <button class="fab fab--results" id="fab-results" data-panel="results" data-i18n-title="fab-results" aria-label="Open results" aria-expanded="false" aria-controls="results-panel">📊</button>
+  {% include "partials/camera_panel.html" with x="0" y="1.5" z="4" %}
 
   <aside class="floating-panel floating-panel--left" id="config-panel" role="dialog" aria-label="Configuration panel" aria-hidden="true">
     <div class="floating-panel__header">
       <span class="floating-panel__title" data-i18n="panel-config-title">⚙️ Configuration</span>
       <div class="floating-panel__actions">
-        <button class="floating-panel__pin" id="pin-config" aria-label="Pin panel" aria-pressed="false">📌</button>
-        <button class="floating-panel__close" aria-label="Close">✕</button>
+        <button class="floating-panel__close" data-i18n-title="panel-close" aria-label="Close">✕</button>
       </div>
     </div>
     <div class="floating-panel__body">
@@ -141,6 +108,7 @@
             <option value="aluminum" data-i18n="materials-opt-aluminum">Aluminum 6061-T6 (E = 70 GPa)</option>
             <option value="concrete" data-i18n="materials-opt-concrete">Structural Concrete (E = 30 GPa)</option>
             <option value="wood" data-i18n="materials-opt-wood">Douglas Fir Wood (E = 11 GPa)</option>
+            <option value="custom" data-i18n="materials-opt-custom">Personalizado</option>
           </select>
         </div>
       </div>
@@ -162,13 +130,14 @@
             <span data-i18n="materials-lbl-length">Beam Length</span> <span class="unit-tag">m</span>
           </label>
           <input class="form-input" type="number" id="length_m" name="length_m"
-                 value="5.0" min="0.5" max="20.0" step="0.1">
+                 value="5.0" min="0.5" max="100.0" step="0.1">
         </div>
 
         <div class="form-group">
           <label class="form-label" for="beam_shape" data-i18n="materials-lbl-shape">Cross Section Type</label>
           <select class="form-input" id="beam_shape" name="beam_shape">
             <option value="rectangular" data-i18n="materials-opt-rect">Rectangular Cross-Section</option>
+            <option value="circular" data-i18n="materials-opt-circ">Seção Circular Maciça</option>
             <option value="manual" data-i18n="materials-opt-manual">Manual I (Moment of Area) Input</option>
           </select>
         </div>
@@ -186,6 +155,12 @@
           </div>
         </div>
 
+        <div id="circular-inputs" style="display:none;">
+          <div class="form-group">
+            <label class="form-label" for="diameter_mm"><span data-i18n="materials-lbl-diameter">Diâmetro</span> <span class="unit-tag">mm</span></label>
+            <input class="form-input" type="number" id="diameter_mm" value="200" min="5" max="2000" step="5">
+          </div>
+        </div>
         <div id="manual-inputs" style="display:none;">
           <div class="form-group">
             <label class="form-label" for="second_moment_m4">
@@ -193,6 +168,13 @@
             </label>
             <input class="form-input" type="number" id="second_moment_m4" name="second_moment_m4"
                    value="8.33e-6" step="1e-8">
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="fibre_mm">
+              <span data-i18n="materials-lbl-fibre">Distância à fibra extrema (c)</span> <span class="unit-tag">mm</span>
+            </label>
+            <input class="form-input" type="number" id="fibre_mm" value="" min="0.01" step="1" placeholder="—">
+            <span class="form-help" data-i18n="materials-help-fibre">Opcional — necessária para a tensão (σ = M·c/I).</span>
           </div>
         </div>
 
@@ -205,6 +187,13 @@
           </label>
           <input class="form-input" type="number" id="youngs_modulus_gpa" name="youngs_modulus_gpa"
                  value="200.0" min="1.0" max="500.0" step="1.0">
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="yield_strength_mpa">
+            <span data-i18n="materials-lbl-yield">Tensão de escoamento (σy)</span> <span class="unit-tag">MPa</span>
+          </label>
+          <input class="form-input" type="number" id="yield_strength_mpa" name="yield_strength_mpa"
+                 value="250" min="0.1" max="10000" step="1">
         </div>
 
         <!-- APPLIED LOADS -->
@@ -225,7 +214,7 @@
             <span data-i18n="materials-lbl-load">Total Load</span> <span class="unit-tag">kN</span>
           </label>
           <input class="form-input" type="number" id="load_kn" name="load_kn"
-                 value="50.0" min="0.0" max="5000.0" step="1.0">
+                 value="50.0" min="0.1" max="100000.0" step="1.0">
         </div>
 
         <!-- Submit -->
@@ -268,7 +257,7 @@
             <tr style="border-bottom:1px solid var(--border-subtle);">
               <td style="padding:4px 4px; color:var(--text-secondary);">Concrete C30</td>
               <td style="padding:4px 4px; text-align:right; font-family:var(--font-mono); color:#60a5fa;">30</td>
-              <td style="padding:4px 4px; text-align:right; font-family:var(--font-mono); color:#6ee7b7;">30</td>
+              <td style="padding:4px 4px; text-align:right; font-family:var(--font-mono); color:#6ee7b7;" title="tração na flexão (compressão ≈ 30 MPa)">3*</td>
               <td style="padding:4px 4px; text-align:right; font-family:var(--font-mono); color:var(--text-muted);">2400</td>
             </tr>
             <tr>
@@ -279,6 +268,7 @@
             </tr>
           </tbody>
         </table>
+        <p class="form-help" style="margin-top:6px;" data-i18n="materials-ref-concrete">* Concreto simples: resistência à tração na flexão (compressão ≈ 30 MPa).</p>
       </div>
 
       <!-- Beam Deflection Formula Reference -->
@@ -320,9 +310,8 @@
     <div class="floating-panel__header">
       <span class="floating-panel__title" data-i18n="panel-results-title">📊 Results</span>
       <div class="floating-panel__actions">
-        <button class="floating-panel__pin" id="pin-results" aria-label="Pin panel" aria-pressed="false">📌</button>
         <button class="floating-panel__export" id="export-results" data-i18n="panel-export">⬇ Export</button>
-        <button class="floating-panel__close" aria-label="Close">✕</button>
+        <button class="floating-panel__close" data-i18n-title="panel-close" aria-label="Close">✕</button>
       </div>
     </div>
     <div class="floating-panel__body">
@@ -347,10 +336,25 @@
           <div class="kpi-value" id="kpi-area-val">—</div>
           <div class="kpi-unit">m²</div>
         </div>
-        <div class="kpi-card kpi-card--deflection kpi-card--highlight" id="kpi-deflection-max" style="grid-column: span 2;">
+        <div class="kpi-card kpi-card--deflection kpi-card--highlight" id="kpi-deflection-max">
           <div class="kpi-label" data-i18n="materials-kpi-deflection">Max Deflection</div>
           <div class="kpi-value" id="kpi-deflection-val">—</div>
           <div class="kpi-unit">mm</div>
+        </div>
+        <div class="kpi-card kpi-card--moment" id="kpi-moment">
+          <div class="kpi-label" data-i18n="materials-kpi-moment">Momento Máx</div>
+          <div class="kpi-value" id="kpi-moment-val">—</div>
+          <div class="kpi-unit">kN·m</div>
+        </div>
+        <div class="kpi-card kpi-card--stress" id="kpi-stress">
+          <div class="kpi-label" data-i18n="materials-kpi-stress">Tensão Máx</div>
+          <div class="kpi-value" id="kpi-stress-val">—</div>
+          <div class="kpi-unit">MPa</div>
+        </div>
+        <div class="kpi-card kpi-card--sf" id="kpi-sf">
+          <div class="kpi-label" data-i18n="materials-kpi-sf">Fator de Segurança</div>
+          <div class="kpi-value" id="kpi-sf-val">—</div>
+          <div class="kpi-unit">σy / σ</div>
         </div>
       </div>
 
@@ -366,6 +370,12 @@
             <tr><td data-i18n="materials-row-load">Applied Load</td><td id="tbl-load">—</td></tr>
             <tr><td data-i18n="materials-row-loadtype">Load Type</td><td id="tbl-load-type">—</td></tr>
             <tr class="results-table__highlight"><td data-i18n="materials-kpi-deflection">Max Deflection</td><td id="tbl-max-deflection">—</td></tr>
+            <tr><td data-i18n="materials-row-service">Verificação de flecha (L/δ)</td><td id="tbl-service">—</td></tr>
+            <tr><td data-i18n="materials-row-reactions">Reações de apoio</td><td id="tbl-reactions">—</td></tr>
+            <tr><td data-i18n="materials-row-max-shear">Esforço cortante máx</td><td id="tbl-max-shear">—</td></tr>
+            <tr><td data-i18n="materials-row-max-moment">Momento fletor máx</td><td id="tbl-max-moment">—</td></tr>
+            <tr><td data-i18n="materials-row-stress">Tensão normal máx (σ = M·c/I)</td><td id="tbl-stress">—</td></tr>
+            <tr class="results-table__highlight"><td data-i18n="materials-row-sf">Fator de segurança (σy/σ)</td><td id="tbl-sf">—</td></tr>
           </tbody>
         </table>
       </div>
@@ -386,6 +396,17 @@
   .kpi-card--rigidity { border-left-color: var(--accent-primary); }
   .kpi-card--area { border-left-color: var(--accent-info); }
   .kpi-card--deflection { border-left-color: var(--accent-danger); }
+  .kpi-card--moment { border-left-color: var(--accent-warning); }
+  .kpi-card--stress { border-left-color: var(--accent-secondary); }
+  .kpi-card--sf { border-left-color: var(--accent-success); }
+  .diagram-switch { display: flex; gap: 4px; flex-wrap: wrap; }
+  .diagram-switch__btn {
+    background: none; border: 1px solid var(--border-default); border-radius: 6px;
+    color: var(--text-secondary); font-size: 0.72rem; font-weight: 600; padding: 4px 10px; cursor: pointer;
+  }
+  .diagram-switch__btn:hover { border-color: var(--accent-primary); color: var(--text-primary); }
+  .diagram-switch__btn--active { border-color: var(--accent-primary); color: var(--text-primary); background: rgba(139, 92, 246, 0.14); }
+  .diagram-switch__btn:disabled { opacity: 0.4; cursor: not-allowed; }
   .formula-steps { font-family: var(--font-mono); font-size: 0.78rem; line-height: 1.7; color: var(--text-secondary); }
   .formula-steps__line { padding: 6px 0; border-bottom: 1px dashed var(--border-subtle); }
   .formula-steps__line:last-child { border-bottom: none; color: var(--accent-primary); font-weight: 600; }
@@ -421,6 +442,41 @@
   document.addEventListener('DOMContentLoaded', () => {
   if (window.TRANSLATIONS) {
     Object.assign(window.TRANSLATIONS.pt, {
+      "materials-opt-custom": "Personalizado",
+      "materials-opt-circ": "Seção Circular Maciça",
+      "materials-lbl-diameter": "Diâmetro",
+      "materials-lbl-fibre": "Distância à fibra extrema (c)",
+      "materials-help-fibre": "Opcional — necessária para a tensão (σ = M·c/I).",
+      "materials-lbl-yield": "Tensão de escoamento (σy)",
+      "materials-ref-concrete": "* Concreto simples: resistência à tração na flexão (compressão ≈ 30 MPa).",
+      "materials-kpi-moment": "Momento Máx",
+      "materials-kpi-stress": "Tensão Máx",
+      "materials-kpi-sf": "Fator de Segurança",
+      "materials-row-service": "Verificação de flecha (L/δ)",
+      "materials-row-reactions": "Reações de apoio",
+      "materials-row-max-shear": "Esforço cortante máx",
+      "materials-row-max-moment": "Momento fletor máx",
+      "materials-row-stress": "Tensão normal máx (σ = M·c/I)",
+      "materials-row-sf": "Fator de segurança (σy/σ)",
+      "materials-diag-deflection": "Deflexão",
+      "materials-diag-moment": "Momento",
+      "materials-diag-shear": "Cortante",
+      "materials-diag-stress": "Tensão",
+      "materials-axis-x": "Posição na viga x (m)",
+      "materials-axis-deflection": "Deflexão (mm)",
+      "materials-axis-moment": "Momento fletor (kN·m)",
+      "materials-axis-shear": "Esforço cortante (kN)",
+      "materials-axis-stress": "Tensão na fibra extrema (MPa)",
+      "materials-trace-current": "Atual",
+      "materials-trace-reference": "Referência",
+      "materials-scale-exag": "Deformação ampliada ×{v} · cores = esforço",
+      "materials-scale-real": "Deformação em escala real · cores = esforço",
+      "materials-scale-reduced": "Deformação reduzida ×{v} (flecha excessiva) · cores = esforço",
+      "materials-service-ok": "atende",
+      "materials-service-fail": "excede o limite",
+      "materials-status-yield": "Escoamento!",
+      "materials-status-sag": "Flecha excessiva",
+      "materials-na": "— (informe c)",
       "materials-title": "Flexão Estrutural de Vigas",
       "materials-desc": "Teoria de Euler-Bernoulli · Rigidez à flexão (EI) · Perfil de deflexão · Gráfico Plotly · Curvatura 3D interativa em Three.js",
       "materials-presets-title": "Predefinidos de Materiais",
@@ -431,9 +487,8 @@
       "materials-badge-deflection": "Deflexão Máx.",
       "materials-wb-title": "🌀 Bancada 3D de Flexão de Vigas",
       "materials-wb-sub": "Modelo de malha deformada interativo (Three.js)",
-      "materials-legend-low": "● Sem flexão",
-      "materials-legend-high": "● Deflexão máxima",
-      "materials-note-scale": "* Perfil de deflexão ampliado 40x para clareza visual. Arraste para girar/zoom (XYZ).",
+      "materials-legend-low": "● Sem esforço",
+      "materials-legend-high": "● Esforço máximo (vermelho = σ ≥ σy)",
       "materials-chart-title": "📉 Curva do Perfil de Deflexão",
       "materials-chart-sub": "Deflexão y(x) ao longo do vão da viga",
       "materials-chart-placeholder": "Resolva a deflexão para gerar o gráfico",
@@ -474,6 +529,41 @@
     });
 
     Object.assign(window.TRANSLATIONS.en, {
+      "materials-opt-custom": "Custom",
+      "materials-opt-circ": "Solid Circular Section",
+      "materials-lbl-diameter": "Diameter",
+      "materials-lbl-fibre": "Extreme fibre distance (c)",
+      "materials-help-fibre": "Optional — needed for the stress (σ = M·c/I).",
+      "materials-lbl-yield": "Yield strength (σy)",
+      "materials-ref-concrete": "* Plain concrete: flexural tensile strength (compression ≈ 30 MPa).",
+      "materials-kpi-moment": "Max Moment",
+      "materials-kpi-stress": "Max Stress",
+      "materials-kpi-sf": "Safety Factor",
+      "materials-row-service": "Deflection check (L/δ)",
+      "materials-row-reactions": "Support reactions",
+      "materials-row-max-shear": "Max shear force",
+      "materials-row-max-moment": "Max bending moment",
+      "materials-row-stress": "Max normal stress (σ = M·c/I)",
+      "materials-row-sf": "Safety factor (σy/σ)",
+      "materials-diag-deflection": "Deflection",
+      "materials-diag-moment": "Moment",
+      "materials-diag-shear": "Shear",
+      "materials-diag-stress": "Stress",
+      "materials-axis-x": "Beam position x (m)",
+      "materials-axis-deflection": "Deflection (mm)",
+      "materials-axis-moment": "Bending moment (kN·m)",
+      "materials-axis-shear": "Shear force (kN)",
+      "materials-axis-stress": "Extreme-fibre stress (MPa)",
+      "materials-trace-current": "Current",
+      "materials-trace-reference": "Reference",
+      "materials-scale-exag": "Deformation enlarged ×{v} · colours = internal force",
+      "materials-scale-real": "Deformation at true scale · colours = internal force",
+      "materials-scale-reduced": "Deformation reduced ×{v} (excessive sag) · colours = internal force",
+      "materials-service-ok": "passes",
+      "materials-service-fail": "exceeds the limit",
+      "materials-status-yield": "Yielding!",
+      "materials-status-sag": "Excessive sag",
+      "materials-na": "— (enter c)",
       "materials-title": "Structural Beam Bending",
       "materials-desc": "Euler-Bernoulli beam theory · Flexural rigidity (EI) · Deflection profile · Plotly chart · Interactive Three.js 3D structural bending",
       "materials-presets-title": "Material Presets",
@@ -484,9 +574,8 @@
       "materials-badge-deflection": "Max Deflection",
       "materials-wb-title": "🌀 3D Beam Bending Workbench",
       "materials-wb-sub": "Interactive deformed mesh model (Three.js)",
-      "materials-legend-low": "● No bending",
-      "materials-legend-high": "● Max deflection",
-      "materials-note-scale": "* Deflection profile scaled up by 40x for visual clarity. Drag to rotate/zoom (XYZ).",
+      "materials-legend-low": "● No load effect",
+      "materials-legend-high": "● Peak effect (red = σ ≥ σy)",
       "materials-chart-title": "📉 Deflection Profile Curve",
       "materials-chart-sub": "Deflection y(x) along beam span",
       "materials-chart-placeholder": "Solve deflection to render chart",
@@ -527,6 +616,41 @@
     });
 
     Object.assign(window.TRANSLATIONS.ja, {
+      "materials-opt-custom": "じぶんできめる",
+      "materials-opt-circ": "まるいぼう",
+      "materials-lbl-diameter": "ふとさ（ちょっけい）",
+      "materials-lbl-fibre": "まんなかからはしまで (c)",
+      "materials-help-fibre": "なくてもOK — 力のかかりぐあいをしらべるのにつかうよ。",
+      "materials-lbl-yield": "がまんできる力 (σy)",
+      "materials-ref-concrete": "* コンクリートはひっぱりによわいよ。",
+      "materials-kpi-moment": "まげる力",
+      "materials-kpi-stress": "なかの力",
+      "materials-kpi-sf": "あんぜんど",
+      "materials-row-service": "たわみチェック (L/δ)",
+      "materials-row-reactions": "ささえる力",
+      "materials-row-max-shear": "ずらす力",
+      "materials-row-max-moment": "まげる力",
+      "materials-row-stress": "なかの力 (σ = M·c/I)",
+      "materials-row-sf": "あんぜんど (σy/σ)",
+      "materials-diag-deflection": "たわみ",
+      "materials-diag-moment": "まげる力",
+      "materials-diag-shear": "ずらす力",
+      "materials-diag-stress": "なかの力",
+      "materials-axis-x": "はしからのきょり x (m)",
+      "materials-axis-deflection": "たわみ (mm)",
+      "materials-axis-moment": "まげる力 (kN·m)",
+      "materials-axis-shear": "ずらす力 (kN)",
+      "materials-axis-stress": "なかの力 (MPa)",
+      "materials-trace-current": "いま",
+      "materials-trace-reference": "おぼえたもの",
+      "materials-scale-exag": "たわみを{v}ばいに見せているよ",
+      "materials-scale-real": "たわみはほんとうの大きさだよ",
+      "materials-scale-reduced": "たわみが大きすぎるので小さく見せているよ",
+      "materials-service-ok": "だいじょうぶ",
+      "materials-service-fail": "たわみすぎ",
+      "materials-status-yield": "こわれちゃう！",
+      "materials-status-sag": "たわみすぎ",
+      "materials-na": "— (cを入れてね)",
       "materials-title": "板のつよさと曲がり方のじっけん",
       "materials-desc": "鉄や木でできた板（はり）の上に重いものをのせたとき、どれくらい曲がるか（たわみ）、つよさをシミュレーションしよう！",
       "materials-presets-title": "板のざいりょうを選ぶ",
@@ -537,9 +661,8 @@
       "materials-badge-deflection": "まがり具合",
       "materials-wb-title": "🌀 ３D板まげじっけん",
       "materials-wb-sub": "曲がった板を３Dでぐるぐる見てみよう (Three.js)",
-      "materials-legend-low": "● まがってない",
-      "materials-legend-high": "● いちばん曲がってる",
-      "materials-note-scale": "* 曲がり方は見やすいように40倍にしてあるよ。ドラッグで回せるよ。",
+      "materials-legend-low": "● 力なし",
+      "materials-legend-high": "● 力がいっぱい（あか＝こわれる）",
       "materials-chart-title": "📉 曲がり方のグラフ",
       "materials-chart-sub": "板のはしからはしまでの曲がり具合 y(x)",
       "materials-chart-placeholder": "けいさんするとグラフが出るよ",

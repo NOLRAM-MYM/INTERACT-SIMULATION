@@ -46,43 +46,6 @@
         <canvas id="three-canvas" aria-label="3D animated gear simulation"
                 style="border-radius:8px; background:#050b18;">
         </canvas>
-
-        <!-- 3D Camera Controls (floating overlay on the canvas corner) -->
-        <div class="camera-controls camera-controls--overlay">
-          <div style="font-size:0.75rem; font-weight:600; color:var(--text-secondary); margin-bottom:8px; display:flex; justify-content:space-between; align-items:center;">
-            <span>🎥 Camera Viewpoint (XYZ)</span>
-            <label style="display:flex; align-items:center; gap:6px; cursor:pointer; font-size:0.72rem; color:var(--text-muted);">
-              <input type="checkbox" id="auto-orbit" style="cursor:pointer; accent-color:var(--accent-primary);"> Auto-Orbit
-            </label>
-          </div>
-
-          <!-- View Presets -->
-          <div style="display:grid; grid-template-columns:repeat(4, 1fr); gap:6px; margin-bottom:10px;">
-            <button type="button" class="btn btn--outline" id="btn-view-iso" style="padding:4px 6px; font-size:0.68rem; justify-content:center; min-height:auto;">Iso</button>
-            <button type="button" class="btn btn--outline" id="btn-view-side" style="padding:4px 6px; font-size:0.68rem; justify-content:center; min-height:auto;">Front (Z)</button>
-            <button type="button" class="btn btn--outline" id="btn-view-top" style="padding:4px 6px; font-size:0.68rem; justify-content:center; min-height:auto;">Top (Y)</button>
-            <button type="button" class="btn btn--outline" id="btn-view-inlet" style="padding:4px 6px; font-size:0.68rem; justify-content:center; min-height:auto;">Side (X)</button>
-          </div>
-
-          <!-- XYZ Sliders -->
-          <div style="display:flex; flex-direction:column; gap:6px;">
-            <div style="display:flex; align-items:center; gap:8px; font-size:0.7rem; font-family:var(--font-mono);">
-              <span style="width:12px; color:#ef4444; font-weight:bold;">X</span>
-              <input type="range" id="cam-slider-x" min="-6" max="6" step="0.05" value="0" style="flex:1; height:4px; background:var(--bg-input); border-radius:2px; accent-color:#ef4444;">
-              <span id="cam-val-x" style="width:28px; text-align:right;">0.00</span>
-            </div>
-            <div style="display:flex; align-items:center; gap:8px; font-size:0.7rem; font-family:var(--font-mono);">
-              <span style="width:12px; color:#10b981; font-weight:bold;">Y</span>
-              <input type="range" id="cam-slider-y" min="-6" max="6" step="0.05" value="0.0" style="flex:1; height:4px; background:var(--bg-input); border-radius:2px; accent-color:#10b981;">
-              <span id="cam-val-y" style="width:28px; text-align:right;">0.00</span>
-            </div>
-            <div style="display:flex; align-items:center; gap:8px; font-size:0.7rem; font-family:var(--font-mono);">
-              <span style="width:12px; color:#3b82f6; font-weight:bold;">Z</span>
-              <input type="range" id="cam-slider-z" min="-6" max="6" step="0.05" value="3.5" style="flex:1; height:4px; background:var(--bg-input); border-radius:2px; accent-color:#3b82f6;">
-              <span id="cam-val-z" style="width:28px; text-align:right;">3.50</span>
-            </div>
-          </div>
-        </div>
       </div>
 
       <div class="velocity-legend" aria-label="Gear labels" style="justify-content:center; gap:16px;">
@@ -114,15 +77,15 @@
   </section>
 
   <!-- ============ FLOATING PANELS: Config (left) / Results (right) ============ -->
-  <button class="fab fab--config" id="fab-config" data-panel="config" aria-label="Open configuration" aria-expanded="false" aria-controls="config-panel">⚙️</button>
-  <button class="fab fab--results" id="fab-results" data-panel="results" aria-label="Open results" aria-expanded="false" aria-controls="results-panel">📊</button>
+  <button class="fab fab--config" id="fab-config" data-panel="config" data-i18n-title="fab-config" aria-label="Open configuration" aria-expanded="false" aria-controls="config-panel">⚙️</button>
+  <button class="fab fab--results" id="fab-results" data-panel="results" data-i18n-title="fab-results" aria-label="Open results" aria-expanded="false" aria-controls="results-panel">📊</button>
+  {% include "partials/camera_panel.html" with x="0" y="0" z="3.5" %}
 
   <aside class="floating-panel floating-panel--left" id="config-panel" role="dialog" aria-label="Configuration panel" aria-hidden="true">
     <div class="floating-panel__header">
-      <span class="floating-panel__title">⚙️ Configuration</span>
+      <span class="floating-panel__title" data-i18n="panel-config-title">⚙️ Configuration</span>
       <div class="floating-panel__actions">
-        <button class="floating-panel__pin" id="pin-config" aria-label="Pin panel" aria-pressed="false">📌</button>
-        <button class="floating-panel__close" aria-label="Close">✕</button>
+        <button class="floating-panel__close" data-i18n-title="panel-close" aria-label="Close">✕</button>
       </div>
     </div>
     <div class="floating-panel__body">
@@ -362,11 +325,10 @@
 
   <aside class="floating-panel floating-panel--right" id="results-panel" role="dialog" aria-label="Results panel" aria-hidden="true">
     <div class="floating-panel__header">
-      <span class="floating-panel__title">📊 Results</span>
+      <span class="floating-panel__title" data-i18n="panel-results-title">📊 Results</span>
       <div class="floating-panel__actions">
-        <button class="floating-panel__pin" id="pin-results" aria-label="Pin panel" aria-pressed="false">📌</button>
-        <button class="floating-panel__export" id="export-results">⬇ Export</button>
-        <button class="floating-panel__close" aria-label="Close">✕</button>
+        <button class="floating-panel__export" id="export-results" data-i18n="panel-export">⬇ Export</button>
+        <button class="floating-panel__close" data-i18n-title="panel-close" aria-label="Close">✕</button>
       </div>
     </div>
     <div class="floating-panel__body">

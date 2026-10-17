@@ -11,9 +11,11 @@
  * As ES modules they have real scope, and `no-undef` is what catches a
  * reference that used to resolve to a global and no longer does.
  *
- * Globals declared below are the ones base.html installs on window at runtime
- * (translation engine, floating panels, export helpers, MathJax from CDN).
- * They are genuinely global and intentionally not imported.
+ * Globals declared below are installed on window at runtime — the translation
+ * engine by base.html's inline script, the floating panels / export helpers /
+ * tooltip by the main.js entry (modules/shared/), MathJax from a CDN. The page
+ * controllers are separate Vite entries, so for them these are genuinely
+ * global and intentionally not imported.
  */
 
 import js from '@eslint/js';
@@ -32,11 +34,11 @@ export default [
       globals: {
         ...globals.browser,
 
-        // Installed on window by base.html's inline script
+        // Installed on window by base.html (i18n) and the main.js entry (the rest)
         TRANSLATIONS: 'readonly',
         translatePage: 'readonly',
         FloatingPanel: 'readonly',
-        exportUtils: 'readonly',   // base.html installs window.exportUtils (lower-case e)
+        exportUtils: 'readonly',   // shell.js installs window.exportUtils (lower-case e)
         ThreeTooltip: 'readonly',
 
         // MathJax is loaded from a CDN in base.html's <head>

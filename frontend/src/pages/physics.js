@@ -41,9 +41,65 @@ let referenceResult = null;
 let lastResult = null;
 
 // Lorentz trajectory playback rate, in path samples per second. The service
-// returns a fixed-count sample array, so this is what sets how fast the
-// particle appears to travel — independent of the display's refresh rate.
-const LORENTZ_STEPS_PER_SECOND = 60;
+// returns ~300 samples (three turns for a fast particle), so one pass of the
+// path takes about four seconds — independent of the display's refresh rate.
+const LORENTZ_STEPS_PER_SECOND = 75;
+
+// Longest a projectile flight is allowed to take on screen. Longer flights
+// are played faster, and the scale note says by how much.
+const MAX_PLAYBACK_S = 6;
+
+// The Pause button freezes the motion in whichever viewport is showing —
+// projectile, Lorentz particle or motor rotor. The render loops keep running,
+// so the camera can still be orbited while the motion is paused.
+let playbackPaused = false;
+
+// Gravity [m/s²] and air density [kg/m³] for the environment selector.
+const ENVIRONMENTS = {
+  earth:     [9.80665, 1.225],
+  earth1000: [9.80665, 1.112],
+  earth3000: [9.80665, 0.909],
+  moon:      [1.62, 0.0],
+  mars:      [3.71, 0.020],
+  jupiter:   [24.79, 0.16],
+};
+
+/** Translated text for `key`, with `{v}` replaced by `value` when given. */
+function tr(key, fallback, value) {
+  const lang = localStorage.getItem('app-language') || 'pt';
+  const text = window.TRANSLATIONS?.[lang]?.[key] || fallback;
+  return value === undefined ? text : text.replace('{v}', value);
+}
+
+/**
+ * Toast the solver's warnings only when they change. Live re-solves fire on
+ * every keystroke, and repeating the same stall warning each time was noise.
+ */
+let lastWarningsKey = '';
+function showWarnings(warnings) {
+  const list = warnings || [];
+  const key = list.join('|');
+  if (key && key !== lastWarningsKey) list.forEach(w => showToast(w, 'info', 7000));
+  lastWarningsKey = key;
+}
+
+/** Smallest 1-2-5 × 10ⁿ value ≥ v, so grid squares are round distances. */
+function niceCeil(v) {
+  const decade = Math.pow(10, Math.floor(Math.log10(v)));
+  return [1, 2, 5, 10].map(m => m * decade).find(n => n >= v * (1 - 1e-9));
+}
+
+function formatLength(m) {
+  if (m >= 1000) return `${Number((m / 1000).toPrecision(3))} km`;
+  if (m >= 1) return `${Number(m.toPrecision(3))} m`;
+  if (m >= 0.01) return `${Number((m * 100).toPrecision(3))} cm`;
+  return `${Number((m * 1000).toPrecision(3))} mm`;
+}
+
+function setScaleNote(text) {
+  const el = document.getElementById('sim-scale-note');
+  if (el) el.textContent = text;
+}
 
 // Plotly chart lifecycle for the single #plotly-chart container, which both
 // tabs share.
@@ -187,6 +243,22 @@ const ProjectileForm = {
       this.handleSubmit();
     });
 
+    // Environment selector fills gravity and air density; editing either by
+    // hand switches the selector to "custom" so it never claims a planet the
+    // numbers no longer describe.
+    const envSelect = document.getElementById('projectile-env');
+    const gInput = document.getElementById('gravity_m_s2');
+    const rhoInput = document.getElementById('air_density_kg_m3');
+    envSelect?.addEventListener('change', () => {
+      const env = ENVIRONMENTS[envSelect.value];
+      if (!env) return;
+      [gInput.value, rhoInput.value] = env;
+      this.handleSubmit(true);
+    });
+    [gInput, rhoInput].forEach(input => input?.addEventListener('input', () => {
+      if (envSelect) envSelect.value = 'custom';
+    }));
+
     // Debounced live recalculations
     let debounceTimer = null;
     this.form.querySelectorAll('input[type="number"]').forEach(input => {
@@ -198,12 +270,19 @@ const ProjectileForm = {
   },
 
   getInputs() {
+    const num = (id, fallback) => {
+      const v = parseFloat(document.getElementById(id)?.value);
+      return Number.isFinite(v) ? v : fallback;
+    };
     return {
-      velocity_m_s:     parseFloat(document.getElementById('velocity_m_s').value),
-      angle_deg:        parseFloat(document.getElementById('angle_deg').value),
-      mass_kg:          parseFloat(document.getElementById('mass_kg').value),
-      diameter_m:       parseFloat(document.getElementById('diameter_m').value),
-      drag_coefficient: parseFloat(document.getElementById('drag_coefficient').value),
+      velocity_m_s:      num('velocity_m_s'),
+      angle_deg:         num('angle_deg'),
+      mass_kg:           num('mass_kg'),
+      diameter_m:        num('diameter_m'),
+      drag_coefficient:  num('drag_coefficient'),
+      launch_height_m:   num('launch_height_m', 0),
+      gravity_m_s2:      num('gravity_m_s2', 9.80665),
+      air_density_kg_m3: num('air_density_kg_m3', 1.225),
     };
   },
 
@@ -243,9 +322,8 @@ const ProjectileForm = {
       ProjectileThree.buildTrajectory(result);
       window.FloatingPanel?.markUpdated('results');
 
-      // The service truncates integration at 100 s; when it does, range and
-      // flight time are lower bounds rather than impact values.
-      (result.warnings || []).forEach(w => showToast(w, 'info', 7000));
+      // e.g. a transonic launch, where a constant Cd underestimates drag.
+      showWarnings(result.warnings);
 
       if (!auto) showToast('Trajectory equations solved!', 'success');
     } catch (e) {
@@ -291,6 +369,18 @@ const ProjectileUI = {
     document.getElementById('tbl-time-vac').textContent = s.time_vacuum_s.toFixed(2) + ' s';
     document.getElementById('tbl-time-drag').textContent = s.time_drag_s.toFixed(2) + ' s';
     document.getElementById('tbl-speed-final').textContent = s.final_velocity_drag_m_s.toFixed(2) + ' m/s';
+
+    const setCell = (id, text) => {
+      const el = document.getElementById(id);
+      if (el) el.textContent = text;
+    };
+    setCell('tbl-impact-angle', `${s.impact_angle_deg.toFixed(1)}°`);
+    setCell('tbl-terminal', s.terminal_velocity_m_s == null
+      ? tr('physics-none', '— (sem ar)')
+      : `${s.terminal_velocity_m_s.toFixed(1)} m/s`);
+    setCell('tbl-drag-energy', `${s.drag_energy_loss_j.toFixed(1)} J`);
+    setCell('tbl-launch-height', `${s.launch_height_m.toFixed(1)} m`);
+    setCell('tbl-env', `${s.gravity_m_s2.toFixed(2)} m/s² · ${s.air_density_kg_m3.toFixed(3)} kg/m³`);
   }
 };
 
@@ -370,14 +460,21 @@ const ProjectileThree = {
   realPathLine: null,
   projectile: null,
   referencePathLine: null,
+  launchTower: null,
+  impactMarker: null,
   grid: null,
+  wallGrid: null,
 
-  animating: true,
   dragCoords: [],
   dragDuration: 0,
+  playbackRate: 1,
   animElapsed: 0,
   _lastFrameTime: null,
   scaleFactor: 1.0,
+  // Metres shown across the 4-unit plotting window. Kept between solves so a
+  // faster launch draws a visibly longer arc instead of being re-normalised to
+  // the same size every time; only re-picked when the flight no longer fits.
+  spanM: null,
 
   targetCameraPos: null,
   targetLookAt: new THREE.Vector3(0, 0, 0),
@@ -413,12 +510,28 @@ const ProjectileThree = {
     pointLight.position.set(5, 5, 5);
     this.scene.add(pointLight);
 
+    // Ground grid (horizontal distance) and a back wall grid (height), both
+    // with 0.4-unit squares = spanM / 10 metres, so the scale note is true.
     this.grid = new THREE.GridHelper(8, 20, 0x1e3a5f, 0x111e35);
     this.grid.position.y = -0.5;
     this.scene.add(this.grid);
 
+    this.wallGrid = new THREE.GridHelper(4, 10, 0x1e3a5f, 0x0d1830);
+    this.wallGrid.rotation.x = Math.PI / 2;
+    this.wallGrid.position.set(0, 1.5, -0.4);
+    this.scene.add(this.wallGrid);
+
     this.loop = createAnimationLoop(() => this.renderFrame());
     this.loop.start();
+  },
+
+  updateScaleNote() {
+    if (!this.spanM) return;
+    const parts = [tr('physics-scale-grid', 'Grade: 1 quadrado = {v}', formatLength(this.spanM / 10))];
+    if (this.playbackRate > 1.05) {
+      parts.push(tr('physics-scale-speed', 'reprodução ×{v}', this.playbackRate.toFixed(1)));
+    }
+    setScaleNote(parts.join(' · '));
   },
 
   buildTrajectory(result) {
@@ -429,14 +542,21 @@ const ProjectileThree = {
     this.realPathLine = disposeAndRemove(this.scene, this.realPathLine);
     this.projectile = disposeAndRemove(this.scene, this.projectile);
     this.referencePathLine = disposeAndRemove(this.scene, this.referencePathLine);
+    this.launchTower = disposeAndRemove(this.scene, this.launchTower);
+    this.impactMarker = disposeAndRemove(this.scene, this.impactMarker);
 
     const xReal = result.x_drag;
     const yReal = result.y_drag;
     const xIdeal = result.x_vacuum;
     const yIdeal = result.y_vacuum;
 
-    const maxVal = Math.max(xIdeal[xIdeal.length - 1] || 1, Math.max(...yIdeal) || 1);
-    this.scaleFactor = 4.0 / maxVal;
+    const curves = [xReal, yReal, xIdeal, yIdeal];
+    if (referenceResult) curves.push(referenceResult.x_drag, referenceResult.y_drag);
+    const extent = Math.max(1e-3, ...curves.map(c => Math.max(...c)));
+    if (!this.spanM || extent > this.spanM || extent < this.spanM * 0.2) {
+      this.spanM = niceCeil(extent * 1.05);
+    }
+    this.scaleFactor = 4.0 / this.spanM;
 
     // Ideal Path
     const idealPoints = [];
@@ -481,9 +601,37 @@ const ProjectileThree = {
     this.projectile.position.copy(this.dragCoords[0] || new THREE.Vector3(-2, -0.5, 0));
     this.scene.add(this.projectile);
 
+    // Launch tower when the throw starts above the ground.
+    const h0 = result.stats.launch_height_m || 0;
+    if (h0 > 0) {
+      const towerH = h0 * this.scaleFactor;
+      const tower = new THREE.Mesh(
+        new THREE.BoxGeometry(0.16, towerH, 0.16),
+        new THREE.MeshPhongMaterial({ color: 0x334155 }),
+      );
+      tower.position.set(-2 - 0.08, -0.5 + towerH / 2, 0);
+      this.launchTower = tower;
+      this.scene.add(tower);
+    }
+
+    // Impact marker on the ground.
+    const last = this.dragCoords[this.dragCoords.length - 1];
+    if (last) {
+      const ring = new THREE.Mesh(
+        new THREE.RingGeometry(0.06, 0.11, 32),
+        new THREE.MeshBasicMaterial({ color: 0xef4444, side: THREE.DoubleSide }),
+      );
+      ring.rotation.x = -Math.PI / 2;
+      ring.position.set(last.x, -0.495, 0);
+      this.impactMarker = ring;
+      this.scene.add(ring);
+    }
+
     this.dragDuration = Math.max(result.stats.time_drag_s || 0, 1e-3);
+    this.playbackRate = Math.max(1, this.dragDuration / MAX_PLAYBACK_S);
     this.animElapsed = 0;
     this._lastFrameTime = null;
+    if (GlobalPhysicsManager.activeTab === 'projectile') this.updateScaleNote();
   },
 
   // Called every frame; resizeRendererToCanvas memoizes, so it is a no-op
@@ -550,13 +698,15 @@ const ProjectileThree = {
       }
     }
 
-    // Playback trajectory
+    // Playback trajectory (samples are uniform in time, so index ∝ time)
     if (this.projectile && this.dragCoords.length > 1 && this.dragDuration) {
       const now = performance.now();
-      const dtReal = this._lastFrameTime ? (now - this._lastFrameTime) / 1000 : 0;
+      const dtReal = this._lastFrameTime ? Math.min((now - this._lastFrameTime) / 1000, 0.1) : 0;
       this._lastFrameTime = now;
 
-      this.animElapsed = (this.animElapsed + dtReal) % this.dragDuration;
+      if (!playbackPaused) {
+        this.animElapsed = (this.animElapsed + dtReal * this.playbackRate) % this.dragDuration;
+      }
       const frac = this.animElapsed / this.dragDuration;
       const idxFloat = frac * (this.dragCoords.length - 1);
       const i0 = Math.max(0, Math.min(this.dragCoords.length - 2, Math.floor(idxFloat)));
@@ -647,24 +797,11 @@ const MagnetismForm = {
     this.updateFormDisplay();
     this.renderPresets();
 
-    // Toggle visualizers
-    const canvas3D = document.getElementById('three-canvas-magnetism');
-    const canvasMotor = document.getElementById('motor-canvas');
-    const camCtrls = document.getElementById('camera-ctrls');
+    // Canvases *and* render loops. This used to flip only the canvases, so
+    // entering the tab in Lorentz mode and then picking the motor left the
+    // motor's 2D loop stopped — a blank canvas — and the way back froze the 3D.
+    GlobalPhysicsManager.syncViewports();
 
-    if (GlobalPhysicsManager.activeTab === 'magnetism') {
-      if (mode === 'motor') {
-        canvas3D.style.display = 'none';
-        canvasMotor.style.display = 'block';
-        camCtrls.style.display = 'none';
-      } else {
-        canvas3D.style.display = 'block';
-        canvasMotor.style.display = 'none';
-        camCtrls.style.display = 'block';
-        MagnetismThree.onResize();
-      }
-    }
-    
     // Update headers in active language
     GlobalPhysicsManager.renderHeaders();
     this.runSimulation();
@@ -805,6 +942,7 @@ const MagnetismForm = {
       } else if (this.currentMode === 'motor') {
         MagnetismMotor.build(data);
       }
+      showWarnings(data.warnings);
       window.FloatingPanel?.markUpdated('results');
 
       if (!auto) showToast('Simulado calculado com sucesso!', 'success');
@@ -920,7 +1058,9 @@ const MagnetismUI = {
       badge1.style.display = 'inline-flex';
       badge2.style.display = 'inline-flex';
       document.getElementById('badge-primary-lbl').textContent = t('physics-mag-lbl-rpm', 'Rpm Estacionário');
-      document.getElementById('badge-primary-val').textContent = Math.round(data.stats.steady_state_speed_rpm) + ' RPM';
+      document.getElementById('badge-primary-val').textContent = data.stats.stalled
+        ? t('physics-motor-stalled', 'MOTOR TRAVADO')
+        : Math.round(data.stats.steady_state_speed_rpm) + ' RPM';
       // ?? not ||: the service legitimately returns 0.0 for a stalled motor
       // (p_elec below threshold or p_mech <= 0), and `||` treated that real
       // measurement as "missing" and fell through to the next value.
@@ -940,19 +1080,26 @@ const MagnetismUI = {
       val3.textContent = data.stats.settling_time_s.toFixed(3);
       unit3.textContent = 'segundos';
 
+      const s = data.stats;
       tbl.innerHTML = `
-        <tr><td>Material dos Ímãs Permanentes</td><td><strong>${data.stats.magnet_material_name || 'Neodímio N52'}</strong> (B_r = ${data.stats.remanence_br_t ?? 1.45} T)</td></tr>
-        <tr><td>Fluxo Magnético no Entreferro (B_gap)</td><td><strong>${data.stats.b_gap_t ?? 1.23} T</strong></td></tr>
-        <tr><td>Cobertura Angular dos Polos (&alpha;_p)</td><td>${data.stats.pole_span_deg ?? 120}° por polo</td></tr>
-        <tr><td>Quantidade de Ímãs (Estator)</td><td>${data.stats.poles_count ?? 2} Ímãs (${(data.stats.poles_count ?? 2) / 2} Pares N-S)</td></tr>
+        <tr><td>Material dos Ímãs Permanentes</td><td><strong>${s.magnet_material_name || 'Neodímio N52'}</strong> (B_r = ${s.remanence_br_t ?? 1.45} T)</td></tr>
+        <tr><td>Fluxo Magnético no Entreferro (B_gap)</td><td><strong>${s.b_gap_t ?? 1.23} T</strong></td></tr>
+        <tr><td>Cobertura Angular dos Polos (&alpha;_p)</td><td>${s.pole_span_deg ?? 120}° por polo</td></tr>
+        <tr><td>Quantidade de Ímãs (Estator)</td><td>${s.poles_count ?? 2} Ímãs (${(s.poles_count ?? 2) / 2} Pares N-S)</td></tr>
+        <tr><td>Constantes Efetivas (Kt &middot; Ke)</td><td>${s.kt_eff.toFixed(3)} N&middot;m/A &middot; ${s.ke_eff.toFixed(3)} V&middot;s/rad</td></tr>
         <tr><td>Tensão de Alimentação (V)</td><td>${document.getElementById('V').value} V</td></tr>
-        <tr><td>Potência Elétrica de Entrada (P_e)</td><td>${data.stats.p_elec_w ?? 0} W</td></tr>
-        <tr><td>Potência Mecânica no Eixo (P_m)</td><td>${data.stats.p_mech_w ?? 0} W</td></tr>
-        <tr><td>Perdas por Efeito Joule (P_cu)</td><td>${data.stats.p_cu_w ?? 0} W</td></tr>
-        <tr class="results-table__highlight"><td>Eficiência Global (&eta;)</td><td><strong>${effVal.toFixed(1)} %</strong></td></tr>
-        <tr><td>Velocidade Máxima (Estac.)</td><td>${data.stats.steady_state_speed_rpm.toFixed(0)} RPM (${data.stats.steady_state_speed_rad_s.toFixed(2)} rad/s)</td></tr>
-        <tr><td>Corrente de Partida (Pico)</td><td>${data.stats.starting_current_a.toFixed(1)} A</td></tr>
-        <tr><td>Torque Eletromagnético Máx</td><td>${data.stats.max_torque_nm.toFixed(2)} N&middot;m</td></tr>
+        <tr><td>Potência Elétrica de Entrada (P_e)</td><td>${s.p_elec_w ?? 0} W</td></tr>
+        <tr><td>Potência Útil no Eixo (P_m = &tau;_carga&middot;&omega;)</td><td>${s.p_mech_w ?? 0} W</td></tr>
+        <tr><td>Perdas por Efeito Joule (P_cu = I&sup2;R)</td><td>${s.p_cu_w ?? 0} W</td></tr>
+        <tr><td>Perdas por Atrito (P_at = b&middot;&omega;&sup2;)</td><td>${s.p_fric_w ?? 0} W</td></tr>
+        <tr class="results-table__highlight"><td>Eficiência Global (&eta; = P_m / P_e)</td><td><strong>${effVal.toFixed(1)} %</strong></td></tr>
+        <tr><td>Velocidade em Regime</td><td>${s.stalled ? '0 RPM (travado)' : `${s.steady_state_speed_rpm.toFixed(0)} RPM (${s.steady_state_speed_rad_s.toFixed(2)} rad/s)`}</td></tr>
+        <tr><td>Velocidade em Vazio (V / Ke)</td><td>${s.no_load_speed_rpm.toFixed(0)} RPM</td></tr>
+        <tr><td>Corrente em Regime</td><td>${s.steady_state_current_a.toFixed(2)} A</td></tr>
+        <tr><td>Corrente de Partida (Pico)</td><td>${s.starting_current_a.toFixed(1)} A</td></tr>
+        <tr><td>Torque de Partida (Kt&middot;V/R)</td><td>${s.stall_torque_nm.toFixed(2)} N&middot;m</td></tr>
+        <tr><td>Torque Eletromagnético Máx</td><td>${s.max_torque_nm.toFixed(2)} N&middot;m</td></tr>
+        <tr><td>Constantes de Tempo (&tau;_e = L/R &middot; &tau;_m)</td><td>${(s.tau_e_s * 1000).toFixed(1)} ms &middot; ${(s.tau_m_s * 1000).toFixed(0)} ms</td></tr>
       `;
 
       document.getElementById('magnetism-legend').innerHTML = `
@@ -1108,7 +1255,6 @@ const MagnetismThree = {
   movingBArrow: null,
 
   currentMode: 'lorentz',
-  animating: true,
   animStep: 0,
   pathCoords: [],
   vCoords: [],
@@ -1272,6 +1418,10 @@ const MagnetismThree = {
         this.bCoords.push(bVec);
       }
 
+      const larmor = data.stats?.larmor_radius_m;
+      setScaleNote(tr('physics-scale-lorentz', 'Órbita ampliada: raio de Larmor = {v}',
+        larmor ? formatLength(larmor) : '∞'));
+
       // Flight trajectory curve line
       const pathGeo = new THREE.BufferGeometry().setFromPoints(pts);
       const pathMat = new THREE.LineBasicMaterial({ color: 0xa855f7, linewidth: 3 });
@@ -1309,57 +1459,77 @@ const MagnetismThree = {
 
     } else if (mode === 'poles' && data.stats) {
       const r = data.stats.distance_m ?? 0.2;
-      const distScale = Math.max(r * 3.5, 2.2);
+      const force = data.stats.force_n ?? 0;
+
+      // Centre-to-centre distance in scene units, log-mapped from r so every
+      // change of r moves the magnets (the old max(r·3.5, 2.2) froze them for
+      // any r below 0.63 m). Each magnet is 1.4 units long, so the facing
+      // faces sit `distScale − 1.4` apart: 0.2 at r = 5 cm, 2.8 at r = 2 m.
+      const frac = Math.min(1, Math.max(0, Math.log10(r / 0.05) / Math.log10(2 / 0.05)));
+      const distScale = 1.6 + 2.6 * frac;
+      const gapHalf = distScale / 2 - 0.7;
 
       const qm1 = parseFloat(document.getElementById('qm1')?.value || '100');
       const qm2 = parseFloat(document.getElementById('qm2')?.value || '-100');
 
-      // Magnet 1 (at x = -distScale / 2)
-      const magnet1 = this.createBarMagnet(qm1 >= 0);
+      // A positive pole strength means a north pole facing the other magnet.
+      // Magnet 1 faces right (+x) and magnet 2 faces left (−x), so magnet 1's
+      // north half goes on its right — it used to go on the left, which drew
+      // south facing south for the default N–S attraction case.
+      const magnet1 = this.createBarMagnet(!(qm1 >= 0));
       magnet1.position.x = -distScale / 2;
       this.magnets.push(magnet1);
       this.scene.add(magnet1);
 
-      // Magnet 2 (at x = distScale / 2)
       const magnet2 = this.createBarMagnet(qm2 >= 0);
       magnet2.position.x = distScale / 2;
       this.magnets.push(magnet2);
       this.scene.add(magnet2);
 
-      // Force Arrows
-      const isAttraction = (data.stats.force_n < 0) || (qm1 * qm2 < 0);
-      const forceVec1 = new THREE.Vector3(isAttraction ? 1 : -1, 0, 0);
-      const forceVec2 = new THREE.Vector3(isAttraction ? -1 : 1, 0, 0);
-      const arrowLength = 0.9;
-      
-      const arrow1 = new THREE.ArrowHelper(forceVec1, new THREE.Vector3(-distScale/2, 0.8, 0), arrowLength, 0xf59e0b, 0.22, 0.14);
-      const arrow2 = new THREE.ArrowHelper(forceVec2, new THREE.Vector3(distScale/2, 0.8, 0), arrowLength, 0xf59e0b, 0.22, 0.14);
-      
-      this.vectors.push(arrow1);
-      this.vectors.push(arrow2);
-      this.scene.add(arrow1);
-      this.scene.add(arrow2);
+      // Force arrows, length ∝ log|F| over 10⁻⁴…10³ N, so a stronger
+      // interaction is visibly longer.
+      const isAttraction = force < 0;
+      const arrowLength = 0.3 + 1.2 * Math.min(1, Math.max(0, (Math.log10(Math.abs(force) || 1e-12) + 4) / 7));
+      if (force !== 0) {
+        const dir1 = new THREE.Vector3(isAttraction ? 1 : -1, 0, 0);
+        const arrow1 = new THREE.ArrowHelper(dir1, new THREE.Vector3(-distScale / 2, 0.75, 0), arrowLength, 0xf59e0b, 0.22, 0.14);
+        const arrow2 = new THREE.ArrowHelper(dir1.clone().negate(), new THREE.Vector3(distScale / 2, 0.75, 0), arrowLength, 0xf59e0b, 0.22, 0.14);
+        this.vectors.push(arrow1, arrow2);
+        this.scene.add(arrow1, arrow2);
+      }
 
-      // Bezier Field lines between poles
+      // Field lines. Opposite poles: lines run across the gap from one face
+      // to the other. Like poles: each face's lines turn back before the
+      // mid-plane, leaving the field-free gap that repulsion produces.
       const groupLines = new THREE.Group();
+      const lineMat = new THREE.LineBasicMaterial({ color: 0x10b981, transparent: true, opacity: 0.75 });
       const numLines = 8;
       for (let i = 0; i < numLines; i++) {
         const angle = (i * Math.PI * 2) / numLines;
-        const curveRadius = 0.6;
-        
-        const pStart = new THREE.Vector3(-distScale/2 + 0.35, 0, 0);
-        const pEnd = new THREE.Vector3(distScale/2 - 0.35, 0, 0);
-        const pMid = new THREE.Vector3(0, Math.sin(angle) * curveRadius * distScale * 0.4, Math.cos(angle) * curveRadius * distScale * 0.4);
-
-        const curve = new THREE.QuadraticBezierCurve3(pStart, pMid, pEnd);
-        const points = curve.getPoints(32);
-        const lineGeo = new THREE.BufferGeometry().setFromPoints(points);
-        const lineMat = new THREE.LineBasicMaterial({ color: 0x10b981, transparent: true, opacity: 0.75, linewidth: 2 });
-        const line = new THREE.Line(lineGeo, lineMat);
-        groupLines.add(line);
+        const dy = Math.sin(angle), dz = Math.cos(angle);
+        let curves;
+        if (isAttraction || force === 0) {
+          const spread = 0.25 + 0.5 * gapHalf;
+          curves = [new THREE.QuadraticBezierCurve3(
+            new THREE.Vector3(-gapHalf, dy * 0.15, dz * 0.15),
+            new THREE.Vector3(0, dy * spread, dz * spread),
+            new THREE.Vector3(gapHalf, dy * 0.15, dz * 0.15),
+          )];
+        } else {
+          const reach = Math.max(0.15, gapHalf * 0.85);
+          curves = [-1, 1].map(side => new THREE.QuadraticBezierCurve3(
+            new THREE.Vector3(side * gapHalf, dy * 0.15, dz * 0.15),
+            new THREE.Vector3(side * (gapHalf - reach), dy * 0.5, dz * 0.5),
+            new THREE.Vector3(side * (gapHalf + 0.6), dy * 1.1, dz * 1.1),
+          ));
+        }
+        curves.forEach(curve => {
+          groupLines.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints(curve.getPoints(32)), lineMat));
+        });
       }
       this.fieldLines = groupLines;
       this.scene.add(this.fieldLines);
+      setScaleNote(tr('physics-scale-poles', 'Distância e setas em escala logarítmica (seta ∝ log |F|)'));
     }
   },
 
@@ -1470,7 +1640,7 @@ const MagnetismThree = {
       // frame made playback speed depend on the display's refresh rate (the
       // projectile view next to it is already time-based).
       const nowMs = Date.now();
-      const deltaS = this._lastStepMs === null ? 0
+      const deltaS = this._lastStepMs === null || playbackPaused ? 0
         : Math.min((nowMs - this._lastStepMs) / 1000, 0.1);
       this._lastStepMs = nowMs;
       this._stepAccumulator += deltaS * LORENTZ_STEPS_PER_SECOND;
@@ -1494,15 +1664,23 @@ const MagnetismMotor = {
   currentAngle: 0.0,
   simTime: 0.0,
   lastTime: performance.now(),
-  animating: true,
   loop: null,
   polesCount: 2,
   poleSpanDeg: 120.0,
   materialName: 'Neodímio N52',
   bGap: 1.23,
-  efficiencyPct: 85.0,
+  efficiencyPct: 0.0,
   pMech: 0,
   pElec: 0,
+  stalled: false,
+  // The rotor is drawn at this fraction of its real angular speed. A
+  // 3000 RPM rotor sampled at 60 fps aliases (the wagon-wheel effect made it
+  // look still or turning backwards), so drawn speed is capped at 1.5 rev/s
+  // and the HUD says by how much it was slowed.
+  visualFactor: 1,
+  // Simulated seconds per real second while replaying the start-up, chosen
+  // so the transient takes 2–8 s on screen whatever its real length.
+  timeScale: 1,
 
   init() {
     this.canvas = document.getElementById('motor-canvas');
@@ -1511,6 +1689,7 @@ const MagnetismMotor = {
     this.tSeries = [0, 1.5];
     this.speedSeries = [0, 0];
     this.iSeries = [0, 0];
+    this.iScale = 1e-6;
 
     this.loop = createAnimationLoop(() => this.renderFrame());
     this.loop.start();
@@ -1518,22 +1697,30 @@ const MagnetismMotor = {
 
   build(data) {
     if (!data || !data.stats) return;
-    this.steadySpeed = data.stats.steady_state_speed_rad_s;
-    this.settlingTime = data.stats.settling_time_s;
-    this.polesCount = data.stats.poles_count ?? 2;
-    this.poleSpanDeg = data.stats.pole_span_deg ?? 120.0;
-    this.materialName = data.stats.magnet_material_name || 'Neodímio N52';
-    this.bGap = data.stats.b_gap_t ?? 1.23;
+    const s = data.stats;
+    this.polesCount = s.poles_count ?? 2;
+    this.poleSpanDeg = s.pole_span_deg ?? 120.0;
+    this.materialName = s.magnet_material_name || 'Neodímio N52';
+    this.bGap = s.b_gap_t ?? 1.23;
     // ?? not ||: a stalled motor really does have 0% efficiency, and `||`
     // discarded that measurement and printed a fabricated 85% on the HUD.
-    this.efficiencyPct = data.stats.efficiency_steady_pct ?? data.stats.max_efficiency_pct ?? 0.0;
-    this.pMech = data.stats.p_mech_w ?? 0;
-    this.pElec = data.stats.p_elec_w ?? 0;
+    this.efficiencyPct = s.efficiency_steady_pct ?? s.max_efficiency_pct ?? 0.0;
+    this.pMech = s.p_mech_w ?? 0;
+    this.pElec = s.p_elec_w ?? 0;
+    this.stalled = !!s.stalled;
 
     this.tSeries = data.t || [0, 1.5];
     this.speedSeries = data.speed_rad_s || [0, 0];
     this.iSeries = data.I || [0, 0];
     this.iScale = Math.max(...this.iSeries.map(Math.abs), 1e-6);
+
+    const peakSpeed = Math.max(...this.speedSeries.map(Math.abs), Math.abs(s.steady_state_speed_rad_s || 0));
+    const cap = 1.5 * 2 * Math.PI;
+    this.visualFactor = peakSpeed > cap ? cap / peakSpeed : 1;
+
+    const tEnd = this.tSeries[this.tSeries.length - 1] || 0.1;
+    this.timeScale = tEnd / Math.min(8, Math.max(2, tEnd));
+
     this.speedRadS = 0;
     this.currentA = 0;
     this.currentAngle = 0;
@@ -1565,19 +1752,23 @@ const MagnetismMotor = {
 
   renderFrame() {
     const now = performance.now();
-    const dt = (now - this.lastTime) / 1000;
+    const dt = Math.min((now - this.lastTime) / 1000, 0.1);
     this.lastTime = now;
 
     if (!this.ctx || this.canvas.style.display === 'none' || GlobalPhysicsManager.activeTab !== 'magnetism') return;
 
     this.checkSize();
 
-    if (MagnetismForm.currentMode === 'motor' && this.animating) {
+    if (MagnetismForm.currentMode === 'motor' && !playbackPaused) {
+      // Replay the start-up transient, then hold the steady state for a
+      // moment before starting over.
       const tEnd = this.tSeries[this.tSeries.length - 1] || 0.1;
-      this.simTime = (this.simTime + dt) % tEnd;
-      this.speedRadS = this.interpolateSeries(this.simTime, this.tSeries, this.speedSeries);
-      this.currentA = this.interpolateSeries(this.simTime, this.tSeries, this.iSeries);
-      this.currentAngle += this.speedRadS * dt;
+      const hold = 1.5 * this.timeScale;
+      this.simTime = (this.simTime + dt * this.timeScale) % (tEnd + hold);
+      const t = Math.min(this.simTime, tEnd);
+      this.speedRadS = this.interpolateSeries(t, this.tSeries, this.speedSeries);
+      this.currentA = this.interpolateSeries(t, this.tSeries, this.iSeries);
+      this.currentAngle += this.speedRadS * this.visualFactor * dt;
     }
 
     this.draw();
@@ -1586,67 +1777,62 @@ const MagnetismMotor = {
   draw() {
     const w = this.canvas.width;
     const h = this.canvas.height;
-    const cx = w / 2;
-    const cy = h / 2;
     const ctx = this.ctx;
-
     ctx.clearRect(0, 0, w, h);
 
-    // 1. Draw Stator Magnets dynamically with specified polesCount and poleSpanDeg
+    // The machine is drawn in a 380-unit square scaled to the canvas, so it
+    // fills small and large viewports alike instead of a fixed 110 px stator.
+    ctx.save();
+    ctx.translate(w / 2, h / 2 + 12);
+    const k = Math.max(0.5, Math.min(w, h - 40) / 380);
+    ctx.scale(k, k);
+
+    // 1. Stator magnets — count and arc from the configuration.
     const N = this.polesCount || 2;
     const rStator = 110;
-    const spanRad = (this.poleSpanDeg * Math.PI / 180.0) / (N / 2);
-    const arcSpan = Math.min((Math.PI * 2 / N) * 0.85, spanRad);
+    const pitch = (Math.PI * 2) / N;
+    // Pole span is in electrical degrees (180° = a full pole pitch).
+    const arcSpan = Math.min(pitch * 0.97, pitch * (this.poleSpanDeg / 180));
 
-    for (let k = 0; k < N; k++) {
-      const angle = (k * Math.PI * 2) / N;
-      const isNorth = (k % 2 === 0);
-
+    for (let p = 0; p < N; p++) {
+      const angle = p * pitch;
+      const isNorth = (p % 2 === 0);
       ctx.beginPath();
-      ctx.arc(cx, cy, rStator, angle - arcSpan / 2, angle + arcSpan / 2);
+      ctx.arc(0, 0, rStator, angle - arcSpan / 2, angle + arcSpan / 2);
       ctx.lineWidth = 24;
       ctx.strokeStyle = isNorth ? '#ef4444' : '#3b82f6';
       ctx.stroke();
 
-      const lx = cx + Math.cos(angle) * (rStator + 24);
-      const ly = cy + Math.sin(angle) * (rStator + 24);
       ctx.fillStyle = isNorth ? '#f87171' : '#60a5fa';
       ctx.font = 'bold 11px Inter, sans-serif';
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
-      const labelText = isNorth ? `N${Math.floor(k/2)+1}` : `S${Math.floor(k/2)+1}`;
-      ctx.fillText(labelText, lx, ly);
+      ctx.fillText(`${isNorth ? 'N' : 'S'}${Math.floor(p / 2) + 1}`,
+        Math.cos(angle) * (rStator + 24), Math.sin(angle) * (rStator + 24));
     }
 
-    // Magnetic field lines between opposing North-South poles
-    ctx.beginPath();
+    // Flux lines: from each pole to its neighbours (always the opposite
+    // polarity), dipping through the rotor. Pairing pole k with pole k + N/2
+    // joined two north poles as soon as N ≥ 4.
     ctx.setLineDash([4, 6]);
     ctx.strokeStyle = 'rgba(16,185,129,0.45)';
     ctx.lineWidth = 2;
-
-    for (let k = 0; k < N / 2; k++) {
-      const angle1 = (k * 2 * Math.PI) / N;
-      const angle2 = angle1 + Math.PI;
-
-      for (let offset = -40; offset <= 40; offset += 20) {
-        const perpX = Math.cos(angle1 + Math.PI / 2) * offset;
-        const perpY = Math.sin(angle1 + Math.PI / 2) * offset;
-
-        const x1 = cx + Math.cos(angle1) * 95 + perpX;
-        const y1 = cy + Math.sin(angle1) * 95 + perpY;
-        const x2 = cx + Math.cos(angle2) * 95 + perpX;
-        const y2 = cy + Math.sin(angle2) * 95 + perpY;
-
-        ctx.moveTo(x1, y1);
-        ctx.lineTo(x2, y2);
+    ctx.beginPath();
+    for (let p = 0; p < N; p++) {
+      const a1 = p * pitch;
+      const a2 = a1 + pitch;
+      const mid = a1 + pitch / 2;
+      for (const depth of [0.3, 0.5, 0.7]) {
+        const ctrlR = 95 * depth * (N === 2 ? 0.9 : Math.cos(pitch / 2));
+        ctx.moveTo(Math.cos(a1) * 95, Math.sin(a1) * 95);
+        ctx.quadraticCurveTo(Math.cos(mid) * ctrlR, Math.sin(mid) * ctrlR, Math.cos(a2) * 95, Math.sin(a2) * 95);
       }
     }
     ctx.stroke();
-    ctx.setLineDash([]); // clear dash
+    ctx.setLineDash([]);
 
-    // 2. Draw Rotor (Armature)
+    // 2. Rotor (armature)
     ctx.save();
-    ctx.translate(cx, cy);
     ctx.rotate(this.currentAngle);
 
     ctx.beginPath();
@@ -1661,6 +1847,7 @@ const MagnetismMotor = {
     ctx.stroke();
 
     const slotCount = 8;
+    const iSign = Math.abs(this.currentA) / (this.iScale || 1e-6) > 0.02 ? Math.sign(this.currentA || 1) : 0;
     for (let i = 0; i < slotCount; i++) {
       const angle = (i * Math.PI * 2) / slotCount;
       const sx = Math.cos(angle) * 44;
@@ -1673,19 +1860,19 @@ const MagnetismMotor = {
       ctx.strokeStyle = '#b45309';
       ctx.stroke();
 
-      const globalY = -sx * Math.sin(this.currentAngle) + sy * Math.cos(this.currentAngle);
-      const iSign = Math.abs(this.currentA) / (this.iScale || 1e-6) > 0.02 ? Math.sign(this.currentA || 1) : 0;
+      // Conductor current direction, fixed in space by the commutator:
+      // into the page on one side of the brush axis, out on the other.
       if (iSign !== 0) {
+        const globalY = -sx * Math.sin(this.currentAngle) + sy * Math.cos(this.currentAngle);
         ctx.fillStyle = '#000';
         ctx.font = 'bold 9px monospace';
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
-        const inward = (globalY < 0 ? 1 : -1) * iSign > 0;
-        ctx.fillText(inward ? '⨂' : '⊙', sx, sy);
+        ctx.fillText(((globalY < 0 ? 1 : -1) * iSign > 0) ? '⨂' : '⊙', sx, sy);
       }
     }
 
-    // Commutator Segments
+    // Commutator segments
     ctx.beginPath();
     ctx.arc(0, 0, 20, 0, Math.PI * 2);
     ctx.fillStyle = '#b45309';
@@ -1693,71 +1880,73 @@ const MagnetismMotor = {
     ctx.strokeStyle = '#000';
     ctx.lineWidth = 2;
     ctx.stroke();
-
     ctx.beginPath();
     ctx.moveTo(-20, 0); ctx.lineTo(20, 0);
     ctx.moveTo(0, -20); ctx.lineTo(0, 20);
-    ctx.strokeStyle = '#000';
     ctx.stroke();
-
     ctx.restore();
 
     // 3. Brushes
     ctx.fillStyle = '#1e293b';
-    ctx.fillRect(cx - 8, cy - 30, 16, 10);
     ctx.strokeStyle = '#cbd5e1';
     ctx.lineWidth = 1;
-    ctx.strokeRect(cx - 8, cy - 30, 16, 10);
+    ctx.fillRect(-8, -30, 16, 10);
+    ctx.strokeRect(-8, -30, 16, 10);
+    ctx.fillRect(-8, 20, 16, 10);
+    ctx.strokeRect(-8, 20, 16, 10);
     ctx.fillStyle = '#f8fafc';
     ctx.font = 'bold 8px monospace';
-    ctx.fillText('+', cx + 12, cy - 22);
+    ctx.textAlign = 'left';
+    ctx.fillText('+', 12, -22);
+    ctx.fillText('−', 12, 28);
 
-    ctx.fillStyle = '#1e293b';
-    ctx.fillRect(cx - 8, cy + 20, 16, 10);
-    ctx.strokeRect(cx - 8, cy + 20, 16, 10);
-    ctx.fillStyle = '#f8fafc';
-    ctx.fillText('-', cx + 12, cy + 28);
+    // Speed under the machine
+    ctx.textAlign = 'center';
+    ctx.fillStyle = this.stalled ? '#f87171' : '#10b981';
+    ctx.font = 'bold 16px JetBrains Mono, monospace';
+    ctx.fillText(this.stalled
+      ? tr('physics-motor-stalled', 'MOTOR TRAVADO')
+      : `${Math.round(this.speedRadS * (30.0 / Math.PI))} RPM`, 0, 155);
+    ctx.fillStyle = '#94a3b8';
+    ctx.font = '10px JetBrains Mono, monospace';
+    const tEnd = this.tSeries[this.tSeries.length - 1] || 0;
+    const caption = [`t = ${Math.min(this.simTime, tEnd).toFixed(2)} s`, `I = ${this.currentA.toFixed(2)} A`];
+    if (this.visualFactor < 0.999) {
+      caption.push(tr('physics-motor-slowmo', 'câmera lenta ×1/{v}', Math.round(1 / this.visualFactor)));
+    }
+    ctx.fillText(caption.join('  ·  '), 0, 174);
+    ctx.restore();
 
-    // 4. On-Canvas HUD Badges & Performance Metrics Overlay
-    // Top Left Badge: Magnet Material & Gap Flux
-    ctx.fillStyle = 'rgba(15, 23, 42, 0.85)';
-    ctx.beginPath();
-    if (ctx.roundRect) ctx.roundRect(14, 14, 260, 48, 8); else ctx.fillRect(14, 14, 260, 48);
-    ctx.fill();
-    ctx.strokeStyle = 'rgba(56, 189, 248, 0.4)';
-    ctx.lineWidth = 1;
-    ctx.stroke();
+    // 4. HUD badges, in screen pixels.
+    const badge = (x, y, bw, border) => {
+      ctx.fillStyle = 'rgba(15, 23, 42, 0.85)';
+      ctx.beginPath();
+      if (ctx.roundRect) ctx.roundRect(x, y, bw, 48, 8); else ctx.rect(x, y, bw, 48);
+      ctx.fill();
+      ctx.strokeStyle = border;
+      ctx.lineWidth = 1;
+      ctx.stroke();
+    };
+    ctx.textAlign = 'left';
+    ctx.textBaseline = 'middle';
 
+    badge(14, 14, 260, 'rgba(56, 189, 248, 0.4)');
     ctx.fillStyle = '#38bdf8';
     ctx.font = 'bold 11px Inter, sans-serif';
-    ctx.textAlign = 'left';
-    ctx.fillText(`🧲 ${this.materialName}`, 24, 32);
+    ctx.fillText(`🧲 ${this.materialName}`, 24, 30);
     ctx.fillStyle = '#cbd5e1';
     ctx.font = '10px JetBrains Mono, monospace';
-    ctx.fillText(`B_gap = ${this.bGap} T  |  α_p = ${this.poleSpanDeg}° (${this.polesCount} Polos)`, 24, 48);
+    ctx.fillText(`B_gap = ${this.bGap} T  |  α_p = ${this.poleSpanDeg}° (${this.polesCount} polos)`, 24, 47);
 
-    // Top Right Badge: Efficiency & Power
-    ctx.fillStyle = 'rgba(15, 23, 42, 0.85)';
-    ctx.beginPath();
-    if (ctx.roundRect) ctx.roundRect(w - 224, 14, 210, 48, 8); else ctx.fillRect(w - 224, 14, 210, 48);
-    ctx.fill();
-    ctx.strokeStyle = 'rgba(16, 185, 129, 0.4)';
-    ctx.lineWidth = 1;
-    ctx.stroke();
-
-    ctx.fillStyle = '#10b981';
-    ctx.font = 'bold 11px Inter, sans-serif';
-    ctx.textAlign = 'left';
-    ctx.fillText(`⚡ Eficiência η: ${this.efficiencyPct.toFixed(1)}%`, w - 212, 32);
-    ctx.fillStyle = '#cbd5e1';
-    ctx.font = '10px JetBrains Mono, monospace';
-    ctx.fillText(`P_mech = ${this.pMech} W  |  P_elec = ${this.pElec} W`, w - 212, 48);
-
-    // Bottom Center Display: RPM
-    ctx.fillStyle = '#10b981';
-    ctx.font = 'bold 16px JetBrains Mono, monospace';
-    ctx.textAlign = 'center';
-    ctx.fillText(`${Math.round(this.speedRadS * (30.0 / Math.PI))} RPM`, cx, cy + 155);
+    if (w > 520) {
+      badge(w - 224, 14, 210, 'rgba(16, 185, 129, 0.4)');
+      ctx.fillStyle = '#10b981';
+      ctx.font = 'bold 11px Inter, sans-serif';
+      ctx.fillText(`⚡ η = ${this.efficiencyPct.toFixed(1)}%`, w - 212, 30);
+      ctx.fillStyle = '#cbd5e1';
+      ctx.font = '10px JetBrains Mono, monospace';
+      ctx.fillText(`P_eixo ${this.pMech} W  |  P_ent ${this.pElec} W`, w - 212, 47);
+    }
   }
 };
 
@@ -1852,66 +2041,17 @@ const GlobalPhysicsManager = {
       document.getElementById('badge-secondary').style.display = mode === 'motor' ? 'inline-flex' : 'none';
     }
 
-    // Stop the render loops that belong to the tab being left. Three
-    // viewports live on this page (projectile 3D, magnetism 3D, motor 2D) and
-    // all three used to keep running at 60 fps regardless of which was on
-    // screen — the per-frame guards skipped the *drawing* but the rAF had
-    // already been rescheduled at the top of the loop.
-    if (tab === 'projectile') {
-      MagnetismThree.loop?.stop();
-      MagnetismMotor.loop?.stop();
-      ProjectileThree.loop?.start();
-    } else {
-      ProjectileThree.loop?.stop();
-      if (MagnetismForm.currentMode === 'motor') {
-        MagnetismThree.loop?.stop();
-        MagnetismMotor.loop?.start();
-      } else {
-        MagnetismMotor.loop?.stop();
-        MagnetismThree.loop?.start();
-      }
-    }
-
     // Both tabs draw into the same #plotly-chart container with incompatible
     // axes and trace counts, so hand it over cleanly (purge + placeholder)
     // rather than leaving the outgoing tab's figure in place until the
     // incoming one happens to finish solving.
     PlotlyChartHelper.resetPlaceholder(tab);
 
-    // Toggle 3D and 2D canvas visualizers
-    const canvasProj = document.getElementById('three-canvas-projectile');
-    const canvasMag = document.getElementById('three-canvas-magnetism');
-    const canvasMotor = document.getElementById('motor-canvas');
-    const camCtrls = document.getElementById('camera-ctrls');
+    this.syncViewports();
 
-    if (tab === 'projectile') {
-      canvasProj.style.display = 'block';
-      canvasMag.style.display = 'none';
-      canvasMotor.style.display = 'none';
-      camCtrls.style.display = 'block';
-      
-      document.getElementById('projectile-legend').style.display = 'flex';
-      document.getElementById('magnetism-legend').style.display = 'none';
-      
-      requestAnimationFrame(() => ProjectileThree.onResize());
-    } else {
-      canvasProj.style.display = 'none';
-      
-      const mode = MagnetismForm.currentMode;
-      if (mode === 'motor') {
-        canvasMag.style.display = 'none';
-        canvasMotor.style.display = 'block';
-        camCtrls.style.display = 'none';
-      } else {
-        canvasMag.style.display = 'block';
-        canvasMotor.style.display = 'none';
-        camCtrls.style.display = 'block';
-        requestAnimationFrame(() => MagnetismThree.onResize());
-      }
-
-      document.getElementById('projectile-legend').style.display = 'none';
-      document.getElementById('magnetism-legend').style.display = 'flex';
-    }
+    document.getElementById('projectile-legend').style.display = tab === 'projectile' ? 'flex' : 'none';
+    document.getElementById('magnetism-legend').style.display = tab === 'projectile' ? 'none' : 'flex';
+    if (tab === 'projectile') ProjectileThree.updateScaleNote(); else setScaleNote('');
 
     // Re-render local page headers/titles in correct active language
     this.renderHeaders();
@@ -1919,6 +2059,8 @@ const GlobalPhysicsManager = {
     // Trigger initial simulation solver or restore previous state chart
     if (tab === 'projectile') {
       if (lastResult) {
+        // updateAll also restores the workbench status the magnetism tab overwrote.
+        ProjectileUI.updateAll(lastResult, ProjectileForm.getInputs());
         ProjectileChart.render(lastResult);
         ProjectileThree.buildTrajectory(lastResult);
       } else {
@@ -1937,6 +2079,48 @@ const GlobalPhysicsManager = {
         MagnetismForm.runSimulation(true);
       }
     }
+  },
+
+  /**
+   * Show the one viewport the current tab + mode needs, run only its render
+   * loop, and offer the camera controls only for the 3D views.
+   *
+   * Three viewports share the canvas slot (projectile 3D, magnetism 3D,
+   * motor 2D). Stopping the hidden loops matters — they used to keep running
+   * at 60 fps behind the visible one — and so does starting the right one:
+   * setMode() used to swap the canvases without touching the loops.
+   */
+  syncViewports() {
+    const view = this.activeTab === 'projectile' ? 'projectile'
+      : MagnetismForm.currentMode === 'motor' ? 'motor' : 'magnetism';
+
+    const show = (id, on) => {
+      const el = document.getElementById(id);
+      if (el) el.style.display = on ? 'block' : 'none';
+    };
+    show('three-canvas-projectile', view === 'projectile');
+    show('three-canvas-magnetism', view === 'magnetism');
+    show('motor-canvas', view === 'motor');
+
+    const loops = { projectile: ProjectileThree.loop, magnetism: MagnetismThree.loop, motor: MagnetismMotor.loop };
+    Object.entries(loops).forEach(([name, loop]) => (name === view ? loop?.start() : loop?.stop()));
+
+    // The 2D motor has no camera: hide the camera controls and their button.
+    const hasCamera = view !== 'motor';
+    [document.getElementById('view-panel'), document.querySelector('.fab[data-panel="view"]')].forEach(el => {
+      if (el) el.style.display = hasCamera ? '' : 'none';
+    });
+
+    // The status tag described the projectile launch on every tab.
+    const status = document.getElementById('workbench-status');
+    if (status && view !== 'projectile') {
+      status.textContent = {
+        lorentz: 'F = q(v × B)', poles: 'F = μ₀q₁q₂ / 4πr²', motor: 'PMDC',
+      }[MagnetismForm.currentMode];
+    }
+
+    if (view === 'projectile') requestAnimationFrame(() => ProjectileThree.onResize());
+    if (view === 'magnetism') requestAnimationFrame(() => MagnetismThree.onResize());
   },
 
   renderHeaders() {
@@ -2091,16 +2275,27 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   });
 
-  // Toggle animation loop globally
-  document.getElementById('toggle-animation').addEventListener('click', (e) => {
+  // Pause / resume the motion in every viewport. This used to flip an
+  // `animating` flag that no render loop read, then call an animate() method
+  // that did not exist — so Pause did nothing and Resume threw.
+  const pauseBtn = document.getElementById('toggle-animation');
+  const syncPauseLabel = () => {
+    const key = playbackPaused ? 'physics-btn-resume' : 'physics-btn-pause';
+    pauseBtn.setAttribute('data-i18n', key);
+    pauseBtn.setAttribute('aria-pressed', String(playbackPaused));
+    pauseBtn.textContent = tr(key, playbackPaused ? '▶ Retomar' : '⏸ Pausar');
+  };
+  pauseBtn?.addEventListener('click', () => {
+    playbackPaused = !playbackPaused;
+    syncPauseLabel();
+  });
+
+  // The scale note is built in JS, so translatePage cannot reach it.
+  window.addEventListener('language-changed', () => {
     if (GlobalPhysicsManager.activeTab === 'projectile') {
-      ProjectileThree.animating = !ProjectileThree.animating;
-      e.target.textContent = ProjectileThree.animating ? '⏸ Pause' : '▶ Resume';
-      if (ProjectileThree.animating) ProjectileThree.animate();
-    } else {
-      MagnetismThree.animating = !MagnetismThree.animating;
-      e.target.textContent = MagnetismThree.animating ? '⏸ Pausar' : '▶ Retomar';
-      if (MagnetismThree.animating) MagnetismThree.animate();
+      ProjectileThree.updateScaleNote();
+    } else if (MagnetismForm.lastResult && MagnetismForm.currentMode !== 'motor') {
+      MagnetismThree.build(MagnetismForm.lastResult, MagnetismForm.currentMode);
     }
   });
 

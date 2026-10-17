@@ -1,0 +1,60 @@
+{% comment %}
+  3D view controls as a floating panel, toggled by its 🎥 button or the V key.
+
+  Include it once per simulator page next to the other floating panels — never
+  inside a .card: cards use backdrop-filter, which makes a position:fixed
+  descendant position itself relative to the card instead of the viewport.
+
+  Optional parameters:
+    lim        ± range of the X/Y sliders (default 6)
+    zmin/zmax  range of the Z slider (default ±lim)
+    step       slider step (default 0.05)
+    x, y, z    initial camera position (default 0, 1.5, 4)
+
+  The element ids are the contract the page controllers bind to.
+{% endcomment %}
+<button class="fab fab--view" data-panel="view" data-i18n-title="fab-view" title="Controles da vista 3D (V)" aria-label="Controles da vista 3D (V)" aria-expanded="false" aria-controls="view-panel">🎥</button>
+
+<aside class="floating-panel floating-panel--view" id="view-panel" role="dialog" aria-label="Controles da vista 3D" aria-hidden="true">
+  <div class="floating-panel__header">
+    <span class="floating-panel__title" data-i18n="cam-title">🎥 Controle de Visualização 3D</span>
+    <div class="floating-panel__actions">
+      <button class="floating-panel__close" data-i18n-title="panel-close" aria-label="Fechar painel">✕</button>
+    </div>
+  </div>
+  <div class="floating-panel__body">
+    <label class="camera-controls__orbit-label">
+      <input type="checkbox" id="auto-orbit" class="camera-controls__orbit-input">
+      <span data-i18n="cam-lbl-orbit">Auto-Orbital</span>
+    </label>
+
+    <div class="camera-controls__presets">
+      <button type="button" class="btn btn--outline camera-controls__preset-btn" id="btn-view-iso" data-i18n="cam-btn-iso">Perspectiva</button>
+      <button type="button" class="btn btn--outline camera-controls__preset-btn" id="btn-view-side" data-i18n="cam-btn-side">Lateral</button>
+      <button type="button" class="btn btn--outline camera-controls__preset-btn" id="btn-view-top" data-i18n="cam-btn-top">Superior</button>
+      <button type="button" class="btn btn--outline camera-controls__preset-btn" id="btn-view-inlet" data-i18n="cam-btn-inlet">Frontal</button>
+    </div>
+
+    <div class="camera-controls__sliders">
+      <div class="camera-controls__slider-row">
+        <span class="camera-controls__slider-axis camera-controls__slider-axis--x" data-i18n-title="cam-pos-x">X</span>
+        <input type="range" class="camera-controls__slider" id="cam-slider-x" aria-label="X"
+               min="-{{ lim|default:6 }}" max="{{ lim|default:6 }}" step="{{ step|default:0.05 }}" value="{{ x|default:0 }}">
+        <span class="camera-controls__value" id="cam-val-x">{{ x|default:0 }}</span>
+      </div>
+      <div class="camera-controls__slider-row">
+        <span class="camera-controls__slider-axis camera-controls__slider-axis--y" data-i18n-title="cam-pos-y">Y</span>
+        <input type="range" class="camera-controls__slider" id="cam-slider-y" aria-label="Y"
+               min="-{{ lim|default:6 }}" max="{{ lim|default:6 }}" step="{{ step|default:0.05 }}" value="{{ y|default:1.5 }}">
+        <span class="camera-controls__value" id="cam-val-y">{{ y|default:1.5 }}</span>
+      </div>
+      <div class="camera-controls__slider-row">
+        <span class="camera-controls__slider-axis camera-controls__slider-axis--z" data-i18n-title="cam-pos-z">Z</span>
+        <input type="range" class="camera-controls__slider" id="cam-slider-z" aria-label="Z"
+               min="{% if zmin %}{{ zmin }}{% else %}-{{ lim|default:6 }}{% endif %}" max="{% if zmax %}{{ zmax }}{% else %}{{ lim|default:6 }}{% endif %}"
+               step="{{ step|default:0.05 }}" value="{{ z|default:4 }}">
+        <span class="camera-controls__value" id="cam-val-z">{{ z|default:4 }}</span>
+      </div>
+    </div>
+  </div>
+</aside>

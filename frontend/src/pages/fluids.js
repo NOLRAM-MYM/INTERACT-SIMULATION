@@ -292,6 +292,11 @@ document.addEventListener('DOMContentLoaded', async () => {
   ThreePipe.init();
   initComparisonMode();
 
+  // Solve the default pipe straight away, like every other module, so the
+  // results panel and the particle field open populated instead of on "—".
+  // After ThreePipe.init(): the solve repaints the 3D scene.
+  FormManager.handleSubmit(true);
+
   // Re-apply translations once the controllers above have built their DOM. The
   // template's inline i18n block already merged this page's dictionary and ran
   // translatePage, but it did so before this module executed, so anything
